@@ -1224,29 +1224,29 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
 
   return (
     <div className="p-6 max-w-6xl mx-auto w-full pb-10">
-      <div className="flex items-center justify-between mb-10">
-        <h1 style={H} className="text-3xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
+      {/* NAGŁÓWEK DASHBOARDU - RESPANSYWNY */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 lg:gap-0 mb-8 lg:mb-10">
+        <h1 style={H} className="text-2xl lg:text-3xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 bg-[#F5EFE6] px-2.5 py-1 rounded-2xl border border-[#E8DDD0]">
-            <button onClick={() => onChangeDate(-1)} className="p-1 hover:bg-white rounded-xl transition-all shadow-sm active:scale-95 text-[#5A7368] hover:text-[#1E5C36]">
-              <ChevronLeft size={15} />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-6">
+          <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-2 bg-[#F5EFE6] px-2.5 py-1.5 rounded-2xl border border-[#E8DDD0]">
+            <button onClick={() => onChangeDate(-1)} className="p-1.5 hover:bg-white rounded-xl transition-all shadow-sm active:scale-95 text-[#5A7368] hover:text-[#1E5C36]">
+              <ChevronLeft size={16} />
             </button>
-            <span className="text-[13px] font-bold text-[#1E5C36] capitalize min-w-[120px] text-center" style={{ fontFamily: "'Lora', serif" }}>
+            <span className="text-[12px] lg:text-[13px] font-bold text-[#1E5C36] capitalize min-w-[120px] text-center" style={{ fontFamily: "'Lora', serif" }}>
               {selectedDate.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
-            <button onClick={() => onChangeDate(1)} className="p-1 hover:bg-white rounded-xl transition-all shadow-sm active:scale-95 text-[#5A7368] hover:text-[#1E5C36]">
+            <button onClick={() => onChangeDate(1)} className="p-1.5 hover:bg-white rounded-xl transition-all shadow-sm active:scale-95 text-[#5A7368] hover:text-[#1E5C36]">
               <ChevronRight size={16} />
             </button>
           </div>
 
-          <div className="flex gap-3">
-            {/* NOWY GUZIK GENEROWANIA */}
-            <button onClick={onGeneratePlan} className="flex items-center gap-2 px-3.5 py-1.5 bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]/30 rounded-xl text-xs font-bold hover:bg-[#2D9E6B] hover:text-white transition-all shadow-sm active:scale-95">
-              <RefreshCw size={15} /> Generuj plan
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button onClick={onGeneratePlan} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 lg:py-1.5 bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]/30 rounded-xl text-xs font-bold hover:bg-[#2D9E6B] hover:text-white transition-all shadow-sm active:scale-95">
+              <RefreshCw size={15} /> Generuj
             </button>
-            <button onClick={onOpenTaskModal} className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-xs font-bold hover:bg-[#F5EFE6] hover:border-[#2D9E6B] transition-all shadow-sm active:scale-95">
-              Dodaj zadanie <Plus size={15} />
+            <button onClick={onOpenTaskModal} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 lg:py-1.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-xs font-bold hover:bg-[#F5EFE6] hover:border-[#2D9E6B] transition-all shadow-sm active:scale-95">
+              Dodaj <Plus size={15} />
             </button>
           </div>
         </div>
@@ -1254,16 +1254,18 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-20 items-start">
         <div className="xl:col-span-8 relative max-w-4xl mx-auto w-full">
-          <div className="absolute left-[3.25rem] top-2 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
+          {/* RESPANSYWNA LINIA OSI CZASU */}
+          <div className="absolute left-[2.5rem] md:left-[3.25rem] top-2 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
           <div className="relative" style={{ height: `${minsToRem((timelineEndHour - timelineStart) * 60)}rem` }}>
             {hours.map((h, i) => (
               <div key={h} className="absolute left-0 flex items-center w-full" style={{ top: `${minsToRem(i * 60)}rem` }}>
-                <span className="text-[10px] font-bold text-[#9FB5AD] w-10 text-right bg-[#FAFAFA] py-1">{h}:00</span>
-                <div className="w-4 h-[1px] bg-[#E8DDD0] ml-2"></div>
+                <span className="text-[9px] md:text-[10px] font-bold text-[#9FB5AD] w-8 md:w-10 text-right bg-[#FAFAFA] py-1">{h}:00</span>
+                <div className="w-2 md:w-4 h-[1px] bg-[#E8DDD0] ml-1 md:ml-2"></div>
               </div>
             ))}
 
-            <div className="absolute top-0 bottom-0 left-20 right-0 flex justify-center pointer-events-none">
+            {/* KONTENER ZADAŃ - MNIEJSZY MARGINES NA MOBILE */}
+            <div className="absolute top-0 bottom-0 left-12 md:left-20 right-0 flex justify-center pointer-events-none">
               <div className="w-full max-w-3xl relative h-full pointer-events-auto">
                 {(() => {
                   const renderItems = timelineWithGaps.map(t => {
@@ -1365,14 +1367,14 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
                                 </div>
                               )}
                             </div>
-                            <div className={`min-w-0 flex-1 ${isSmall ? 'pr-20' : 'pr-32'}`}>
+                            <div className={`min-w-0 flex-1 ${isSmall ? 'pr-16 lg:pr-20' : 'pr-20 lg:pr-32'}`}>
                               <h4 className={`${titleSize} font-bold transition-colors truncate ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22] group-hover:text-[#1E5C36]'}`} title={t.title}>{t.title}</h4>
                               {showTime && (
                                 <p className={`text-xs font-bold mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A7368]'}`}>{formatTime(t.sMins)} — {formatTime(t.sMins + t.durMins)}</p>
                               )}
                             </div>
                           </div>
-                          <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-30 ${t.done ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                          <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-30 ${t.done ? 'opacity-100' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'}`}>
                             {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
                             {!t.isLocked && !t.done && (
                               <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}>
@@ -1392,7 +1394,7 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
             </div>
           </div>
           {backlog.length > 0 && (
-            <div className="sticky bottom-0 z-[100] mt-10 pl-20 pointer-events-none flex justify-center">
+            <div className="sticky bottom-0 z-[100] mt-10 pl-12 md:pl-20 pointer-events-none flex justify-center">
               <div className="w-full max-w-3xl pointer-events-auto">
                 <div className="bg-white border-2 border-b-0 border-[#E8DDD0] shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] w-full p-5 pb-3 transition-all">
                   <button onClick={() => setShowBacklog(!showBacklog)} className="w-full flex items-center justify-between mb-4 group">
@@ -2813,78 +2815,69 @@ export default function App() {
             onDismissAlert={() => setDismissedAlertKey(currentAlertKey)}
           />
           <main className="flex-1 overflow-y-auto relative bg-[#FAFAFA]">
-
-            {/* NOWY HEADER ZE STREAKIEM (1 do 1 z HTML) */}
-            <header className="w-full px-6 py-4 flex items-center justify-between border-b border-[#E8DDD0] bg-white sticky top-0 z-[60]">
-              <div className="flex items-center space-x-4">
-                <span className="text-xl font-bold text-[#164229] flex items-baseline gap-2">
-                  <span>Dzień dobry {user?.name || "Natalia"},</span>
-                  <span className="capitalize text-lg text-[#5A7368] font-medium">{getNow().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+            {/* NOWY HEADER RESPANSYWNY */}
+            <header className="w-full px-4 md:px-6 py-3 md:py-4 flex items-center justify-between border-b border-[#E8DDD0] bg-white sticky top-0 z-[60]">
+              <div className="flex items-center space-x-2 md:space-x-4 truncate">
+                <span className="text-lg md:text-xl font-bold text-[#164229] flex items-baseline gap-1 md:gap-2 truncate">
+                  <span className="truncate">Cześć {user?.name ? user.name.split(' ')[0] : "Natalia"},</span>
+                  <span className="capitalize text-sm md:text-lg text-[#5A7368] font-medium hidden sm:inline">{getNow().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                 </span>
               </div>
 
-              <div className="flex items-center bg-[#F3F4F6] rounded-full px-6 py-2 space-x-5">
-                {/* Tracker Dni */}
-                <div className="flex items-center space-x-2">
-                  {[
-                    { d: 'Pon', checked: true },
-                    { d: 'Wt', checked: true },
-                    { d: 'Śr', checked: true },
-                    { d: 'Czw', checked: true },
-                    { d: 'Pt', checked: false },
-                    { d: 'Sb', checked: false },
-                    { d: 'Ndz', checked: false },
-                  ].map((day, idx) => (
-                    <div key={idx} className="flex flex-col items-center">
-                      {day.checked ? (
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#50C878] text-white">
-                          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      ) : (
-                        <div className="w-5 h-5 rounded-full border-[1.5px] border-dashed border-[#D1D5DB]"></div>
-                      )}
-                      <span className="text-[9px] text-[#6B7280] mt-0.5 text-center">{day.d}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Licznik Dni */}
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-xl drop-shadow-sm filter">🔥</span>
-                  <span className="text-xl font-bold text-gray-800">{tasks.some(t => t.done) ? 13 : 12}</span>
-                </div>
-
-                {/* Profil z działającym menu */}
-                <div className="flex items-center border-l border-gray-200 pl-4">
-                  <div className="relative w-full">
-                    <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center space-x-2 focus:outline-none w-full">
-                      <svg className="w-8 h-8 rounded-full bg-gray-200" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="20" cy="20" fill="#E5E7EB" r="20" />
-                        <path d="M20 20C22.2091 20 24 18.2091 24 16C24 13.7909 22.2091 12 20 12C17.7909 12 16 13.7909 16 16C16 18.2091 17.7909 20 20 20Z" fill="#9CA3AF" />
-                        <path d="M20 22C15.5817 22 12 25.5817 12 30H28C28 25.5817 24.4183 22 20 22Z" fill="#9CA3AF" />
-                      </svg>
-                      <div className="flex flex-col leading-tight text-left">
-                        <span className="text-xs font-medium text-gray-800">{user?.name || "Natalia"}</span>
+              <div className="flex items-center space-x-3 md:space-x-5 flex-shrink-0">
+                {/* Streak i Tracker - widoczne tylko od tabletów w górę */}
+                <div className="hidden md:flex items-center bg-[#F3F4F6] rounded-full px-6 py-2 space-x-5">
+                  <div className="hidden lg:flex items-center space-x-2">
+                    {[
+                      { d: 'Pon', checked: true },
+                      { d: 'Wt', checked: true },
+                      { d: 'Śr', checked: true },
+                      { d: 'Czw', checked: true },
+                      { d: 'Pt', checked: false },
+                      { d: 'Sb', checked: false },
+                      { d: 'Ndz', checked: false },
+                    ].map((day, idx) => (
+                      <div key={idx} className="flex flex-col items-center">
+                        {day.checked ? (
+                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#50C878] text-white">
+                            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-[1.5px] border-dashed border-[#D1D5DB]"></div>
+                        )}
+                        <span className="text-[9px] text-[#6B7280] mt-0.5 text-center">{day.d}</span>
                       </div>
-                      <svg className={`h-4 w-4 text-gray-800 transition-transform duration-200 ${profileMenuOpen ? 'rotate-0' : 'rotate-90'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-xl drop-shadow-sm filter">🔥</span>
+                    <span className="text-xl font-bold text-gray-800">{tasks.some(t => t.done) ? 13 : 12}</span>
+                  </div>
+                </div>
 
-                    {/* Menu wylogowania powiązane z kliknięciem w profil */}
-                    <div className={`absolute top-full mt-2 left-0 w-full bg-white rounded-2xl shadow-xl border border-[#E8DDD0] py-2 z-[100] origin-top transition-all duration-200 ease-out ${profileMenuOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
-                      <button
-                        onClick={() => {
-                          localStorage.clear();
-                          window.location.reload();
-                        }}
-                        className="w-full px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 flex items-center justify-center gap-2 transition-all rounded-xl"
-                      >
-                        <LogOut size={16} /> Wyloguj mnie
-                      </button>
-                    </div>
+                {/* Profil - ikona widoczna zawsze, imię chowane na mobile */}
+                <div className="flex items-center relative">
+                  <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center space-x-2 focus:outline-none bg-[#F3F4F6] md:bg-transparent p-1 md:p-0 rounded-full">
+                    <svg className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="20" cy="20" fill="#E5E7EB" r="20" />
+                      <path d="M20 20C22.2091 20 24 18.2091 24 16C24 13.7909 22.2091 12 20 12C17.7909 12 16 13.7909 16 16C16 18.2091 17.7909 20 20 20Z" fill="#9CA3AF" />
+                      <path d="M20 22C15.5817 22 12 25.5817 12 30H28C28 25.5817 24.4183 22 20 22Z" fill="#9CA3AF" />
+                    </svg>
+                    <span className="hidden md:block text-xs font-medium text-gray-800">{user?.name || "Natalia"}</span>
+                  </button>
+
+                  <div className={`absolute top-full right-0 mt-3 w-40 bg-white rounded-2xl shadow-xl border border-[#E8DDD0] py-2 z-[100] origin-top-right transition-all duration-200 ease-out ${profileMenuOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
+                    <button
+                      onClick={() => {
+                        localStorage.clear();
+                        window.location.reload();
+                      }}
+                      className="w-full px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 flex items-center justify-center gap-2 transition-all"
+                    >
+                      <LogOut size={16} /> Wyloguj mnie
+                    </button>
                   </div>
                 </div>
               </div>
