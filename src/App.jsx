@@ -2228,7 +2228,6 @@ export default function App() {
   }, [offsetDays]);
 
   const [hasPromptedToday, setHasPromptedToday] = useState(false);
-  const [hasPrompted5h, setHasPrompted5h] = useState(false);
 
   const [dismissedAlertKey, setDismissedAlertKey] = useState(null);
   const rawActiveAlert = useMemo(() => analyzeMoodAlerts(moods, getNow()), [moods, getNow]);
@@ -2247,7 +2246,7 @@ export default function App() {
       const d = new Date(nowL);
       d.setDate(d.getDate() - daysAgo);
       return {
-        id: Date.now() + Math.random(),
+        // Usunięto generowanie ID. Zostawiamy to chmurze Supabase.
         d: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
         v: v,
         note: "Symulacja",
@@ -2279,10 +2278,26 @@ export default function App() {
     }
 
     try {
-      await supabase.from('moods').delete().eq('user_email', user.email);
+      // Wyciągamy tylko daty, które chcemy nadpisać w bazie
+      const datesToReplace = newMoods.map(m => m.d);
+
+      // Kasujemy z bazy TYLKO dni nadpisywane, zachowując prawdziwą historię
+      await supabase
+        .from('moods')
+        .delete()
+        .eq('user_email', user.email)
+        .in('d', datesToReplace);
+
+      // Wrzucamy nową symulację (tym razem przejdzie, bo nie ma wymuszonego ID)
       const { data, error } = await supabase.from('moods').insert(newMoods).select();
       if (error) throw error;
-      setMoods(data || []);
+
+      // Aktualizujemy poprawnie UI bez utraty starych danych
+      setMoods(prev => {
+        const filtered = prev.filter(m => !datesToReplace.includes(m.d));
+        return [...filtered, ...(data || [])].sort((a, b) => a.d.localeCompare(b.d));
+      });
+
       setShowDebugModal(false);
       add("Zasymulowano scenariusz " + scenarioId);
     } catch (err) {
@@ -2333,18 +2348,36 @@ export default function App() {
 
     generateFakeMoods: async () => {
       const fakeMoods = [];
+      const datesToReplace = [];
+
       for (let i = 14; i >= 0; i--) {
         const d = getNow();
         d.setDate(d.getDate() - i);
         const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         fakeMoods.push({ d: ds, v: Math.floor(Math.random() * 5) + 1, note: "Testowa notatka", user_email: user.email });
+        datesToReplace.push(ds);
       }
 
-      await supabase.from('moods').delete().eq('user_email', user.email);
-      const { data, error } = await supabase.from('moods').insert(fakeMoods).select();
-      if (!error) {
-        setMoods(data || []);
+      try {
+        // Usuwamy tylko te kilkanaście dni w tył, nie tykając reszty danych
+        await supabase
+          .from('moods')
+          .delete()
+          .eq('user_email', user.email)
+          .in('d', datesToReplace);
+
+        const { data, error } = await supabase.from('moods').insert(fakeMoods).select();
+        if (error) throw error;
+
+        setMoods(prev => {
+          const filtered = prev.filter(m => !datesToReplace.includes(m.d));
+          return [...filtered, ...(data || [])].sort((a, b) => a.d.localeCompare(b.d));
+        });
+
         add('Sztuczna historia nastrojów wygenerowana (Test)', 'success');
+      } catch (err) {
+        console.error(err);
+        add('Błąd generowania nastrojów.', 'warn');
       }
       setShowDebugModal(false);
     },
@@ -2388,29 +2421,25 @@ export default function App() {
   useEffect(() => {
     const nowLocal = getNow();
     const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+
+    // 1. Sprawdzamy, czy użytkownik zapisał już dziś nastrój
     const moodToday = moods.find(m => m.d === todayStr);
 
-    // 1. WYCHWYĆ START DNIA (Lub odświeżenie)
-    if (!moodToday && !hasPromptedToday) {
+    // 2. Sprawdzamy w pamięci przeglądarki, czy popup już dzisiaj wyskoczył
+    const lastPromptDate = localStorage.getItem('wba_last_mood_prompt');
+
+    if (!moodToday && lastPromptDate !== todayStr && !hasPromptedToday) {
       setTimeout(() => {
         setShowMoodModal(true);
         setHasPromptedToday(true);
-      }, 2000); // Małe opóźnienie dla efektu
+        // Zapisujemy dzisiejszą datę do localStorage, aby F5 tego nie zresetowało
+        localStorage.setItem('wba_last_mood_prompt', todayStr);
+      }, 2000);
     }
 
-    // 2. WYCHWYĆ 5 GODZIN PRACY (300 MINUT)
-    const scheduled = tasks.filter(t => t.sMins !== null);
-    const completedMinutes = scheduled
-      .filter(t => t.done)
-      .reduce((sum, t) => sum + (parseInt(t.duration) || 0), 0);
-
-    if (completedMinutes >= 300 && !hasPrompted5h) {
-      add("Pracujesz już intensywnie ponad 5 godzin. Jak się czujesz?");
-      setShowMoodModal(true);
-      setHasPrompted5h(true);
-    }
-  }, [tasks, moods, hasPromptedToday, hasPrompted5h, getNow, add]);
-
+    // Usunięto kod odpowiedzialny za wyskakiwanie popupu po 5 godzinach, 
+    // aby aplikacja pytała o nastrój bezwzględnie raz dziennie.
+  }, [moods, hasPromptedToday, getNow]);
   const handleNav = (tab) => {
     // Usunęliśmy stąd blokadę, która otwierała Modal zamiast widoku
     setIsLoading(true);
