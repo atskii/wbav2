@@ -2452,8 +2452,8 @@ export default function App() {
     });
   };
 
-  // --- NOWA LOGIKA: RĘCZNE GENEROWANIE PLANU ---
-  const generatePlan = () => {
+  // --- NOWA LOGIKA: RĘCZNE GENEROWANIE PLANU Z ZAPISEM DO BAZY ---
+  const generatePlan = async () => {
     // Godzina startu i długość dnia z preferencji onboardingu
     const parsedStart = user?.prefs?.startTime ? user.prefs.startTime.split(':').map(Number) : [6, 0];
     const timelineStart = parsedStart[0] || 6;
@@ -2461,99 +2461,139 @@ export default function App() {
     const dayLimitMins = (timelineStart + workHours) * 60;
     const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
-    setTasks(prevTasks => {
-      // 1. Wyodrębniamy sztywne bloki (dla selectedDate)
-      const lockedBlocks = prevTasks
-        .filter(t => t.isLocked && t.t && checkIsDate(t.t, selectedDate))
-        .map(t => {
-          const match = t.t.match(/(\d{1,2}):(\d{2})/);
-          const startMins = match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
-          const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;
-          const duration = durMatch ? parseInt(durMatch[1]) : 60;
-          return { ...t, sMins: startMins, eMins: startMins + duration };
-        })
-        .sort((a, b) => a.sMins - b.sMins);
+    let currentTasks = [...tasks];
 
-      // 2. Resetujemy zadania flex dla bieżącego dnia lub z backlogu
-      const updatedTasks = prevTasks.map(t => {
-        if (!t.isLocked && (t.pDate === dateStr || !t.pDate)) {
-          return { ...t, sMins: null, eMins: null };
-        }
-        return t;
-      });
-
-      // 3. Wypełniamy luki zadaniami z kolejki (flex)
-      const flexTasks = updatedTasks
-        .filter(t => (t.pDate === dateStr || (!t.pDate && !t.isLocked)) && !t.sMins)
-        .sort((a, b) => {
-          if (a.p === "wysoki" && b.p !== "wysoki") return -1;
-          if (a.p !== "wysoki" && b.p === "wysoki") return 1;
-          return 0;
-        });
-
-      // Przygotowujemy dane dla każdego elastycznego zadania
-      const flexData = flexTasks.map(t => {
+    // 1. Wyodrębniamy sztywne bloki (dla selectedDate)
+    const lockedBlocks = currentTasks
+      .filter(t => t.isLocked && t.t && checkIsDate(t.t, selectedDate))
+      .map(t => {
+        const match = t.t.match(/(\d{1,2}):(\d{2})/);
+        const startMins = match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
         const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;
-        const duration = durMatch ? parseInt(durMatch[1]) : 45;
-        const visualDuration = Math.max(duration, 45);
-        let breakTime = 0;
-        if (duration >= 50) {
-          breakTime = 17;
-        } else if (duration >= 25) {
-          breakTime = Math.round((duration / 52) * 17);
-        } else {
-          breakTime = 3;
-        }
-        return { ...t, duration, visualDuration, breakTime };
+        const duration = durMatch ? parseInt(durMatch[1]) : 60;
+        return { ...t, sMins: startMins, eMins: startMins + duration };
+      })
+      .sort((a, b) => a.sMins - b.sMins);
+
+    // 2. Resetujemy zadania flex dla bieżącego dnia lub z backlogu
+    let updatedTasks = currentTasks.map(t => {
+      if (!t.isLocked && (t.pDate === dateStr || !t.pDate)) {
+        return { ...t, sMins: null, eMins: null };
+      }
+      return t;
+    });
+
+    // 3. Wypełniamy luki zadaniami z kolejki (flex)
+    const flexTasks = updatedTasks
+      .filter(t => (t.pDate === dateStr || (!t.pDate && !t.isLocked)) && !t.sMins)
+      .sort((a, b) => {
+        if (a.p === "wysoki" && b.p !== "wysoki") return -1;
+        if (a.p !== "wysoki" && b.p === "wysoki") return 1;
+        return 0;
       });
 
-      const placed = new Set(); // ID zadań już umieszczonych w planie
-
-      // Budujemy listę slotów (luk) między zablokowanymi blokami
-      const gaps = [];
-      let gapStart = timelineStart * 60;
-      for (const block of lockedBlocks) {
-        if (gapStart < block.sMins) {
-          gaps.push({ start: gapStart, end: block.sMins });
-        }
-        gapStart = Math.max(gapStart, block.eMins);
+    // Przygotowujemy dane dla każdego elastycznego zadania
+    const flexData = flexTasks.map(t => {
+      const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;
+      const duration = durMatch ? parseInt(durMatch[1]) : 45;
+      const visualDuration = Math.max(duration, 45);
+      let breakTime = 0;
+      if (duration >= 50) {
+        breakTime = 17;
+      } else if (duration >= 25) {
+        breakTime = Math.round((duration / 52) * 17);
+      } else {
+        breakTime = 3;
       }
-      // Ostatnia luka po ostatnim zablokowanym bloku do końca dnia
-      if (gapStart < dayLimitMins) {
-        gaps.push({ start: gapStart, end: dayLimitMins });
-      }
-
-      // Dla każdej luki próbujemy wypełnić ją zadaniami z kolejki
-      for (const gap of gaps) {
-        let pointer = gap.start;
-        // Iterujemy po zadaniach w kolejności priorytetu
-        for (const ft of flexData) {
-          if (placed.has(ft.id)) continue; // już umieszczone
-
-          const neededSpace = ft.visualDuration;
-          // Sprawdź czy zadanie mieści się w pozostałej części luki
-          if (pointer + neededSpace <= gap.end) {
-            const idx = updatedTasks.findIndex(ut => ut.id === ft.id);
-            if (idx !== -1) {
-              updatedTasks[idx] = { ...updatedTasks[idx], sMins: pointer, eMins: pointer + ft.duration, pDate: dateStr };
-            }
-            placed.add(ft.id);
-            pointer += neededSpace + ft.breakTime;
-            // Jeśli pointer po przerwie wykroczył poza lukę, przerywamy tę lukę
-            if (pointer >= gap.end) break;
-          }
-          // Jeśli zadanie się nie mieści, sprawdzamy kolejne (mniejsze) zadania
-        }
-      }
-
-      return updatedTasks;
+      return { ...t, duration, visualDuration, breakTime };
     });
-    add(`Plan dnia (${selectedDate.toLocaleDateString('pl-PL')}) został wygenerowany! ✨`);
+
+    const placed = new Set(); // ID zadań już umieszczonych w planie
+
+    // Budujemy listę slotów (luk) między zablokowanymi blokami
+    const gaps = [];
+    let gapStart = timelineStart * 60;
+    for (const block of lockedBlocks) {
+      if (gapStart < block.sMins) {
+        gaps.push({ start: gapStart, end: block.sMins });
+      }
+      gapStart = Math.max(gapStart, block.eMins);
+    }
+    // Ostatnia luka po ostatnim zablokowanym bloku do końca dnia
+    if (gapStart < dayLimitMins) {
+      gaps.push({ start: gapStart, end: dayLimitMins });
+    }
+
+    // Dla każdej luki próbujemy wypełnić ją zadaniami z kolejki
+    for (const gap of gaps) {
+      let pointer = gap.start;
+      // Iterujemy po zadaniach w kolejności priorytetu
+      for (const ft of flexData) {
+        if (placed.has(ft.id)) continue; // już umieszczone
+
+        const neededSpace = ft.visualDuration;
+        // Sprawdź czy zadanie mieści się w pozostałej części luki
+        if (pointer + neededSpace <= gap.end) {
+          const idx = updatedTasks.findIndex(ut => ut.id === ft.id);
+          if (idx !== -1) {
+            updatedTasks[idx] = { ...updatedTasks[idx], sMins: pointer, eMins: pointer + ft.duration, pDate: dateStr };
+          }
+          placed.add(ft.id);
+          pointer += neededSpace + ft.breakTime;
+          // Jeśli pointer po przerwie wykroczył poza lukę, przerywamy tę lukę
+          if (pointer >= gap.end) break;
+        }
+        // Jeśli zadanie się nie mieści, sprawdzamy kolejne (mniejsze) zadania
+      }
+    }
+
+    // ZAPIS DO SUPABASE I DO STANU LOKALNEGO
+    try {
+      // Wszystkie zadania w tym momencie pochodzą już z bazy (mają poprawne ID).
+      // Zamiast problematycznego 'upsert' na tabeli z 'GENERATED ALWAYS', wykonujemy bezpieczny 'update'.
+      const tasksToSync = updatedTasks.filter(t => t.pDate === dateStr || (!t.pDate && !t.isLocked));
+
+      if (tasksToSync.length > 0) {
+        await Promise.all(
+          tasksToSync.map(async (task) => {
+            // Wyciągamy id, a resztę danych wysyłamy do aktualizacji
+            const { id, ...taskDataWithoutId } = task;
+
+            const { error } = await supabase
+              .from('tasks')
+              .update(taskDataWithoutId)
+              .eq('id', id);
+
+            if (error) throw error;
+          })
+        );
+      }
+
+      setTasks(updatedTasks);
+      add(`Plan dnia (${selectedDate.toLocaleDateString('pl-PL')}) został wygenerowany! ✨`);
+    } catch (err) {
+      console.error(err);
+      add("Nie udało się zapisać planu w bazie danych.", "warn");
+    }
   };
 
-  const returnToBacklog = (id) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, sMins: null, eMins: null, pDate: null } : t));
-    add("Zadanie cofnięto do backlogu.");
+  const returnToBacklog = async (id) => {
+    try {
+      // Resetowanie położenia zadania w Supabase
+      const { error } = await supabase
+        .from('tasks')
+        .update({ sMins: null, eMins: null, pDate: null })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Po udanym zapisu w bazie - aktualizacja frontendu
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, sMins: null, eMins: null, pDate: null } : t));
+      add("Zadanie cofnięto do backlogu.");
+    } catch (err) {
+      console.error(err);
+      add("Błąd podczas cofania zadania.", "warn");
+    }
   };
 
   const handleEditMood = async (dateStr, newV, newNote) => {
@@ -2619,20 +2659,21 @@ export default function App() {
     }
 
     try {
+      // Oddzielamy id od reszty danych
+      const { id, ...taskDataWithoutId } = taskToSave;
+
       if (taskToSave.id) {
         const { error } = await supabase
           .from('tasks')
-          .update(taskToSave)
+          .update(taskDataWithoutId)
           .eq('id', taskToSave.id);
         if (error) throw error;
 
         setTasks(prev => sortSmartQueue(prev.map(task => task.id === taskToSave.id ? { ...task, ...taskToSave } : task)));
       } else {
-        // Usuwamy ID przy dodawaniu nowego zadania
-        const { id, ...insertData } = taskToSave;
         const { data, error } = await supabase
           .from('tasks')
-          .insert(insertData)
+          .insert(taskDataWithoutId)
           .select();
         if (error) throw error;
 
@@ -2677,14 +2718,17 @@ export default function App() {
   const addMood = async (m) => {
     const nowL = getNow();
     const todayStr = `${nowL.getFullYear()}-${String(nowL.getMonth() + 1).padStart(2, '0')}-${String(nowL.getDate()).padStart(2, '0')}`;
-    const moodData = { ...m, d: todayStr, user_email: user.email };
+
+    // Oddzielamy 'id' od reszty danych już na samym początku!
+    const { id, ...moodDataWithoutId } = { ...m, d: todayStr, user_email: user.email };
+
     const existingIndex = moods.findIndex(mood => mood.d === todayStr);
 
     try {
       if (existingIndex >= 0) {
         const { error } = await supabase
           .from('moods')
-          .update(moodData)
+          .update(moodDataWithoutId)
           .eq('d', todayStr)
           .eq('user_email', user.email);
         if (error) throw error;
@@ -2695,11 +2739,9 @@ export default function App() {
           return newMoods;
         });
       } else {
-        // Usuwamy ID przy dodawaniu nowego nastroju
-        const { id, ...insertData } = moodData;
         const { data, error } = await supabase
           .from('moods')
-          .insert(insertData)
+          .insert(moodDataWithoutId)
           .select();
         if (error) throw error;
         setMoods(prev => [...prev, data[0]]);
