@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { createClient } from "@supabase/supabase-js";
 import {
   Home, Calendar, Smile, AlertTriangle, Plus, Search, Check, X,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, Clock, ArrowRight,
@@ -7,6 +8,13 @@ import {
   Minus, MessageSquare, Leaf, Star, AlertCircle, CheckCircle,
   Play, Pause, RotateCcw, Target, Sparkles, Trash2, Pencil, Lock
 } from "lucide-react";
+
+// ═══════════════════════════════════════════════════
+//  SUPABASE CONFIG
+// ═══════════════════════════════════════════════════
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ═══════════════════════════════════════════════════
 //  CONSTANTS & CONFIG
@@ -2174,10 +2182,43 @@ export default function App() {
   const [editingTask, setEditingTask] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
-  const [tasks, setTasks] = usePersist("wba_tasks", INIT_TASKS);
-  const [moods, setMoods] = usePersist("wba_moods", INIT_MOODS);
+  const [tasks, setTasks] = useState([]);
+  const [moods, setMoods] = useState([]);
   const { ts, add, rm } = useToasts();
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Pobieranie danych z Supabase po zalogowaniu
+  useEffect(() => {
+    if (user && user.email) {
+      const fetchData = async () => {
+        setIsLoading(true);
+        try {
+          const { data: tasksData, error: tasksError } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('user_email', user.email);
+
+          if (tasksError) throw tasksError;
+          setTasks(tasksData || []);
+
+          const { data: moodsData, error: moodsError } = await supabase
+            .from('moods')
+            .select('*')
+            .eq('user_email', user.email)
+            .order('d', { ascending: true });
+
+          if (moodsError) throw moodsError;
+          setMoods(moodsData || []);
+        } catch (err) {
+          console.error("Błąd podczas pobierania danych:", err);
+          add("Błąd pobierania danych z bazy.", "warn");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchData();
+    }
+  }, [user]);
 
   const [offsetDays, setOffsetDays] = useState(0);
   const getNow = useCallback(() => {
@@ -2196,7 +2237,7 @@ export default function App() {
 
   const [showDebugModal, setShowDebugModal] = useState(false);
 
-  const handleTriggerScenario = (scenarioId) => {
+  const handleTriggerScenario = async (scenarioId) => {
     setDismissedAlertKey(null);
     const nowL = new Date();
     nowL.setHours(0, 0, 0, 0);
@@ -2209,85 +2250,102 @@ export default function App() {
         id: Date.now() + Math.random(),
         d: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
         v: v,
-        note: "Symulacja"
+        note: "Symulacja",
+        user_email: user.email
       };
     };
 
-    setMoods(prev => {
-      let newMoods = [];
-      if (scenarioId === 1) {
-        newMoods.push(generateFakeMood(0, 0));
-        newMoods.push(generateFakeMood(1, 0));
-        newMoods.push(generateFakeMood(2, 1));
-      } else if (scenarioId === 2) {
-        for (let i = 0; i < 7; i++) newMoods.push(generateFakeMood(i, 3));
-      } else if (scenarioId === 3) {
-        const day = nowL.getDay();
-        let diffToMonday = day === 0 ? -6 : 1 - day;
-        if (diffToMonday > 0) diffToMonday -= 7;
-        setOffsetDays(diffToMonday);
-        const monDaysAgo = Math.abs(diffToMonday);
-        newMoods.push(generateFakeMood(monDaysAgo, 2));
-        newMoods.push(generateFakeMood(monDaysAgo + 3, 4));
-      } else if (scenarioId === 4) {
-        newMoods.push(generateFakeMood(0, 2));
-        newMoods.push(generateFakeMood(1, 3));
-        newMoods.push(generateFakeMood(2, 2));
-        newMoods.push(generateFakeMood(3, 3));
-        newMoods.push(generateFakeMood(4, 2));
-      }
-      return newMoods;
-    });
+    let newMoods = [];
+    if (scenarioId === 1) {
+      newMoods.push(generateFakeMood(0, 0));
+      newMoods.push(generateFakeMood(1, 0));
+      newMoods.push(generateFakeMood(2, 1));
+    } else if (scenarioId === 2) {
+      for (let i = 0; i < 7; i++) newMoods.push(generateFakeMood(i, 3));
+    } else if (scenarioId === 3) {
+      const day = nowL.getDay();
+      let diffToMonday = day === 0 ? -6 : 1 - day;
+      if (diffToMonday > 0) diffToMonday -= 7;
+      setOffsetDays(diffToMonday);
+      const monDaysAgo = Math.abs(diffToMonday);
+      newMoods.push(generateFakeMood(monDaysAgo, 2));
+      newMoods.push(generateFakeMood(monDaysAgo + 3, 4));
+    } else if (scenarioId === 4) {
+      newMoods.push(generateFakeMood(0, 2));
+      newMoods.push(generateFakeMood(1, 3));
+      newMoods.push(generateFakeMood(2, 2));
+      newMoods.push(generateFakeMood(3, 3));
+      newMoods.push(generateFakeMood(4, 2));
+    }
 
-    setShowDebugModal(false);
-    add("Zasymulowano scenariusz " + scenarioId);
+    try {
+      await supabase.from('moods').delete().eq('user_email', user.email);
+      const { data, error } = await supabase.from('moods').insert(newMoods).select();
+      if (error) throw error;
+      setMoods(data || []);
+      setShowDebugModal(false);
+      add("Zasymulowano scenariusz " + scenarioId);
+    } catch (err) {
+      console.error(err);
+      add("Błąd symulacji.", "warn");
+    }
   };
 
   const debugActions = {
     triggerScenario: handleTriggerScenario,
 
-    clearTasks: () => {
+    clearTasks: async () => {
+      await supabase.from('tasks').delete().eq('user_email', user.email);
       setTasks([]);
       add('Usunięto wszystkie zadania (Test)');
       setShowDebugModal(false);
     },
 
-    addRandomTasks: () => {
-      let totalCount = 0;
-      setTasks(prev => {
-        const existingTitles = new Set(prev.map(t => t.title));
-        const available = INIT_TASKS.filter(t => !existingTitles.has(t.title));
-        if (available.length === 0) {
-          totalCount = prev.length;
-          return prev;
-        }
-        const shuffled = [...available].sort(() => Math.random() - 0.5);
-        const picked = shuffled.slice(0, Math.min(20, available.length));
-        totalCount = prev.length + picked.length;
-        const newTasks = picked.map(t => ({
-          ...t, id: Date.now() + Math.random(), done: t.done, sMins: null, eMins: null, pDate: null
-        }));
-        return [...prev, ...newTasks];
+    addRandomTasks: async () => {
+      const existingTitles = new Set(tasks.map(t => t.title));
+      const available = INIT_TASKS.filter(t => !existingTitles.has(t.title));
+      if (available.length === 0) {
+        add(`Zadania w obiegu: ${tasks.length}/${INIT_TASKS.length} (Test)`);
+        setShowDebugModal(false);
+        return;
+      }
+      const shuffled = [...available].sort(() => Math.random() - 0.5);
+      const picked = shuffled.slice(0, Math.min(20, available.length));
+      const newTasks = picked.map(t => {
+        const { id, ...rest } = t; // Usuwamy ID z INIT_TASKS
+        return { ...rest, user_email: user.email, done: t.done, sMins: null, eMins: null, pDate: null };
       });
-      setTimeout(() => { add(`Zadania w obiegu: ${totalCount}/${INIT_TASKS.length} (Test)`); setShowDebugModal(false); }, 0);
+
+      const { data, error } = await supabase.from('tasks').insert(newTasks).select();
+      if (!error) {
+        setTasks(prev => sortSmartQueue([...prev, ...data]));
+        add(`Zadania w obiegu: ${tasks.length + data.length}/${INIT_TASKS.length} (Test)`);
+      }
+      setShowDebugModal(false);
     },
 
-    clearMoods: () => {
+    clearMoods: async () => {
+      await supabase.from('moods').delete().eq('user_email', user.email);
       setMoods([]);
       add('Historia nastrojów wyczyszczona (Test)', 'info');
       setShowDebugModal(false);
     },
 
-    generateFakeMoods: () => {
+    generateFakeMoods: async () => {
       const fakeMoods = [];
       for (let i = 14; i >= 0; i--) {
         const d = getNow();
         d.setDate(d.getDate() - i);
         const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        fakeMoods.push({ id: Date.now() + i, d: ds, v: Math.floor(Math.random() * 5) + 1, note: "Testowa notatka" });
+        fakeMoods.push({ d: ds, v: Math.floor(Math.random() * 5) + 1, note: "Testowa notatka", user_email: user.email });
       }
-      setMoods(fakeMoods);
-      add('Sztuczna historia nastrojów wygenerowana (Test)', 'success');
+
+      await supabase.from('moods').delete().eq('user_email', user.email);
+      const { data, error } = await supabase.from('moods').insert(fakeMoods).select();
+      if (!error) {
+        setMoods(data || []);
+        add('Sztuczna historia nastrojów wygenerowana (Test)', 'success');
+      }
       setShowDebugModal(false);
     },
 
@@ -2498,28 +2556,60 @@ export default function App() {
     add("Zadanie cofnięto do backlogu.");
   };
 
-  const handleEditMood = (dateStr, newV, newNote) => {
-    setMoods(prev => {
-      const exists = prev.find(m => m.d === dateStr);
+  const handleEditMood = async (dateStr, newV, newNote) => {
+    const moodData = { d: dateStr, v: newV, note: newNote || "", user_email: user.email };
+    const exists = moods.find(m => m.d === dateStr);
+
+    try {
       if (exists) {
-        return prev.map(m => m.d === dateStr ? { ...m, v: newV, note: newNote !== undefined ? newNote : m.note } : m);
+        const { error } = await supabase
+          .from('moods')
+          .update(moodData)
+          .eq('d', dateStr)
+          .eq('user_email', user.email);
+        if (error) throw error;
+        setMoods(prev => prev.map(m => m.d === dateStr ? { ...m, ...moodData } : m));
       } else {
-        return [{ id: Date.now(), d: dateStr, v: newV, note: newNote || "" }, ...prev];
+        // Upewniamy się, że nie wysyłamy ID przy insercie
+        const { id, ...insertData } = moodData;
+        const { data, error } = await supabase
+          .from('moods')
+          .insert(insertData)
+          .select();
+        if (error) throw error;
+        setMoods(prev => [data[0], ...prev]);
       }
-    });
-    add("Zaktualizowano nastrój dla dnia " + dateStr);
+      add("Zaktualizowano nastrój dla dnia " + dateStr);
+    } catch (err) {
+      console.error(err);
+      add("Błąd zapisu nastroju.", "warn");
+    }
   };
 
-  const toggleTask = (id) => {
-    setTasks(prevTasks => {
-      let updated = prevTasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
-      // USUNIĘTO: Generowanie sztucznych przerw po wykonaniu trudnego zadania
-      return sortSmartQueue(updated);
-    });
+  const toggleTask = async (id) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ done: !task.done })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setTasks(prevTasks => {
+        let updated = prevTasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+        return sortSmartQueue(updated);
+      });
+    } catch (err) {
+      console.error(err);
+      add("Błąd podczas aktualizacji zadania.", "warn");
+    }
   };
 
-  const saveTask = (t) => {
-    let taskToSave = { ...t };
+  const saveTask = async (t) => {
+    let taskToSave = { ...t, user_email: user.email };
     const durMatch = taskToSave.duration ? taskToSave.duration.match(/(\d+)/) : null;
     let durationAlert = false;
 
@@ -2528,21 +2618,36 @@ export default function App() {
       durationAlert = true;
     }
 
-    setTasks(prev => {
-      let updatedTasks = [];
+    try {
       if (taskToSave.id) {
-        updatedTasks = prev.map(task => task.id === taskToSave.id ? { ...task, ...taskToSave } : task);
-      } else {
-        updatedTasks = [{ ...taskToSave, id: Date.now(), done: false }, ...prev];
-      }
-      return sortSmartQueue(updatedTasks);
-    });
+        const { error } = await supabase
+          .from('tasks')
+          .update(taskToSave)
+          .eq('id', taskToSave.id);
+        if (error) throw error;
 
-    if (durationAlert) {
-      add("Czas minimalny na zadanie to 15 minut. Został on wydłużony do 15.", "warn");
-    } else {
-      if (t.id) add("Zmiany zostały zapisane.");
-      else add("Zadanie dodane pomyślnie!");
+        setTasks(prev => sortSmartQueue(prev.map(task => task.id === taskToSave.id ? { ...task, ...taskToSave } : task)));
+      } else {
+        // Usuwamy ID przy dodawaniu nowego zadania
+        const { id, ...insertData } = taskToSave;
+        const { data, error } = await supabase
+          .from('tasks')
+          .insert(insertData)
+          .select();
+        if (error) throw error;
+
+        setTasks(prev => sortSmartQueue([data[0], ...prev]));
+      }
+
+      if (durationAlert) {
+        add("Czas minimalny na zadanie to 15 minut. Został on wydłużony do 15.", "warn");
+      } else {
+        if (t.id) add("Zmiany zostały zapisane.");
+        else add("Zadanie dodane pomyślnie!");
+      }
+    } catch (err) {
+      console.error(err);
+      add("Błąd zapisu zadania.", "warn");
     }
 
     setIsTaskModalOpen(false);
@@ -2554,31 +2659,56 @@ export default function App() {
     setIsTaskModalOpen(true);
   };
 
-  const deleteTask = (id) => {
-    setTasks(p => p.filter(t => t.id !== id));
-    add("Zadanie usunięte.");
+  const deleteTask = async (id) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      setTasks(p => p.filter(t => t.id !== id));
+      add("Zadanie usunięte.");
+    } catch (err) {
+      console.error(err);
+      add("Błąd podczas usuwania zadania.", "warn");
+    }
   };
 
-  const addMood = (m) => {
-    setMoods(prev => {
-      // Pobieramy dzisiejszą datę w formacie YYYY-MM-DD (lokalnie, bez UTC!)
-      const nowL = getNow();
-      const todayStr = `${nowL.getFullYear()}-${String(nowL.getMonth() + 1).padStart(2, '0')}-${String(nowL.getDate()).padStart(2, '0')}`;
+  const addMood = async (m) => {
+    const nowL = getNow();
+    const todayStr = `${nowL.getFullYear()}-${String(nowL.getMonth() + 1).padStart(2, '0')}-${String(nowL.getDate()).padStart(2, '0')}`;
+    const moodData = { ...m, d: todayStr, user_email: user.email };
+    const existingIndex = moods.findIndex(mood => mood.d === todayStr);
 
-      // Szukamy, czy dzisiaj już wprowadzono nastrój
-      const existingIndex = prev.findIndex(mood => mood.d === todayStr);
-
+    try {
       if (existingIndex >= 0) {
-        // Jeśli tak -> aktualizujemy istniejącą kropkę (zmieniamy wartość i notatkę)
-        const newMoods = [...prev];
-        newMoods[existingIndex] = { ...newMoods[existingIndex], v: m.v, note: m.note };
-        return newMoods;
+        const { error } = await supabase
+          .from('moods')
+          .update(moodData)
+          .eq('d', todayStr)
+          .eq('user_email', user.email);
+        if (error) throw error;
+
+        setMoods(prev => {
+          const newMoods = [...prev];
+          newMoods[existingIndex] = { ...newMoods[existingIndex], v: m.v, note: m.note };
+          return newMoods;
+        });
       } else {
-        // Jeśli nie -> dodajemy nową kropkę
-        return [...prev, { ...m, d: todayStr }];
+        // Usuwamy ID przy dodawaniu nowego nastroju
+        const { id, ...insertData } = moodData;
+        const { data, error } = await supabase
+          .from('moods')
+          .insert(insertData)
+          .select();
+        if (error) throw error;
+        setMoods(prev => [...prev, data[0]]);
       }
-    });
-    add("Twój nastrój został zapisany.");
+      add("Twój nastrój został zapisany.");
+    } catch (err) {
+      console.error(err);
+      add("Błąd zapisu nastroju.", "warn");
+    }
   };
 
   if (view === "landing") return <><Font /><Landing onCTA={(mode) => { setAuthMode(mode); setView("auth"); }} /></>;
