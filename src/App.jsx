@@ -343,7 +343,7 @@ function Landing({ onCTA }) {
           <span style={H} className="text-[#1E5C36] font-bold text-xl tracking-tight">Wellbeing app</span>
           <div className="flex gap-2">
             <button onClick={() => onCTA("login")} className="px-5 py-2 text-sm font-semibold text-[#1E5C36] border-2 border-[#1E5C36] rounded-full hover:bg-[#1E5C36] hover:text-white transition-all duration-200">Zaloguj się</button>
-            <button onClick={() => onCTA("register")} className="px-5 py-2 text-sm font-semibold bg-[#1E5C36] text-white rounded-full hover:bg-[#164a2c] transition-all duration-200 shadow-lg shadow-green-900/20">Zarejestruj się</button>
+            <button disabled className="px-5 py-2 text-sm font-semibold bg-gray-400 text-gray-500 rounded-full cursor-not-allowed opacity-50 line-through">Zarejestruj się</button>
           </div>
         </div>
       </nav>
@@ -355,7 +355,7 @@ function Landing({ onCTA }) {
           <p className="text-[#5A7368] text-lg leading-relaxed mb-8">
             Aplikacja dla pracowników, która łączy inteligentny harmonogram z monitorowaniem nastroju, by wcześnie wykrywać możliwe symptomy wypalenia zawodowego.
           </p>
-          <button onClick={() => onCTA("register")} className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#1E5C36] text-white rounded-full font-semibold hover:bg-[#164a2c] shadow-xl shadow-green-900/25 transition-all hover:-translate-y-0.5">
+          <button onClick={() => onCTA("login")} className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#1E5C36] text-white rounded-full font-semibold hover:bg-[#164a2c] shadow-xl shadow-green-900/25 transition-all hover:-translate-y-0.5">
             Dowiedz się więcej <ArrowRight size={18} />
           </button>
         </div>
@@ -391,67 +391,62 @@ function Landing({ onCTA }) {
 //  AUTH VIEW & ONBOARDING
 // ═══════════════════════════════════════════════════
 function AuthView({ mode, onAuth, onSwitch, onBack }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [loginInput, setLoginInput] = useState("");
   const [pw, setPw] = useState("");
-  const [pw2, setPw2] = useState("");
   const [show, setShow] = useState(false);
-  const [agreed, setAgreed] = useState(false);
   const [err, setErr] = useState("");
   const S = { fontFamily: "'DM Sans',sans-serif" };
   const H = { fontFamily: "'Lora',serif" };
+
+  // Hardcoded accounts for closed MVP
+  const ACCOUNTS = {
+    "Michał Jeska": "UP4444",
+    "Aleksander Igłowski": "UP7777",
+    "Marcin Klinowski": "UP5432",
+    "Agnieszka Wojtasiak-Terech": "UP7890",
+    "testuser": "testuser",
+    "Kamila Łuczak": "UP2345",
+  };
+
   const submit = () => {
     setErr("");
-    if (mode === "register") {
-      if (!name || !email || !pw) { setErr("Uzupełnij wszystkie pola."); return; }
-      if (pw !== pw2) { setErr("Hasła nie są identyczne."); return; }
-      if (pw.length < 8) { setErr("Hasło musi mieć min. 8 znaków."); return; }
-      if (!agreed) { setErr("Zaakceptuj regulamin."); return; }
+    if (!loginInput || !pw) { setErr("Uzupełnij login i hasło."); return; }
+    const expectedPw = ACCOUNTS[loginInput];
+    if (expectedPw && expectedPw === pw) {
+      onAuth({ name: loginInput, email: loginInput });
     } else {
-      if (!email || !pw) { setErr("Uzupełnij e-mail i hasło."); return; }
+      setErr("Błędny login lub hasło. Brak dostępu.");
     }
-    onAuth({ name: name || email.split("@")[0], email });
   };
   return (
     <div style={S} className="min-h-screen bg-[#F5EFE6] flex flex-col">
       <nav className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4 flex items-center justify-between">
         <button onClick={onBack}><span style={H} className="text-[#1E5C36] font-bold text-xl">Wellbeing app</span></button>
         <div className="flex gap-2">
-          <button onClick={() => onSwitch("login")} className={`px-5 py-2 text-sm font-semibold rounded-full border-2 transition-all ${mode === "login" ? "bg-[#1E5C36] text-white border-[#1E5C36]" : "text-[#1E5C36] border-[#1E5C36] hover:bg-[#f0f9f4]"}`}>Zaloguj się</button>
-          <button onClick={() => onSwitch("register")} className={`px-5 py-2 text-sm font-semibold rounded-full border-2 transition-all ${mode === "register" ? "bg-[#1E5C36] text-white border-[#1E5C36]" : "text-[#1E5C36] border-[#1E5C36] hover:bg-[#f0f9f4]"}`}>Zarejestruj się</button>
+          <button onClick={() => onSwitch("login")} className="px-5 py-2 text-sm font-semibold rounded-full border-2 transition-all bg-[#1E5C36] text-white border-[#1E5C36]">Zaloguj się</button>
+          <button disabled className="px-5 py-2 text-sm font-semibold rounded-full border-2 bg-gray-400 text-gray-500 border-gray-400 cursor-not-allowed opacity-50 line-through">Zarejestruj się</button>
         </div>
       </nav>
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative overflow-hidden">
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl shadow-green-900/10 p-8 w-full max-w-sm border border-[#E8DDD0]">
           <h2 style={H} className="text-2xl font-bold text-[#1A2F22] text-center mb-1">
-            {mode === "register" ? "Utwórz konto" : "Zaloguj się"}
+            Zaloguj się
           </h2>
           <p className="text-center text-[#5A7368] text-sm mb-6">
-            {mode === "register" ? "Cześć, cieszymy się, że będziemy mogli Ci pomóc!" : "Cześć, dobrze Cię widzieć!"}
+            Cześć, dobrze Cię widzieć!
           </p>
           {err && <div className="mb-4 px-3 py-2.5 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600">{err}</div>}
           <div className="space-y-3">
-            {mode === "register" && <input value={name} onChange={e => setName(e.target.value)} placeholder="Podaj swoje imię" className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] text-sm focus:outline-none focus:border-[#2D9E6B] transition-all" />}
-            <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Wprowadź swój e-mail" type="email" className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] text-sm focus:outline-none focus:border-[#2D9E6B] transition-all" />
+            <input value={loginInput} onChange={e => setLoginInput(e.target.value)} placeholder="Wprowadź swój login" type="text" className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] text-sm focus:outline-none focus:border-[#2D9E6B] transition-all" />
             <div className="relative">
-              <input value={pw} onChange={e => setPw(e.target.value)} placeholder="Wprowadź hasło" type={show ? "text" : "password"} className="w-full px-4 py-3 pr-10 rounded-2xl border border-[#E8DDD0] text-sm focus:outline-none focus:border-[#2D9E6B] transition-all" />
+              <input value={pw} onChange={e => setPw(e.target.value)} placeholder="Wprowadź hasło" type={show ? "text" : "password"} className="w-full px-4 py-3 pr-10 rounded-2xl border border-[#E8DDD0] text-sm focus:outline-none focus:border-[#2D9E6B] transition-all" onKeyDown={e => { if (e.key === 'Enter') submit(); }} />
               <button onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9FB5AD] hover:text-[#5A7368]">{show ? <EyeOff size={16} /> : <Eye size={16} />}</button>
             </div>
-            {mode === "register" && <>
-              <p className="text-[10px] text-[#9FB5AD] -mt-1 ml-1">*minimum 8 znaków</p>
-              <input value={pw2} onChange={e => setPw2(e.target.value)} placeholder="Powtórz hasło" type="password" className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] text-sm focus:outline-none focus:border-[#2D9E6B] transition-all" />
-              <label className="flex items-start gap-2 text-xs text-[#5A7368] cursor-pointer leading-relaxed">
-                <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="mt-0.5 rounded accent-[#1E5C36]" />
-                Wyrażam zgodę na warunki Regulaminu.
-              </label>
-            </>}
             <button onClick={submit} className="w-full py-3.5 bg-[#1E5C36] text-white rounded-2xl font-semibold text-sm hover:bg-[#164a2c] transition-all shadow-lg mt-1">
-              {mode === "register" ? "Kontynuuj" : "Zaloguj się"}
+              Zaloguj się
             </button>
-            <p className="text-center text-sm text-[#5A7368] mt-4">
-              <button onClick={() => onSwitch(mode === "register" ? "login" : "register")} className="text-[#2D9E6B] font-semibold hover:underline">
-                {mode === "register" ? "Zaloguj się" : "Zarejestruj się"}
-              </button>
+            <p className="text-center text-sm text-gray-400 mt-4 line-through opacity-60">
+              Funkcja rejestracji została zablokowana
             </p>
           </div>
         </div>
@@ -670,14 +665,12 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
       {/* MINI KALENDARZ W LEWYM DOLNYM ROGU */}
       {!collapsed && (
         <div className="px-3 py-5 border-t border-[#E8DDD0] bg-[#FAFAFA]">
-          <div className="flex items-center justify-between mb-4 px-2">
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#1E5C36]">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-md transition-colors"><ChevronLeft size={12} className="text-[#1A2F22]" /></button>
+            <span className="text-[9px] font-black uppercase tracking-widest text-[#1A2F22]">
               {selectedDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' })}
             </span>
-            <div className="flex gap-1">
-              <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-md"><ChevronLeft size={12} /></button>
-              <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[#E8DDD0] rounded-md"><ChevronRight size={12} /></button>
-            </div>
+            <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[#E8DDD0] rounded-md transition-colors"><ChevronRight size={12} className="text-[#1A2F22]" /></button>
           </div>
           <div className="grid grid-cols-7 gap-0.5 text-center text-[8px] font-black text-[#9FB5AD] mb-2 uppercase tracking-tighter">
             {['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'].map((d, i) => (
@@ -1264,129 +1257,129 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
 
             <div className="absolute top-0 bottom-0 left-20 right-0 flex justify-center pointer-events-none">
               <div className="w-full max-w-3xl relative h-full pointer-events-auto">
-              {(() => {
-                const renderItems = timelineWithGaps.map(t => {
-                  const topRem = minsToRem(t.sMins - (timelineStart * 60));
-                  const durMins = t.duration ? parseInt(t.duration) : 45;
-                  const heightRem = minsToRem(Math.max(durMins, 15));
-                  const actualHeight = t.isVisualGap ? minsToRem(t.eMins - t.sMins) : Math.max(heightRem, 2.2);
-                  return { ...t, topRem, heightRem, actualHeight, durMins };
-                });
+                {(() => {
+                  const renderItems = timelineWithGaps.map(t => {
+                    const topRem = minsToRem(t.sMins - (timelineStart * 60));
+                    const durMins = t.duration ? parseInt(t.duration) : 45;
+                    const heightRem = minsToRem(Math.max(durMins, 15));
+                    const actualHeight = t.isVisualGap ? minsToRem(t.eMins - t.sMins) : Math.max(heightRem, 2.2);
+                    return { ...t, topRem, heightRem, actualHeight, durMins };
+                  });
 
-                const tasksOnly = renderItems.filter(t => !t.isVisualGap);
-                let currentGroup = [];
-                let maxEnd = 0;
-                const groups = [];
+                  const tasksOnly = renderItems.filter(t => !t.isVisualGap);
+                  let currentGroup = [];
+                  let maxEnd = 0;
+                  const groups = [];
 
-                tasksOnly.forEach(t => {
-                  if (currentGroup.length === 0) {
-                    currentGroup.push(t);
-                    maxEnd = t.topRem + t.actualHeight;
-                  } else {
-                    if (t.topRem < maxEnd - 0.2) {
+                  tasksOnly.forEach(t => {
+                    if (currentGroup.length === 0) {
                       currentGroup.push(t);
-                      maxEnd = Math.max(maxEnd, t.topRem + t.actualHeight);
-                    } else {
-                      groups.push(currentGroup);
-                      currentGroup = [t];
                       maxEnd = t.topRem + t.actualHeight;
-                    }
-                  }
-                });
-                if (currentGroup.length > 0) groups.push(currentGroup);
-
-                groups.forEach(group => {
-                  const cols = [];
-                  group.forEach(t => {
-                    let placed = false;
-                    for (let i = 0; i < cols.length; i++) {
-                      const lastInCol = cols[i][cols[i].length - 1];
-                      if (t.topRem >= lastInCol.topRem + lastInCol.actualHeight - 0.2) {
-                        cols[i].push(t);
-                        t.colIndex = i;
-                        placed = true;
-                        break;
+                    } else {
+                      if (t.topRem < maxEnd - 0.2) {
+                        currentGroup.push(t);
+                        maxEnd = Math.max(maxEnd, t.topRem + t.actualHeight);
+                      } else {
+                        groups.push(currentGroup);
+                        currentGroup = [t];
+                        maxEnd = t.topRem + t.actualHeight;
                       }
                     }
-                    if (!placed) {
-                      t.colIndex = cols.length;
-                      cols.push([t]);
-                    }
                   });
-                  const colCount = cols.length;
-                  group.forEach(t => {
-                    t.colCount = colCount;
-                  });
-                });
+                  if (currentGroup.length > 0) groups.push(currentGroup);
 
-                return renderItems.map(t => {
-                  if (t.isVisualGap) {
-                    return (
-                      <div key={t.id} className="absolute left-0 right-0 flex items-center justify-center z-10 pointer-events-none" style={{ top: `${t.topRem}rem`, height: `${t.actualHeight}rem` }}>
-                        <div className="w-full border-t-2 border-dashed border-[#2D9E6B]/30 flex items-center justify-center relative">
-                          <div className="absolute bg-[#FAFAFA] px-4 py-1.5 rounded-full border border-[#2D9E6B]/20 flex items-center gap-2 shadow-sm">
-                            <Leaf size={12} className="text-[#2D9E6B]" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-[#5A7368]">{t.title} ({t.duration})</span>
+                  groups.forEach(group => {
+                    const cols = [];
+                    group.forEach(t => {
+                      let placed = false;
+                      for (let i = 0; i < cols.length; i++) {
+                        const lastInCol = cols[i][cols[i].length - 1];
+                        if (t.topRem >= lastInCol.topRem + lastInCol.actualHeight - 0.2) {
+                          cols[i].push(t);
+                          t.colIndex = i;
+                          placed = true;
+                          break;
+                        }
+                      }
+                      if (!placed) {
+                        t.colIndex = cols.length;
+                        cols.push([t]);
+                      }
+                    });
+                    const colCount = cols.length;
+                    group.forEach(t => {
+                      t.colCount = colCount;
+                    });
+                  });
+
+                  return renderItems.map(t => {
+                    if (t.isVisualGap) {
+                      return (
+                        <div key={t.id} className="absolute left-0 right-0 flex items-center justify-center z-10 pointer-events-none" style={{ top: `${t.topRem}rem`, height: `${t.actualHeight}rem` }}>
+                          <div className="w-full border-t-2 border-dashed border-[#2D9E6B]/30 flex items-center justify-center relative">
+                            <div className="absolute bg-[#FAFAFA] px-4 py-1.5 rounded-full border border-[#2D9E6B]/20 flex items-center gap-2 shadow-sm">
+                              <Leaf size={12} className="text-[#2D9E6B]" />
+                              <span className="text-[9px] font-black uppercase tracking-widest text-[#5A7368]">{t.title} ({t.duration})</span>
+                            </div>
                           </div>
+                        </div>
+                      );
+                    }
+
+                    const widthPct = 100 / t.colCount;
+                    const leftOffset = t.colIndex * widthPct;
+
+                    const isSmall = t.durMins <= 25;
+                    const isMedium = t.durMins > 25 && t.durMins <= 45;
+
+                    const pClass = isSmall ? 'p-1.5 px-2' : isMedium ? 'p-2' : 'p-4';
+                    const minH = isSmall ? '2rem' : isMedium ? '3.1rem' : '4.8rem';
+                    const titleSize = isSmall ? 'text-[11px]' : isMedium ? 'text-xs' : 'text-[13px]';
+                    const starSize = isSmall ? 12 : isMedium ? 16 : 18;
+                    const btnClass = isSmall ? 'w-5 h-5' : isMedium ? 'w-6 h-6' : 'w-7 h-7';
+                    const btnIconSize = isSmall ? 8 : isMedium ? 10 : 12;
+                    const showTime = !isSmall;
+
+                    const showLockInFlex = isSmall || isMedium;
+                    const lockFlexClass = isSmall ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]';
+                    const lockIconSize = isSmall ? 6 : isMedium ? 8 : 10;
+                    const actionsPosClass = (isSmall || isMedium) ? 'top-1/2 -translate-y-1/2 right-0' : 'top-0 right-0';
+
+                    return (
+                      <div key={t.id} onClick={() => onEditTask(t)} className={`absolute rounded-2xl ${pClass} shadow-sm border z-20 hover:z-50 transition-all cursor-pointer group flex flex-col justify-center ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-xl hover:border-[#2D9E6B] hover:bg-[#FBFFF1] hover:-translate-y-0.5 active:scale-[0.99]'}`} style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}>
+                        <div className={`flex justify-between h-full relative ${(isSmall || isMedium) ? 'items-center' : 'items-start'}`}>
+                          <div className="flex gap-2 sm:gap-4 min-w-0 flex-1">
+                            <div className={`${isSmall ? 'mt-0' : 'mt-1'} flex-shrink-0 flex items-center gap-1.5 ${t.done ? 'text-gray-400' : t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                              <Star size={starSize} fill="currentColor" strokeWidth={1} />
+                              {t.isLocked && showLockInFlex && (
+                                <div className={`flex items-center justify-center rounded border border-[#E8DDD0] bg-white shadow-sm z-30 ${lockFlexClass} ${t.done ? 'opacity-50' : ''}`}>
+                                  <Lock size={lockIconSize} strokeWidth={2.5} className="text-[#5A7368]" />
+                                </div>
+                              )}
+                            </div>
+                            <div className={`min-w-0 flex-1 ${isSmall ? 'pr-20' : 'pr-32'}`}>
+                              <h4 className={`${titleSize} font-bold transition-colors truncate ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22] group-hover:text-[#1E5C36]'}`} title={t.title}>{t.title}</h4>
+                              {showTime && (
+                                <p className={`text-xs font-bold mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A7368]'}`}>{formatTime(t.sMins)} — {formatTime(t.sMins + t.durMins)}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-30 ${t.done ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                            {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
+                            {!t.isLocked && !t.done && (
+                              <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}>
+                                <RotateCcw size={btnIconSize} />
+                              </button>
+                            )}
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Trash2 size={btnIconSize} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} className={`${btnClass} rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
+                          </div>
+                          {t.isLocked && !showLockInFlex && <div className={`absolute bottom-0 left-0 flex items-center justify-center rounded border border-[#E8DDD0] bg-white shadow-sm z-30 w-[22px] h-[22px] ${t.done ? 'opacity-50' : ''}`}><Lock size={12} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
                         </div>
                       </div>
                     );
-                  }
-
-                  const widthPct = 100 / t.colCount;
-                  const leftOffset = t.colIndex * widthPct;
-
-                  const isSmall = t.durMins <= 25;
-                  const isMedium = t.durMins > 25 && t.durMins <= 45;
-
-                  const pClass = isSmall ? 'p-1.5 px-2' : isMedium ? 'p-2' : 'p-4';
-                  const minH = isSmall ? '2rem' : isMedium ? '3.1rem' : '4.8rem';
-                  const titleSize = isSmall ? 'text-[11px]' : isMedium ? 'text-xs' : 'text-[13px]';
-                  const starSize = isSmall ? 12 : isMedium ? 16 : 18;
-                  const btnClass = isSmall ? 'w-5 h-5' : isMedium ? 'w-6 h-6' : 'w-7 h-7';
-                  const btnIconSize = isSmall ? 8 : isMedium ? 10 : 12;
-                  const showTime = !isSmall;
-
-                  const showLockInFlex = isSmall || isMedium;
-                  const lockFlexClass = isSmall ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]';
-                  const lockIconSize = isSmall ? 6 : isMedium ? 8 : 10;
-                  const actionsPosClass = (isSmall || isMedium) ? 'top-1/2 -translate-y-1/2 right-0' : 'top-0 right-0';
-
-                  return (
-                    <div key={t.id} onClick={() => onEditTask(t)} className={`absolute rounded-2xl ${pClass} shadow-sm border z-20 hover:z-50 transition-all cursor-pointer group flex flex-col justify-center ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-xl hover:border-[#2D9E6B] hover:bg-[#FBFFF1] hover:-translate-y-0.5 active:scale-[0.99]'}`} style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}>
-                      <div className={`flex justify-between h-full relative ${(isSmall || isMedium) ? 'items-center' : 'items-start'}`}>
-                        <div className="flex gap-2 sm:gap-4 min-w-0 flex-1">
-                          <div className={`${isSmall ? 'mt-0' : 'mt-1'} flex-shrink-0 flex items-center gap-1.5 ${t.done ? 'text-gray-400' : t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                            <Star size={starSize} fill="currentColor" strokeWidth={1} />
-                            {t.isLocked && showLockInFlex && (
-                              <div className={`flex items-center justify-center rounded border border-[#E8DDD0] bg-white shadow-sm z-30 ${lockFlexClass} ${t.done ? 'opacity-50' : ''}`}>
-                                <Lock size={lockIconSize} strokeWidth={2.5} className="text-[#5A7368]" />
-                              </div>
-                            )}
-                          </div>
-                          <div className={`min-w-0 flex-1 ${isSmall ? 'pr-20' : 'pr-32'}`}>
-                            <h4 className={`${titleSize} font-bold transition-colors truncate ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22] group-hover:text-[#1E5C36]'}`} title={t.title}>{t.title}</h4>
-                            {showTime && (
-                              <p className={`text-xs font-bold mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A7368]'}`}>{formatTime(t.sMins)} — {formatTime(t.sMins + t.durMins)}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-30 ${t.done ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                          {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
-                          {!t.isLocked && !t.done && (
-                            <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}>
-                              <RotateCcw size={btnIconSize} />
-                            </button>
-                          )}
-                          <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Trash2 size={btnIconSize} /></button>
-                          <button onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} className={`${btnClass} rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
-                        </div>
-                        {t.isLocked && !showLockInFlex && <div className={`absolute bottom-0 left-0 flex items-center justify-center rounded border border-[#E8DDD0] bg-white shadow-sm z-30 w-[22px] h-[22px] ${t.done ? 'opacity-50' : ''}`}><Lock size={12} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
+                  });
+                })()}
               </div>
             </div>
           </div>
@@ -1394,35 +1387,35 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
             <div className="sticky bottom-0 z-[100] mt-10 pl-20 pointer-events-none flex justify-center">
               <div className="w-full max-w-3xl pointer-events-auto">
                 <div className="bg-white border-2 border-b-0 border-[#E8DDD0] shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] w-full p-5 pb-3 transition-all">
-                <button onClick={() => setShowBacklog(!showBacklog)} className="w-full flex items-center justify-between mb-4 group">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-amber-50 text-amber-600 p-2 rounded-xl"><Plus size={18} /></div>
-                    <div className="text-left">
-                      <h3 className="font-bold text-[#1A2F22] text-[13px]">Zadania poza planem ({backlog.length})</h3>
-                      <p className="text-[9px] text-[#5A7368]">Oczekują na kliknięcie "Generuj plan".</p>
-                    </div>
-                  </div>
-                  <div className={`p-2 rounded-full bg-slate-50 transition-transform ${showBacklog ? 'rotate-180' : ''}`}><ChevronDown size={20} /></div>
-                </button>
-                {showBacklog && (
-                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                    {backlog.map(t => (
-                      <div key={t.id} className="p-4 rounded-2xl border bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B] transition-all cursor-pointer group relative flex flex-col justify-between" onClick={() => onEditTask(t)} style={{ minHeight: '4.8rem' }}>
-                        <div className="flex items-start gap-3 pr-24">
-                          <div className={`mt-0.5 flex-shrink-0 flex items-center gap-1 ${t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                            <Star size={16} fill="currentColor" strokeWidth={1} />
-                            {t.isLocked && <span className="text-red-600 font-black text-[10px] animate-pulse">!</span>}
-                          </div>
-                          <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
-                        </div>
-                        <div className="flex transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 opacity-0 group-hover:opacity-100">
-                          <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm"><Trash2 size={16} /></button>
-                        </div>
-                        {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
+                  <button onClick={() => setShowBacklog(!showBacklog)} className="w-full flex items-center justify-between mb-4 group">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-amber-50 text-amber-600 p-2 rounded-xl"><Plus size={18} /></div>
+                      <div className="text-left">
+                        <h3 className="font-bold text-[#1A2F22] text-[13px]">Zadania poza planem ({backlog.length})</h3>
+                        <p className="text-[9px] text-[#5A7368]">Oczekują na kliknięcie "Generuj plan".</p>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                    <div className={`p-2 rounded-full bg-slate-50 transition-transform ${showBacklog ? 'rotate-180' : ''}`}><ChevronDown size={20} /></div>
+                  </button>
+                  {showBacklog && (
+                    <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                      {backlog.map(t => (
+                        <div key={t.id} className="p-4 rounded-2xl border bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B] transition-all cursor-pointer group relative flex flex-col justify-between" onClick={() => onEditTask(t)} style={{ minHeight: '4.8rem' }}>
+                          <div className="flex items-start gap-3 pr-24">
+                            <div className={`mt-0.5 flex-shrink-0 flex items-center gap-1 ${t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                              <Star size={16} fill="currentColor" strokeWidth={1} />
+                              {t.isLocked && <span className="text-red-600 font-black text-[10px] animate-pulse">!</span>}
+                            </div>
+                            <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
+                          </div>
+                          <div className="flex transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 opacity-0 group-hover:opacity-100">
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm"><Trash2 size={16} /></button>
+                          </div>
+                          {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1495,22 +1488,20 @@ function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, o
   return (
     <div className="flex h-screen bg-white">
       {/* LEWA KOLUMNA: Oś czasu */}
-      <div className="flex-1 overflow-y-auto p-8 border-r border-[#E8DDD0] pb-24">
-        <header className="mb-10 flex flex-col gap-1">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <button onClick={() => onChangeDate(-1)} className="p-2 hover:bg-[#F5EFE6] rounded-full transition-all active:scale-95 text-[#5A7368] hover:text-[#1E5C36]">
-                <ChevronLeft size={20} />
-              </button>
-              <button onClick={() => onChangeDate(1)} className="p-2 hover:bg-[#F5EFE6] rounded-full transition-all active:scale-95 text-[#5A7368] hover:text-[#1E5C36]">
-                <ChevronRight size={20} />
-              </button>
-            </div>
-            <h1 style={H} className="text-3xl font-bold text-[#1A2F22] capitalize">
+      <div className="flex-1 overflow-y-auto p-6 border-r border-[#E8DDD0] pb-24">
+        <header className="mb-8 flex flex-col gap-1">
+          <div className="flex items-center gap-2 ml-[-0.5rem]">
+            <button onClick={() => onChangeDate(-1)} className="p-2 hover:bg-[#F5EFE6] rounded-full transition-all active:scale-95 text-[#1A2F22]">
+              <ChevronLeft size={20} />
+            </button>
+            <h1 style={H} className="text-[26px] font-bold text-[#1A2F22] capitalize">
               {selectedDate.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
             </h1>
+            <button onClick={() => onChangeDate(1)} className="p-2 hover:bg-[#F5EFE6] rounded-full transition-all active:scale-95 text-[#1A2F22]">
+              <ChevronRight size={20} />
+            </button>
           </div>
-          <p className="text-[#5A7368] text-sm mt-1">Siatka godzinowa: Twoje zablokowane terminy i ostateczne deadline'y.</p>
+          <p className="text-[#5A7368] text-[13px] ml-2 mt-1">Siatka godzinowa: Twoje zablokowane terminy i ostateczne deadline'y.</p>
         </header>
 
         <div className="relative">
@@ -1528,8 +1519,8 @@ function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, o
             });
 
             return (
-              <div key={h} className="flex border-t border-[#F5EFE6] h-[6rem] group">
-                <div className="w-20 -mt-2.5 text-[11px] font-black text-[#9FB5AD] uppercase tracking-tighter z-10">
+              <div key={h} className="flex border-t border-[#F5EFE6] h-[5.4rem] group">
+                <div className="w-16 -mt-2.5 text-[10px] font-black text-[#9FB5AD] uppercase tracking-tighter z-10">
                   <span className="bg-white pr-2">{h.toString().padStart(2, '0')}:00</span>
                 </div>
                 <div className="flex-1 relative pr-2">
@@ -1550,17 +1541,17 @@ function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, o
                           width: `calc(${100 / tasksInThisHour.length}% - 4px)`,
                           left: `calc(${(100 / tasksInThisHour.length) * index}% + 2px)`
                         }}
-                        className={`absolute top-0 border-l-4 rounded-xl p-3 shadow-md hover:shadow-lg transition-all overflow-hidden cursor-pointer ${isDeadlineBlock ? 'bg-red-50/95 border-red-400' : 'bg-[#E8F4ED]/95 border-[#2D9E6B]'}`}
+                        className={`absolute top-0 border-l-4 rounded-xl p-2.5 shadow-md hover:shadow-lg transition-all overflow-hidden cursor-pointer ${isDeadlineBlock ? 'bg-red-50/95 border-red-400' : 'bg-[#E8F4ED]/95 border-[#2D9E6B]'}`}
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <p className={`text-sm font-bold truncate ${isDeadlineBlock ? 'text-red-700' : 'text-[#1E5C36]'}`}>{t.title}</p>
+                          <p className={`text-[13px] font-bold truncate ${isDeadlineBlock ? 'text-red-700' : 'text-[#1E5C36]'}`}>{t.title}</p>
                           {isDeadlineBlock ? (
-                            <span className="text-[9px] font-black text-red-500 uppercase tracking-widest hidden sm:block">⚠️ Deadline</span>
+                            <span className="text-[8px] font-black text-red-500 uppercase tracking-widest hidden sm:block">⚠️ Deadline</span>
                           ) : (
-                            <span className="text-[9px] font-black text-[#2D9E6B] uppercase tracking-widest hidden sm:block">🔒 Zablokowane</span>
+                            <span className="text-[8px] font-black text-[#2D9E6B] uppercase tracking-widest hidden sm:block">🔒 Zablokowane</span>
                           )}
                         </div>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mt-1 ${isDeadlineBlock ? 'text-red-600/70' : 'text-[#5A7368]'}`}>
+                        <p className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${isDeadlineBlock ? 'text-red-600/70' : 'text-[#5A7368]'}`}>
                           {t.duration || "60 min"}
                         </p>
                       </div>
@@ -1574,20 +1565,20 @@ function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, o
       </div>
 
       {/* PRAWA KOLUMNA: Pełna baza zadań z wyszukiwarką */}
-      <div className="w-96 bg-[#FAFAFA] p-8 overflow-y-auto hidden lg:block pb-24">
-        <h3 style={H} className="text-xl font-bold text-[#1A2F22] mb-6 flex items-center gap-2">
-          <Target size={20} className="text-[#2D9E6B]" /> Wszystkie zadania
+      <div className="w-80 bg-[#FAFAFA] p-6 overflow-y-auto hidden lg:block pb-24 border-l border-[#E8DDD0]/50">
+        <h3 style={H} className="text-lg font-bold text-[#1A2F22] mb-6 flex items-center gap-2">
+          <Target size={18} className="text-[#2D9E6B]" /> Wszystkie zadania
         </h3>
 
         {/* WYSZUKIWARKA */}
         <div className="relative mb-6">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9FB5AD]" />
+          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9FB5AD]" />
           <input
             type="text"
             placeholder="Szukaj zadania..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-2xl border border-[#E8DDD0] text-sm focus:outline-none focus:border-[#2D9E6B] bg-white transition-all shadow-sm placeholder:text-[#9FB5AD]"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E8DDD0] text-[13px] focus:outline-none focus:border-[#2D9E6B] bg-white transition-all shadow-sm placeholder:text-[#9FB5AD]"
           />
         </div>
 
@@ -1598,26 +1589,26 @@ function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, o
               <div
                 key={t.id}
                 onClick={() => onEditTask(t)}
-                className={`bg-white p-5 rounded-[2rem] border shadow-sm transition-all duration-300 cursor-pointer group hover:-translate-y-1 hover:shadow-lg ${t.done ? 'opacity-60 grayscale border-gray-200' : (deadlineToday ? 'border-red-200 hover:border-red-400' : 'border-[#E8DDD0] hover:border-[#2D9E6B]')}`}
+                className={`bg-white p-4 rounded-3xl border shadow-sm transition-all duration-300 cursor-pointer group hover:-translate-y-1 hover:shadow-lg ${t.done ? 'opacity-60 grayscale border-gray-200' : (deadlineToday ? 'border-red-200 hover:border-red-400' : 'border-[#E8DDD0] hover:border-[#2D9E6B]')}`}
               >
-                <div className="flex justify-between items-start mb-3">
+                <div className="flex justify-between items-start mb-2">
                   <div className="flex items-center gap-2">
                     <PBadge p={t.p} />
-                    {t.isLocked && <Lock size={12} className="text-[#5A7368]" title="Zablokowane w kalendarzu" />}
+                    {t.isLocked && <Lock size={10} className="text-[#5A7368]" title="Zablokowane w kalendarzu" />}
                   </div>
-                  {deadlineToday && !t.done && <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-lg border border-red-100">W tym dniu!</span>}
-                  {!deadlineToday && t.deadline && !t.done && <span className="text-[10px] font-bold text-[#5A7368] bg-[#F5EFE6] px-2 py-1 rounded-lg">Dl: {t.deadline.split(' o ')[0]}</span>}
-                  {t.done && <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-lg border border-gray-200">Zrobione</span>}
+                  {deadlineToday && !t.done && <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100">W tym dniu!</span>}
+                  {!deadlineToday && t.deadline && !t.done && <span className="text-[9px] font-bold text-[#5A7368] bg-[#F5EFE6] px-1.5 py-0.5 rounded-md">Dl: {t.deadline.split(' o ')[0]}</span>}
+                  {t.done && <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-md border border-gray-200">Zrobione</span>}
                 </div>
 
-                <h4 className={`text-sm font-bold mb-3 pr-4 transition-colors ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22] group-hover:text-[#1E5C36]'}`}>{t.title}</h4>
+                <h4 className={`text-[13px] font-bold mb-2.5 pr-2 transition-colors ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22] group-hover:text-[#1E5C36]'}`}>{t.title}</h4>
 
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-bold text-[#5A7368] flex items-center gap-1 bg-[#F5EFE6] px-2 py-1 rounded-md">
-                    <Clock size={12} /> {t.duration || "Brak info"}
+                  <span className="text-[9px] font-bold text-[#5A7368] flex items-center gap-1 bg-[#F5EFE6] px-1.5 py-0.5 rounded-md">
+                    <Clock size={10} /> {t.duration || "Brak info"}
                   </span>
 
-                  <div className="ml-auto flex gap-2">
+                  <div className="ml-auto flex gap-1.5">
                     <button
                       onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
                       title="Usuń zadanie"
