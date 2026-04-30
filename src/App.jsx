@@ -604,22 +604,22 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
   };
 
   const navItems = [
-    { id: "dashboard", icon: <Home size={18} />, label: "Strona główna" },
-    { id: "calendar", icon: <Calendar size={18} />, label: "Kalendarz" },
-    { id: "mood", icon: <Smile size={18} />, label: "Monitor nastroju" },
-    { id: "warning", icon: <AlertTriangle size={18} />, label: "System ostrzegania" },
+    { id: "dashboard", icon: <Home size={16} />, label: "Strona główna" },
+    { id: "calendar", icon: <Calendar size={16} />, label: "Kalendarz" },
+    { id: "mood", icon: <Smile size={16} />, label: "Monitor nastroju" },
+    { id: "warning", icon: <AlertTriangle size={16} />, label: "System ostrzegania" },
   ];
 
   return (
-    <aside className={`${collapsed ? "w-20" : "w-60"} flex-shrink-0 bg-white border-r border-[#E8DDD0] flex flex-col transition-all duration-300 h-screen sticky top-0 z-50`}>
-      <div className={`px-6 py-6 border-b border-[#E8DDD0] flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
-        {!collapsed && <span style={H} className="text-[#1E5C36] font-bold text-xl tracking-tight">Wellbeing app</span>}
-        <button onClick={() => setCollapsed(!collapsed)} className="p-2 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all">
-          <Menu size={20} />
+    <aside className={`${collapsed ? "w-20" : "w-56"} flex-shrink-0 bg-white border-r border-[#E8DDD0] flex flex-col transition-all duration-300 h-screen sticky top-0 z-50`}>
+      <div className={`px-5 py-5 border-b border-[#E8DDD0] flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
+        {!collapsed && <span style={H} className="text-[#1E5C36] font-bold text-lg tracking-tight">Wellbeing app</span>}
+        <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all">
+          <Menu size={18} />
         </button>
       </div>
 
-      <nav className="px-3 py-4 space-y-1">
+      <nav className="px-3 py-3 space-y-1">
         {navItems.map(n => {
           const isWarning = n.id === "warning";
           const hasAlert = isWarning && activeAlert !== null;
@@ -627,12 +627,12 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
           return (
             <div key={n.id} className="relative flex flex-col items-end">
               {hasAlert && !collapsed && (
-                <div className="text-right mb-1 pr-2 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <span className="text-[9px] font-bold text-[#A51A1A] tracking-[0.15em] uppercase">AKCJA WYMAGANA</span>
+                <div className="text-right mb-0.5 pr-2 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <span className="text-[8px] font-bold text-[#A51A1A] tracking-[0.15em] uppercase">AKCJA WYMAGANA</span>
                 </div>
               )}
 
-              <button onClick={() => { if (hasAlert) onDismissAlert(); onNav(n.id); }} className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-sm font-bold transition-all relative overflow-hidden ${active === n.id ? (hasAlert ? "bg-[#1e3a2b] text-white shadow-md" : "bg-[#1E5C36] text-white shadow-lg shadow-green-900/20") : (hasAlert ? "bg-[#1e3a2b] text-white shadow-md hover:bg-[#162c20]" : "text-[#5A7368] hover:bg-[#F5EFE6]")}`}>
+              <button onClick={() => { if (hasAlert) onDismissAlert(); onNav(n.id); }} className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-bold transition-all relative overflow-hidden ${active === n.id ? (hasAlert ? "bg-[#1e3a2b] text-white shadow-md" : "bg-[#1E5C36] text-white shadow-lg shadow-green-900/20") : (hasAlert ? "bg-[#1e3a2b] text-white shadow-md hover:bg-[#162c20]" : "text-[#5A7368] hover:bg-[#F5EFE6]")}`}>
 
                 {hasAlert && (
                   <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#D32F2F]"></div>
@@ -645,13 +645,16 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
               </button>
 
               {hasAlert && !collapsed && (
-                <div className={`overflow-hidden transition-all duration-500 ease-in-out origin-top w-full max-h-96 opacity-100 mt-3`}>
-                  <div className="bg-[#fceeb5] p-5 rounded-2xl shadow-inner mx-1 relative">
-                    <h2 style={H} className="text-lg font-bold text-[#1A432E] leading-tight mb-2">Zauważyliśmy coś ważnego</h2>
-                    <p className="text-[#1A432E] text-xs leading-relaxed mb-4">
+                <div className="absolute top-full left-0 right-0 mt-2 z-[100] animate-in fade-in zoom-in-95 duration-300">
+                  <div className="bg-[#fceeb5] p-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.2)] mx-1 relative border border-[#E8DDD0]">
+                    <button onClick={(e) => { e.stopPropagation(); onDismissAlert(); }} className="absolute top-2 right-2 text-[#1A432E] opacity-50 hover:opacity-100 transition-opacity p-1 bg-[#fceeb5] rounded-full hover:bg-yellow-200" title="Zamknij ostrzeżenie">
+                      <X size={14} />
+                    </button>
+                    <h2 style={H} className="text-base font-bold text-[#1A432E] leading-tight mb-2 pr-6">Zauważyliśmy coś ważnego</h2>
+                    <p className="text-[#1A432E] text-[11px] leading-relaxed mb-4">
                       {activeAlert.text}
                     </p>
-                    <button onClick={() => { onDismissAlert(); onNav("warning"); }} className="text-[#1A432E] font-bold text-xs underline decoration-2 underline-offset-4 hover:opacity-80 transition-opacity text-left">
+                    <button onClick={() => { onDismissAlert(); onNav("warning"); }} className="text-[#1A432E] font-bold text-[11px] underline decoration-2 underline-offset-4 hover:opacity-80 transition-opacity text-left">
                       {activeAlert.btnText}
                     </button>
                   </div>
@@ -666,17 +669,17 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
 
       {/* MINI KALENDARZ W LEWYM DOLNYM ROGU */}
       {!collapsed && (
-        <div className="px-4 py-6 border-t border-[#E8DDD0] bg-[#FAFAFA]">
+        <div className="px-3 py-5 border-t border-[#E8DDD0] bg-[#FAFAFA]">
           <div className="flex items-center justify-between mb-4 px-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#1E5C36]">
+            <span className="text-[9px] font-black uppercase tracking-widest text-[#1E5C36]">
               {selectedDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' })}
             </span>
             <div className="flex gap-1">
-              <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-md"><ChevronLeft size={14} /></button>
-              <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[#E8DDD0] rounded-md"><ChevronRight size={14} /></button>
+              <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-md"><ChevronLeft size={12} /></button>
+              <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[#E8DDD0] rounded-md"><ChevronRight size={12} /></button>
             </div>
           </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center text-[9px] font-black text-[#9FB5AD] mb-2 uppercase tracking-tighter">
+          <div className="grid grid-cols-7 gap-0.5 text-center text-[8px] font-black text-[#9FB5AD] mb-2 uppercase tracking-tighter">
             {['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'].map((d, i) => (
               <div key={i} className="whitespace-nowrap">{d}</div>
             ))}
@@ -695,7 +698,7 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
                 <button
                   key={`day-${idx}`}
                   onClick={() => { setSelectedDate(date); onNav("calendar"); }}
-                  className={`aspect-square flex items-center justify-center rounded-md text-[12px] font-bold transition-all ${isSelected ? "bg-[#1E5C36] text-white" : isToday ? "text-[#1E5C36] border border-[#1E5C36]" : "text-[#5A7368] hover:bg-[#E8DDD0]"}`}
+                  className={`aspect-square flex items-center justify-center rounded-md text-[11px] font-bold transition-all ${isSelected ? "bg-[#1E5C36] text-white" : isToday ? "text-[#1E5C36] border border-[#1E5C36]" : "text-[#5A7368] hover:bg-[#E8DDD0]"}`}
                 >
                   {date.getDate()}
                 </button>
@@ -1660,7 +1663,7 @@ function MoodView({ moods, onOpenModal, onEditMood, todayDate }) {
   today.setHours(0, 0, 0, 0);
 
   const width = 1200;
-  const height = 280;
+  const height = 250;
   const paddingX = 60; // Zwiększony margines, aby zmieścić minki po lewej
   const innerWidth = width - 2 * paddingX;
 
@@ -1701,40 +1704,40 @@ function MoodView({ moods, onOpenModal, onEditMood, todayDate }) {
   const hitRadius = Math.min(25, Math.max(6, (width / daysToShow) / 2));
 
   return (
-    <div className="p-10 max-w-7xl mx-auto w-full pb-32 animate-in fade-in duration-500">
+    <div className="p-8 max-w-6xl mx-auto w-full pb-32 animate-in fade-in duration-500">
 
       {/* ODDZIELONY NAGŁÓWEK OPISOWY */}
       <header className="mb-6">
-        <h1 style={H} className="text-4xl font-bold text-[#1A2F22] mb-4">Monitor nastroju</h1>
-        <p className="text-[#5A7368] text-sm max-w-xl">Śledź swoje samopoczucie w relacji do obowiązków akademickich.</p>
+        <h1 style={H} className="text-3xl font-bold text-[#1A2F22] mb-4">Monitor nastroju</h1>
+        <p className="text-[#5A7368] text-[13px] max-w-xl">Śledź swoje samopoczucie w relacji do obowiązków akademickich.</p>
       </header>
 
       {/* NOWE BIAŁE MENU (ŚREDNIA I REJESTRACJA) */}
-      <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-[#E8DDD0] shadow-sm mb-8">
+      <div className="flex justify-between items-center bg-white p-2.5 rounded-2xl border border-[#E8DDD0] shadow-sm mb-8">
         <div className="flex items-center gap-2 pl-2">
           <button
             onClick={() => setShowAvg(!showAvg)}
-            className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all border-2 ${showAvg ? "bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md" : "bg-transparent text-[#5A7368] border-transparent hover:bg-[#F5EFE6]"}`}
+            className={`px-4 py-2 rounded-xl text-[13px] font-bold transition-all border-2 ${showAvg ? "bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md" : "bg-transparent text-[#5A7368] border-transparent hover:bg-[#F5EFE6]"}`}
           >
             Średnia
           </button>
           {/* Puste miejsce na przyszłe funkcje np. Wzrost/Spadek */}
         </div>
-        <button onClick={onOpenModal} className="px-6 py-3 bg-[#1E5C36] text-white rounded-xl font-bold shadow-md hover:bg-[#164a2c] active:scale-95 transition-all flex items-center gap-2">
-          <Smile size={18} /> Zarejestruj swój nastrój
+        <button onClick={onOpenModal} className="px-5 py-2.5 bg-[#1E5C36] text-white rounded-xl text-[13px] font-bold shadow-md hover:bg-[#164a2c] active:scale-95 transition-all flex items-center gap-2">
+          <Smile size={16} /> Zarejestruj swój nastrój
         </button>
       </div>
 
       {/* GŁÓWNY KONTENER WYKRESU */}
-      <div className="bg-white rounded-[2.5rem] border border-[#E8DDD0] p-10 shadow-sm relative">
+      <div className="bg-white rounded-[2.5rem] border border-[#E8DDD0] p-8 shadow-sm relative">
         <div className="flex justify-between items-center mb-12 pl-12">
-          <h3 className="font-bold text-[#1A2F22]">Wykres Twojego nastroju w czasie</h3>
+          <h3 className="font-bold text-[#1A2F22] text-[13px]">Wykres Twojego nastroju w czasie</h3>
           <div className="flex items-center gap-1 bg-[#F5EFE6] p-1 rounded-xl">
             {["Dzień", "Tydzień", "Miesiąc", "Kwartał", "Rok"].map(f => {
               const isDisabled = f === "Rok" || f === "Dzień";
               return (
                 <button key={f} onClick={() => !isDisabled && setFilter(f)} disabled={isDisabled}
-                  className={`px-5 py-2 rounded-lg text-xs font-bold transition-all ${isDisabled ? "text-gray-400 cursor-not-allowed opacity-40" : filter === f ? "bg-white text-[#1A2F22] shadow-sm" : "text-[#5A7368] hover:text-[#1A2F22]"}`}>
+                  className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all ${isDisabled ? "text-gray-400 cursor-not-allowed opacity-40" : filter === f ? "bg-white text-[#1A2F22] shadow-sm" : "text-[#5A7368] hover:text-[#1A2F22]"}`}>
                   {f}
                 </button>
               )
@@ -1742,12 +1745,12 @@ function MoodView({ moods, onOpenModal, onEditMood, todayDate }) {
           </div>
         </div>
 
-        <div className="relative w-full h-[280px]">
+        <div className="relative w-full h-[250px]">
           {/* OŚ Y - 7 MINEK PO LEWEJ STRONIE (Renderowane jako HTML poza SVG) */}
           {[0, 1, 2, 3, 4, 5, 6].map(level => {
             const yPos = height - 20 - (level / 6) * (height - 60);
             return (
-              <div key={`html-emoji-${level}`} className="absolute text-2xl" style={{ left: 0, top: `${(yPos / height) * 100}%`, transform: 'translateY(-50%)' }}>
+              <div key={`html-emoji-${level}`} className="absolute text-xl" style={{ left: 0, top: `${(yPos / height) * 100}%`, transform: 'translateY(-50%)' }}>
                 {EMOJIS[level]}
               </div>
             );
