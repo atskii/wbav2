@@ -454,8 +454,13 @@ function Landing({ onCTA }) {
       </section>
 
       {/* Co oferujemy */}
-      <section className="py-20 px-8 bg-[#E8F5EC]">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-20 px-8 bg-[#E8F5EC] relative overflow-hidden">
+        {/* Miejsce na grafikę w prawym dolnym rogu (np. niebieski ludzik) */}
+        <div className="absolute bottom-0 right-0 w-64 h-64 md:w-[350px] md:h-[350px] pointer-events-none z-0">
+          <img src="/blue_figure.png" alt="Ilustracja postaci" className="w-full h-full object-contain object-bottom right-0 bottom-0 absolute" />
+        </div>
+
+        <div className="max-w-5xl mx-auto relative z-10">
           <div className="flex flex-col items-center text-center mb-16">
             <span className="inline-block px-4 py-1.5 border border-[#0E6630] text-[#0E6630] rounded-full font-semibold mb-6">Co oferujemy</span>
             <h2 className="text-4xl font-bold text-[#151515] mb-6">Nasza aplikacja</h2>
@@ -463,26 +468,41 @@ function Landing({ onCTA }) {
               Jesteś pracownikiem, team leaderem czy menedżerem? Bez względu na rolę, nasza aplikacja wellbeing wspomoże Cię w efektywnym planowaniu dnia i zapobieganiu wypaleniu. Tylko 5-10 minut dziennie – spersonalizowana pod Ciebie, dla realnych rezultatów.
             </p>
           </div>
-          <div className="grid md:grid-cols-4 gap-6 relative z-10">
-            {[
-              { icon: <CheckCircle size={24} />, title: "Task planer", desc: "Układa zadania w harmonogram spersonalizowany pod Ciebie" },
-              { icon: <Smile size={24} />, title: "Monitor nastroju", desc: "Krótka, codzienna skala 5-stopniowa, która zbiera to, jak się czujesz w pracy" },
-              { icon: <AlertTriangle size={24} />, title: "System ostrzegania", desc: "Delikatny sygnał, gdy dane od dłuższego czasu wskazują możliwe symptomy wypalenia" },
-              { icon: <Lock size={24} />, title: "Bezpieczne rekomendacje", desc: "Linki do rzetelnych źródeł i instytucji, jeśli uznasz, że potrzebujesz dodatkowego wsparcia" }
-            ].map((c, i) => (
-              <div key={i} className="bg-white p-6 rounded-2xl text-center shadow-sm flex flex-col items-center">
-                <div className="text-[#0E6630] mb-3">{c.icon}</div>
-                <h3 className="font-bold text-[#151515] text-lg mb-2">{c.title}</h3>
-                <p className="text-sm text-[#151515] leading-relaxed">{c.desc}</p>
-              </div>
-            ))}
+          <div className="flex flex-col gap-6 relative z-10 w-full items-center">
+            {/* Top row - 3 items */}
+            <div className="grid md:grid-cols-3 gap-6 w-full">
+              {[
+                { icon: <img src="/checklist.png" alt="Task planer" className="w-8 h-8 object-contain" />, title: "Task planer", desc: "Układa zadania w harmonogram spersonalizowany pod Ciebie." },
+                { icon: <img src="/sentiment_satisfied.png" alt="Monitor nastroju" className="w-8 h-8 object-contain" />, title: "Monitor nastroju", desc: "Krótka, codzienna skala 5 stopniowa, która zbiera to, jak się czujesz w pracy." },
+                { icon: <img src="/query_stats.png" alt="Analiza trendów" className="w-8 h-8 object-contain" />, title: "Analiza trendów", desc: "Czytelny obraz, co dzieje się z Twoim nastrojem i obciążeniem tydzień po tygodniu." }
+              ].map((c, i) => (
+                <div key={i} className="bg-white p-8 rounded-2xl text-center shadow-sm flex flex-col items-center">
+                  <div className="mb-4">{c.icon}</div>
+                  <h3 className="font-bold text-[#151515] text-lg mb-3">{c.title}</h3>
+                  <p className="text-sm text-[#151515] leading-relaxed px-2">{c.desc}</p>
+                </div>
+              ))}
+            </div>
+            {/* Bottom row - 2 items */}
+            <div className="grid md:grid-cols-2 gap-6 w-full max-w-3xl">
+              {[
+                { icon: <img src="/support.png" alt="System ostrzegania" className="w-8 h-8 object-contain" />, title: "System ostrzegania", desc: "Delikatny sygnał, gdy dane od dłuższego czasu wskazują możliwe symptomy wypalenia." },
+                { icon: <img src="/for_you.png" alt="Bezpieczne rekomendacje" className="w-8 h-8 object-contain" />, title: "Bezpieczne rekomendacje", desc: "Linki do rzetelnych źródeł i instytucji, jeśli uznasz, że potrzebujesz dodatkowego wsparcia." }
+              ].map((c, i) => (
+                <div key={i} className="bg-white p-8 rounded-2xl text-center shadow-sm flex flex-col items-center">
+                  <div className="mb-4">{c.icon}</div>
+                  <h3 className="font-bold text-[#151515] text-lg mb-3">{c.title}</h3>
+                  <p className="text-sm text-[#151515] leading-relaxed px-2">{c.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Nasza wizja */}
-      <section className="py-24 px-8 bg-[#0E6630] text-center">
-        <div className="max-w-4xl mx-auto">
+      <section className="py-24 px-8 bg-[#0E6630] text-center relative overflow-hidden">
+        <div className="max-w-4xl mx-auto relative z-10">
           <span className="inline-block px-4 py-1.5 border border-white text-white rounded-full font-semibold mb-8">Nasza wizja</span>
           <p className="text-2xl md:text-3xl font-bold text-white leading-relaxed">
             Jeśli codziennie zmagasz się z natłokiem zadań, pomożemy Ci je zorganizować i wychwycić wczesne symptomy wypalenia. Aplikacja dostosowuje się do Ciebie na podstawie wywiadu i danych o nastroju, oferując spersonalizowany planer oraz monitorowanie. Dostarczamy rekomendacje do sprawdzonych źródeł pomocy – rządowych instytucji czy specjalistów – bo zależy nam na Twoim dobrostanie.
@@ -493,11 +513,11 @@ function Landing({ onCTA }) {
       {/* Rozwiązanie problemu */}
       <section className="py-20 px-8 bg-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-16">
-          <div className="flex-1">
-            <span className="inline-block px-4 py-1.5 border border-[#2F7377] text-[#2F7377] rounded-full font-semibold mb-6">Rozwiązanie problemu</span>
-            <h2 className="text-4xl font-bold text-[#151515] leading-tight">Zaprojektowaliśmy aplikację Dla Ciebie</h2>
+          <div className="flex-1 flex flex-col">
+            <span className="inline-block px-4 py-1.5 border border-[#2F7377] text-[#2F7377] rounded-full font-semibold mb-6 w-max">Rozwiązanie problemu</span>
+            <h2 className="text-4xl font-bold text-[#151515] leading-tight mb-8">Zaprojektowaliśmy aplikację Dla Ciebie</h2>
           </div>
-          <div className="flex-1 flex flex-col gap-6">
+          <div className="flex-1 flex flex-col gap-6 relative z-10">
             {[
               "Wpisujesz zadania z priorytetami, a AI tworzy zoptymalizowany harmonogram dopasowany do Twojego aktualnego samopoczucia – dostępne na mobile i desktop.",
               "Codziennie oceniasz nastrój w prostej skali, aplikacja analizuje emocje i czas pracy, sygnalizując ryzyka z indywidualnymi wskazówkami.",
@@ -514,7 +534,8 @@ function Landing({ onCTA }) {
       {/* Kontakt */}
       <section className="py-20 px-8 bg-[#F5EFE6] relative overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-[#E8B94F] opacity-40" style={{ clipPath: 'polygon(0 40%, 100% 0%, 100% 100%, 0% 100%)' }} />
+          {/* Miejsce na grafikę tła (żółte i pomarańczowe fale np. 9247434.png) */}
+          <img src="/kontakt_tlo.png" alt="Tło kontaktowe" className="w-full h-full object-cover object-bottom" />
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-16 relative z-10">
           <div className="flex-1">
