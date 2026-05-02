@@ -342,55 +342,240 @@ function PBadge({ p }) {
 //  LANDING PAGE
 // ═══════════════════════════════════════════════════
 function Landing({ onCTA }) {
-  const S = { fontFamily: "'DM Sans',sans-serif" };
-  const H = { fontFamily: "'Lora',serif" };
+  const fontInter = { fontFamily: "'Inter', sans-serif" };
+  const fontDM = { fontFamily: "'DM Sans', sans-serif" };
+
   return (
-    <div style={S} className="bg-[#F5EFE6] min-h-screen">
-      <nav className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <span style={H} className="text-[#1E5C36] font-bold text-xl tracking-tight">Wellbeing app</span>
-          <div className="flex gap-2">
-            <button onClick={() => onCTA("login")} className="px-5 py-2 text-sm font-semibold text-[#1E5C36] border-2 border-[#1E5C36] rounded-full hover:bg-[#1E5C36] hover:text-white transition-all duration-200">Zaloguj się</button>
-            <button disabled className="px-5 py-2 text-sm font-semibold bg-gray-400 text-gray-500 rounded-full cursor-not-allowed opacity-50 line-through">Zarejestruj się</button>
+    <div style={fontInter} className="min-h-screen bg-[#FCFCFD] text-[#151515] overflow-x-hidden">
+      {/* Navbar */}
+      <nav className="bg-[#FCFCFD] px-8 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-12">
+            <span className="text-[#03421C] font-bold text-2xl tracking-tight">Wellbeing app</span>
+            <div className="hidden md:flex items-center gap-6">
+              <a href="#" className="text-[#0E6630] font-bold text-lg">Home</a>
+              <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">Produkt</a>
+              <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">Wypalenie</a>
+              <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">O nas</a>
+              <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">Kontakt</a>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={() => onCTA("login")} className="px-5 py-2.5 bg-[#D0EBDA] text-[#0E6630] font-medium rounded-lg hover:bg-[#bce0ca] transition-colors">Zaloguj się</button>
+            <button disabled className="px-5 py-2.5 bg-[#0E6630] text-white font-medium rounded-lg opacity-50 cursor-not-allowed line-through">Zarejestruj się</button>
           </div>
         </div>
       </nav>
-      <section className="px-6 py-20 max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-        <div>
-          <h1 style={H} className="text-5xl font-bold text-[#1A2F22] leading-[1.12] mb-6">
-            Zdobądź kontrolę<br />nad swoim dniem<br /><em className="not-italic text-[#2D9E6B]">i zadbaj<br />o dobrostan</em>
+
+      {/* Hero */}
+      <section className="py-20 px-8 max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+        <div className="max-w-xl">
+          <h1 className="text-5xl font-bold text-[#151515] leading-[1.2] mb-8">
+            Zdobądź kontrolę nad swoim dniem i zadbaj o swój dobrostan!
           </h1>
-          <p className="text-[#5A7368] text-lg leading-relaxed mb-8">
-            Aplikacja dla pracowników, która łączy inteligentny harmonogram z monitorowaniem nastroju, by wcześnie wykrywać możliwe symptomy wypalenia zawodowego.
+          <p className="text-[#151515] text-xl leading-relaxed mb-8">
+            Oferujemy prosty sposób, aby wspierać pracowników w radzeniu sobie ze stresem i wypaleniem zawodowym, zwiększać ich zaangażowanie i tworzyć zdrowszą, bardziej efektywną kulturę pracy.
           </p>
-          <button onClick={() => onCTA("login")} className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#1E5C36] text-white rounded-full font-semibold hover:bg-[#164a2c] shadow-xl shadow-green-900/25 transition-all hover:-translate-y-0.5">
-            Dowiedz się więcej <ArrowRight size={18} />
+          <button onClick={() => onCTA("login")} className="inline-flex items-center gap-2 px-6 py-3 bg-[#0E6630] text-white rounded-lg font-medium hover:bg-[#0b5025] transition-colors">
+            Zrób pierwszy krok <ArrowRight size={20} />
           </button>
         </div>
-        <div className="relative flex items-center justify-center h-72">
-          <div className="absolute w-72 h-72 rounded-full bg-[#E8B94F]/12 blur-3xl" />
-          <div className="absolute w-48 h-48 rounded-full bg-[#2D9E6B]/10 blur-2xl translate-x-10" />
-          <span className="relative z-10 text-[120px] leading-none select-none drop-shadow-2xl">🌿</span>
+        <div className="flex justify-center">
+          <img src="/Frame 256.png" alt="Hero ilustracja" className="w-full max-w-md object-contain" />
         </div>
       </section>
-      <section className="py-16 bg-white">
-        <div className="max-w-5xl mx-auto px-6">
-          <p className="text-center text-[11px] font-bold text-[#2D9E6B] uppercase tracking-[0.25em] mb-3">Nasz produkt</p>
-          <h2 style={H} className="text-4xl font-bold text-center text-[#1A2F22] mb-14">Największe korzyści</h2>
-          <div className="grid md:grid-cols-3 gap-5">
+
+      {/* Benefits */}
+      <section className="py-20 px-8 bg-[#FFEDE6]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col items-center mb-16">
+            <span className="inline-block px-4 py-1.5 border border-[#F2733C] text-[#F2733C] rounded-full font-semibold mb-6">Nasz produkt</span>
+            <h2 className="text-4xl font-bold text-center text-[#151515]">Największe korzyści</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: "📅", title: "Spersonalizowany harmonogram zadań dopasowany do Twojego obciążenia." },
-              { icon: "😊", title: "Codzienne monitorowanie nastroju i cotygodniowe raporty." },
-              { icon: "🔔", title: "Wczesne ostrzeganie i bezpieczne rekomendacje" },
+              { icon: <Calendar size={28} className="text-[#F2733C]" />, title: "Indywidualny planer, który pomaga organizować dzień i unikać przeciążenia" },
+              { icon: <AlertTriangle size={28} className="text-[#F2733C]" />, title: "Automatyczne sygnały, gdy Twój poziom stresu lub wypalenia rośnie" },
+              { icon: <Bell size={28} className="text-[#F2733C]" />, title: "Personalizowane wskazówki, jak zadbać o swój dobrostan i energię" }
             ].map((f, i) => (
-              <div key={i} className="p-7 rounded-3xl bg-[#F5EFE6] hover:shadow-xl hover:shadow-green-100 transition-all duration-300 hover:-translate-y-1 cursor-default">
-                <div className="text-4xl mb-4">{f.icon}</div>
-                <p className="text-[#1A2F22] font-medium leading-relaxed">{f.title}</p>
+              <div key={i} className="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all">
+                <div className="w-16 h-16 bg-[#FFEDE6] rounded-xl flex items-center justify-center mb-6">
+                  {f.icon}
+                </div>
+                <p className="text-xl font-medium text-[#151515] leading-relaxed">{f.title}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Testimonials */}
+      <section className="py-20 px-8 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+          <div className="flex-1">
+            <span className="inline-block px-4 py-1.5 border border-[#0E6630] text-[#0E6630] rounded-full font-semibold mb-6">Opinie</span>
+            <h2 className="text-4xl font-bold text-[#151515] mb-8 leading-tight">Co mówią nasi użytkownicy</h2>
+            <p className="text-lg text-[#151515] mb-8 leading-relaxed max-w-lg">
+              "Tydzień korzystania z Wellbeing app i nareszcie czuję się zorganizowana"
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="/avatarLP.png" alt="Anna Kowalska" className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <p className="font-medium text-[#151515]">Anna Kowalska</p>
+                <p className="text-sm text-[#5A5A5A]">Wykładowczyni na UW</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 flex justify-center">
+            <img src="/comowiaonas.png" alt="Opinie użytkowników" className="w-full max-w-lg aspect-[4/3] object-cover rounded-3xl border border-[#E8DDD0]" />
+          </div>
+        </div>
+      </section>
+
+      {/* Wypalenie */}
+      <section className="py-20 px-8 bg-[#E8F5EC]">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+          <div className="flex-1 flex justify-center order-2 md:order-1">
+            <img src="/kluczykwypalenie.png" alt="Problem wypalenia" className="w-full max-w-lg aspect-square object-contain rounded-3xl" />
+          </div>
+          <div className="flex-1 order-1 md:order-2">
+            <span className="inline-block px-4 py-1.5 border border-[#0E6630] text-[#0E6630] rounded-full font-semibold mb-6">Wypalenie</span>
+            <h2 className="text-4xl font-bold text-[#151515] mb-8 leading-tight">Problem, który chcemy rozwiązać</h2>
+            <p className="text-[#151515] text-lg leading-relaxed mb-6">
+              Wiele firm boryka się ze wzrostem wypalenia zawodowego wśród pracowników, co prowadzi do spadku efektywności, większej absencji i rotacji w zespole. Często brakuje narzędzi, które pozwalałyby w porę zauważyć przeciążenie i odpowiednio wspierać pracowników.
+            </p>
+            <p className="text-[#0E6630] font-semibold text-lg leading-relaxed">
+              Nasza aplikacja pomaga w tym wyzwaniu, oferując indywidualne planery, raporty i system ostrzegania przed wypaleniem. Dzięki temu HR może proaktywnie wspierać dobrostan zespołu i budować zdrowszą, bardziej efektywną kulturę pracy.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Co oferujemy */}
+      <section className="py-20 px-8 bg-[#E8F5EC]">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-16">
+            <span className="inline-block px-4 py-1.5 border border-[#0E6630] text-[#0E6630] rounded-full font-semibold mb-6">Co oferujemy</span>
+            <h2 className="text-4xl font-bold text-[#151515] mb-6">Nasza aplikacja</h2>
+            <p className="text-xl text-[#151515] max-w-3xl leading-relaxed">
+              Jesteś pracownikiem, team leaderem czy menedżerem? Bez względu na rolę, nasza aplikacja wellbeing wspomoże Cię w efektywnym planowaniu dnia i zapobieganiu wypaleniu. Tylko 5-10 minut dziennie – spersonalizowana pod Ciebie, dla realnych rezultatów.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6 relative z-10">
+            {[
+              { icon: <CheckCircle size={24} />, title: "Task planer", desc: "Układa zadania w harmonogram spersonalizowany pod Ciebie" },
+              { icon: <Smile size={24} />, title: "Monitor nastroju", desc: "Krótka, codzienna skala 5-stopniowa, która zbiera to, jak się czujesz w pracy" },
+              { icon: <AlertTriangle size={24} />, title: "System ostrzegania", desc: "Delikatny sygnał, gdy dane od dłuższego czasu wskazują możliwe symptomy wypalenia" },
+              { icon: <Lock size={24} />, title: "Bezpieczne rekomendacje", desc: "Linki do rzetelnych źródeł i instytucji, jeśli uznasz, że potrzebujesz dodatkowego wsparcia" }
+            ].map((c, i) => (
+              <div key={i} className="bg-white p-6 rounded-2xl text-center shadow-sm flex flex-col items-center">
+                <div className="text-[#0E6630] mb-3">{c.icon}</div>
+                <h3 className="font-bold text-[#151515] text-lg mb-2">{c.title}</h3>
+                <p className="text-sm text-[#151515] leading-relaxed">{c.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Nasza wizja */}
+      <section className="py-24 px-8 bg-[#0E6630] text-center">
+        <div className="max-w-4xl mx-auto">
+          <span className="inline-block px-4 py-1.5 border border-white text-white rounded-full font-semibold mb-8">Nasza wizja</span>
+          <p className="text-2xl md:text-3xl font-bold text-white leading-relaxed">
+            Jeśli codziennie zmagasz się z natłokiem zadań, pomożemy Ci je zorganizować i wychwycić wczesne symptomy wypalenia. Aplikacja dostosowuje się do Ciebie na podstawie wywiadu i danych o nastroju, oferując spersonalizowany planer oraz monitorowanie. Dostarczamy rekomendacje do sprawdzonych źródeł pomocy – rządowych instytucji czy specjalistów – bo zależy nam na Twoim dobrostanie.
+          </p>
+        </div>
+      </section>
+
+      {/* Rozwiązanie problemu */}
+      <section className="py-20 px-8 bg-white">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-16">
+          <div className="flex-1">
+            <span className="inline-block px-4 py-1.5 border border-[#2F7377] text-[#2F7377] rounded-full font-semibold mb-6">Rozwiązanie problemu</span>
+            <h2 className="text-4xl font-bold text-[#151515] leading-tight">Zaprojektowaliśmy aplikację Dla Ciebie</h2>
+          </div>
+          <div className="flex-1 flex flex-col gap-6">
+            {[
+              "Wpisujesz zadania z priorytetami, a AI tworzy zoptymalizowany harmonogram dopasowany do Twojego aktualnego samopoczucia – dostępne na mobile i desktop.",
+              "Codziennie oceniasz nastrój w prostej skali, aplikacja analizuje emocje i czas pracy, sygnalizując ryzyka z indywidualnymi wskazówkami.",
+              "To Twój osobisty asystent równowagi – wypróbuj i przekonaj się o zmianie."
+            ].map((text, i) => (
+              <div key={i} className="bg-[#E4F6F8] p-6 rounded-xl text-[#000000] text-lg leading-relaxed shadow-sm">
+                {text}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Kontakt */}
+      <section className="py-20 px-8 bg-[#F5EFE6] relative overflow-hidden">
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-[#E8B94F] opacity-40" style={{ clipPath: 'polygon(0 40%, 100% 0%, 100% 100%, 0% 100%)' }} />
+        </div>
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-16 relative z-10">
+          <div className="flex-1">
+            <span className="inline-block px-4 py-1.5 border border-[#0E6630] text-[#0E6630] rounded-full font-semibold mb-6">Kontakt</span>
+            <h2 style={fontDM} className="text-5xl font-bold text-[#0D0D0D] tracking-tight mb-6">Skontaktuj się z nami</h2>
+            <p className="text-[#151515] text-lg leading-relaxed max-w-md">
+              Masz pytania? Napisz do nas – pokażemy demo, porozmawiamy o możliwym wdrożeniu i przedstawimy, jak realnie może to zwiększyć efektywność pracy zespołu. Skontaktuj się z nami, a wspólnie dopasujemy najlepsze podejście dla Twojej organizacji.
+            </p>
+          </div>
+          <div className="flex-1">
+            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-[#151515] font-medium mb-2">Imię</label>
+                  <input type="text" placeholder="Twoje imię" className="w-full px-4 py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630]" />
+                </div>
+                <div>
+                  <label className="block text-[#151515] font-medium mb-2">Email</label>
+                  <input type="email" placeholder="Wpisz e-mail" className="w-full px-4 py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630]" />
+                </div>
+                <div>
+                  <label className="block text-[#151515] font-medium mb-2">Twoja wiadomość</label>
+                  <textarea placeholder="Napisz..." rows={4} className="w-full px-4 py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630] resize-none" />
+                </div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" className="mt-1 w-5 h-5 border-[#DFDBDB] rounded accent-[#0E6630]" />
+                  <span className="text-[#151515] text-sm mt-0.5">Akceptuję <a href="#" className="underline">regulamin</a></span>
+                </label>
+                <button className="flex items-center gap-2 px-6 py-3 bg-[#0E6630] text-white font-medium rounded-lg hover:bg-[#0b5025] transition-colors">
+                  Wyślij <ArrowRight size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white py-12 px-8 border-t border-gray-100">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-12">
+          <div className="flex flex-col md:flex-row items-center gap-12 md:gap-24 w-full">
+            <span className="text-[#03421C] font-bold text-2xl tracking-tight">Wellbeing app</span>
+            <div className="flex flex-wrap justify-center gap-8">
+              <a href="#" className="text-[#5A5A5A] font-medium hover:text-[#0E6630]">Home</a>
+              <a href="#" className="text-[#5A5A5A] font-medium hover:text-[#0E6630]">Produkt</a>
+              <a href="#" className="text-[#5A5A5A] font-medium hover:text-[#0E6630]">Wypalenie</a>
+              <a href="#" className="text-[#5A5A5A] font-medium hover:text-[#0E6630]">O nas</a>
+              <a href="#" className="text-[#5A5A5A] font-medium hover:text-[#0E6630]">Kontakt</a>
+            </div>
+          </div>
+          <div className="w-full h-px bg-[#F6F6F6]" />
+          <div className="w-full flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="text-[#000000] text-sm">© 2026 Wellbeing app. Wszelkie prawa zastrzeżone.</p>
+            <div className="flex gap-6 text-sm text-[#000000]">
+              <a href="#" className="underline hover:text-[#0E6630]">Polityka prywatności</a>
+              <a href="#" className="underline hover:text-[#0E6630]">Regulamin</a>
+              <a href="#" className="hover:text-[#0E6630]">Ustawienia cookies</a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -2189,38 +2374,52 @@ export default function App() {
   const { ts, add, rm } = useToasts();
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Pobieranie danych z Supabase po zalogowaniu
+  // Pobieranie danych z Supabase oraz sprawdzanie statusu onboardingu
   useEffect(() => {
     if (user && user.email) {
       const fetchData = async () => {
         setIsLoading(true);
         try {
-          const { data: tasksData, error: tasksError } = await supabase
+          // 1. Pobierz zadania
+          const { data: tasksData } = await supabase
             .from('tasks')
             .select('*')
             .eq('user_email', user.email);
-
-          if (tasksError) throw tasksError;
           setTasks(tasksData || []);
 
-          const { data: moodsData, error: moodsError } = await supabase
+          // 2. Pobierz nastroje
+          const { data: moodsData } = await supabase
             .from('moods')
             .select('*')
             .eq('user_email', user.email)
             .order('d', { ascending: true });
-
-          if (moodsError) throw moodsError;
           setMoods(moodsData || []);
+
+          // 3. Pobierz preferencje (status onboardingu)
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('prefs')
+            .eq('email', user.email)
+            .single();
+
+          if (!profileError && profileData) {
+            // Użytkownik ma już profil - pomiń onboarding i wejdź do apki
+            setUser(prev => ({ ...prev, prefs: profileData.prefs }));
+            setView("app");
+          } else {
+            // Brak profilu w bazie - wymuś onboarding
+            setView("onboarding");
+          }
         } catch (err) {
-          console.error("Błąd podczas pobierania danych:", err);
-          add("Błąd pobierania danych z bazy.", "warn");
+          console.error("Błąd synchronizacji:", err);
+          add("Błąd połączenia z bazą preferencji.", "warn");
         } finally {
           setIsLoading(false);
         }
       };
       fetchData();
     }
-  }, [user]);
+  }, [user?.email]);
 
   const [offsetDays, setOffsetDays] = useState(0);
   const getNow = useCallback(() => {
@@ -2785,8 +2984,30 @@ export default function App() {
   };
 
   if (view === "landing") return <><Font /><Landing onCTA={(mode) => { setAuthMode(mode); setView("auth"); }} /></>;
-  if (view === "auth") return <><Font /><AuthView mode={authMode} onSwitch={setAuthMode} onBack={() => setView("landing")} onAuth={(u) => { setUser(u); setView("onboarding"); }} /></>;
-  if (view === "onboarding") return <><Font /><Onboarding onComplete={(prefs) => { setUser({ ...user, prefs }); setView("app"); }} /></>;
+  // Zmieniono: Usuwamy setView("onboarding"), aby useEffect mógł sprawdzić bazę przed decyzją
+  if (view === "auth") return <><Font /><AuthView mode={authMode} onSwitch={setAuthMode} onBack={() => setView("landing")} onAuth={(u) => setUser(u)} /></>;
+  if (view === "onboarding") return (
+    <>
+      <Font />
+      <Onboarding onComplete={async (prefs) => {
+        try {
+          // Zapisz preferencje w Supabase przed wejściem do aplikacji
+          const { error } = await supabase
+            .from('profiles')
+            .upsert({ email: user.email, prefs });
+
+          if (error) throw error;
+
+          setUser({ ...user, prefs });
+          setView("app");
+          add("Ustawienia zostały zapisane!");
+        } catch (err) {
+          console.error(err);
+          add("Nie udało się zapisać ustawień onboardingu.", "warn");
+        }
+      }} />
+    </>
+  );
 
   return (
     <div className="flex h-screen bg-[#F5EFE6] font-sans selection:bg-[#2D9E6B] selection:text-white overflow-hidden">
