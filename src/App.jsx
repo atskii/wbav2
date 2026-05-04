@@ -817,13 +817,14 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
     { id: "calendar", icon: <Calendar size={16} />, label: "Kalendarz" },
     { id: "mood", icon: <Smile size={16} />, label: "Monitor nastroju" },
     { id: "warning", icon: <AlertTriangle size={16} />, label: "System ostrzegania" },
+    { id: "settings", icon: <Settings size={16} />, label: "Ustawienia" },
   ];
 
   return (
-    <aside className={`${collapsed ? "w-20" : "w-56"} flex-shrink-0 bg-white border-r border-[#E8DDD0] flex flex-col transition-all duration-300 h-screen sticky top-0 z-50`}>
-      <div className={`px-5 py-5 border-b border-[#E8DDD0] flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
-        {!collapsed && <span style={H} className="text-[#1E5C36] font-bold text-lg tracking-tight">Wellbeing app</span>}
-        <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all">
+    <aside className={`${collapsed ? "w-20 md:w-64" : "w-64"} flex-shrink-0 bg-white border-r border-[#E8DDD0] flex flex-col transition-all duration-300 h-screen sticky top-0 z-50`}>
+      <div className={`px-5 py-6 border-b border-[#E8DDD0] flex items-center ${collapsed ? "justify-center md:justify-between" : "justify-between"}`}>
+        <span style={H} className={`text-[#1E5C36] font-bold text-xl tracking-tight ${collapsed ? "hidden md:inline" : "inline"}`}>Wellbeing app</span>
+        <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all md:hidden">
           <Menu size={18} />
         </button>
       </div>
@@ -850,7 +851,7 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
                 <span className={`flex-shrink-0 ${hasAlert ? "animate-ring text-white" : ""}`}>
                   {n.icon}
                 </span>
-                {!collapsed && <span>{n.label}</span>}
+                <span className={`${collapsed ? "hidden md:inline" : "inline"}`}>{n.label}</span>
               </button>
 
               {hasAlert && !collapsed && (
@@ -877,8 +878,7 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
       <div className="flex-1" />
 
       {/* MINI KALENDARZ W LEWYM DOLNYM ROGU */}
-      {!collapsed && (
-        <div className="px-3 py-5 border-t border-[#E8DDD0] bg-[#FAFAFA]">
+      <div className={`px-3 py-5 border-t border-[#E8DDD0] bg-[#FAFAFA] ${collapsed ? "hidden md:block" : "block"}`}>
           <div className="flex items-center justify-center gap-2 mb-4">
             <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-md transition-colors"><ChevronLeft size={12} className="text-[#1A2F22]" /></button>
             <span className="text-[9px] font-black uppercase tracking-widest text-[#1A2F22]">
@@ -913,7 +913,6 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
             })}
           </div>
         </div>
-      )}
 
       {/* Profil użytkownika przeniesiony do prawego górnego rogu aplikacji */}
     </aside>
@@ -1317,23 +1316,23 @@ function StreakPlant({ tasks }) {
   const plantHeight = Math.max(15, progress);
 
   return (
-    <div className="bg-white rounded-3xl border border-[#E8DDD0] p-6 sticky top-24 shadow-sm">
+    <div className="pt-[52px]">
       <h3 style={H} className="text-xl font-bold text-[#1A2F22] mb-2">Twoja roślinka streaku</h3>
       <p className="text-xs text-[#5A7368] mb-6 leading-relaxed">
         Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie zasila roślinę.
       </p>
 
-      <div className="relative h-64 bg-[#F5EFE6]/50 rounded-[2rem] flex items-end justify-center pb-6 mb-6 overflow-hidden border border-[#E8DDD0]">
-        <div className="absolute bottom-0 w-28 h-14 bg-[#5A7368] rounded-b-2xl rounded-t-sm z-20 flex flex-col items-center">
-          <div className="w-32 h-4 bg-[#3E5249] rounded-sm -mt-1 shadow-md" />
+      <div className="relative h-80 bg-white rounded-[2rem] flex items-end justify-center pb-6 mb-6 overflow-hidden">
+        <div className="absolute bottom-4 w-40 h-20 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
+          <div className="w-44 h-6 bg-[#3E5249] rounded-sm -mt-2 shadow-md" />
         </div>
         <div
-          className="w-14 bg-[#2D9E6B] rounded-t-[2rem] transition-all duration-1000 ease-out relative z-10 flex flex-col items-center shadow-inner"
-          style={{ height: `${plantHeight}%`, maxHeight: '80%', bottom: '30px' }}
+          className="w-24 bg-[#2D9E6B] rounded-t-[4rem] relative z-10 flex flex-col items-center shadow-inner"
+          style={{ height: '140px', bottom: '80px' }}
         >
-          <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[2rem]" />
+          <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[4rem]" />
         </div>
-        <div className={`absolute top-8 text-4xl transition-all duration-700 z-30 ${progress === 100 ? 'opacity-100 scale-100 animate-bounce' : 'opacity-0 scale-50'}`}>
+        <div className={`absolute top-12 text-5xl transition-all duration-700 z-30 ${progress === 100 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
           🌸
         </div>
       </div>
@@ -1355,10 +1354,6 @@ function StreakPlant({ tasks }) {
           </div>
         )}
       </div>
-
-      <button className="mt-4 w-full py-2 text-xs font-bold text-[#5A7368] border-2 border-[#E8DDD0] rounded-xl flex items-center justify-center gap-2 hover:bg-[#F5EFE6] transition-all">
-        <RefreshCw size={12} /> Zmień roślinkę
-      </button>
     </div>
   );
 }
@@ -1429,43 +1424,43 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
   const formatTime = (mins) => `${Math.floor(mins / 60)}:${(mins % 60).toString().padStart(2, '0')}`;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto w-full pb-10">
-      {/* NAGŁÓWEK DASHBOARDU - RESPANSYWNY */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 lg:gap-0 mb-8 lg:mb-10">
-        <h1 style={H} className="text-2xl lg:text-3xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
+    <div className="px-6 pt-2 pb-6 max-w-6xl mx-auto w-full h-[calc(100vh-88px)] flex flex-col">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-16 items-start flex-1 overflow-hidden">
+        <div className="xl:col-span-8 relative max-w-4xl mx-auto w-full h-full flex flex-col min-h-0">
+          {/* NAGŁÓWEK DASHBOARDU PRZENIESIONY TUTAJ - NAD PLAN DNI */}
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 lg:gap-0 mb-6 flex-shrink-0">
+            <div className="flex flex-col items-start gap-1">
+              <h1 style={H} className="text-3xl lg:text-4xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
+              <div className="flex items-center gap-3 mt-2">
+                <button onClick={() => onChangeDate(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-full transition-all active:scale-95 text-[#1A2F22]">
+                  <ChevronLeft size={20} strokeWidth={2.5} />
+                </button>
+                <span className="text-[18px] lg:text-[20px] font-bold text-[#1A2F22] capitalize text-center" style={{ fontFamily: "'Lora', serif" }}>
+                  {selectedDate.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </span>
+                <button onClick={() => onChangeDate(1)} className="p-1 hover:bg-[#E8DDD0] rounded-full transition-all active:scale-95 text-[#1A2F22]">
+                  <ChevronRight size={20} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 lg:gap-6">
-          <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-2 bg-[#F5EFE6] px-2.5 py-1.5 rounded-2xl border border-[#E8DDD0]">
-            <button onClick={() => onChangeDate(-1)} className="p-1.5 hover:bg-white rounded-xl transition-all shadow-sm active:scale-95 text-[#5A7368] hover:text-[#1E5C36]">
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-[12px] lg:text-[13px] font-bold text-[#1E5C36] capitalize min-w-[120px] text-center" style={{ fontFamily: "'Lora', serif" }}>
-              {selectedDate.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </span>
-            <button onClick={() => onChangeDate(1)} className="p-1.5 hover:bg-white rounded-xl transition-all shadow-sm active:scale-95 text-[#5A7368] hover:text-[#1E5C36]">
-              <ChevronRight size={16} />
-            </button>
+            <div className="flex gap-2 w-full lg:w-auto mt-2">
+              <button onClick={onGeneratePlan} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">
+                <RefreshCw size={15} /> Generuj
+              </button>
+              <button onClick={onOpenTaskModal} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] transition-all shadow-sm active:scale-95">
+                Dodaj <Plus size={15} />
+              </button>
+            </div>
           </div>
 
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button onClick={onGeneratePlan} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 lg:py-1.5 bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]/30 rounded-xl text-xs font-bold hover:bg-[#2D9E6B] hover:text-white transition-all shadow-sm active:scale-95">
-              <RefreshCw size={15} /> Generuj
-            </button>
-            <button onClick={onOpenTaskModal} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 lg:py-1.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-xs font-bold hover:bg-[#F5EFE6] hover:border-[#2D9E6B] transition-all shadow-sm active:scale-95">
-              Dodaj <Plus size={15} />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-20 items-start">
-        <div className="xl:col-span-8 relative max-w-4xl mx-auto w-full">
           {/* RESPANSYWNA LINIA OSI CZASU */}
-          <div className="absolute left-[2.5rem] md:left-[3.25rem] top-2 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
-          <div className="relative" style={{ height: `${minsToRem((timelineEndHour - timelineStart) * 60)}rem` }}>
+          <div className="flex-1 overflow-y-auto relative pr-4 custom-scrollbar -mr-4">
+            <div className="absolute left-[2.5rem] md:left-[3.25rem] top-0 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
+            <div className="relative mt-8" style={{ height: `${minsToRem((timelineEndHour - timelineStart) * 60)}rem` }}>
             {hours.map((h, i) => (
               <div key={h} className="absolute left-0 flex items-center w-full" style={{ top: `${minsToRem(i * 60)}rem` }}>
-                <span className="text-[9px] md:text-[10px] font-bold text-[#9FB5AD] w-8 md:w-10 text-right bg-[#FAFAFA] py-1">{h}:00</span>
+                <span className="text-[9px] md:text-[10px] font-bold text-[#9FB5AD] w-8 md:w-10 text-right py-1 relative z-10 bg-[#FAFAFA]">{h}:00</span>
                 <div className="w-2 md:w-4 h-[1px] bg-[#E8DDD0] ml-1 md:ml-2"></div>
               </div>
             ))}
@@ -1532,10 +1527,10 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
                     if (t.isVisualGap) {
                       return (
                         <div key={t.id} className="absolute left-0 right-0 flex items-center justify-center z-10 pointer-events-none" style={{ top: `${t.topRem}rem`, height: `${t.actualHeight}rem` }}>
-                          <div className="w-full border-t-2 border-dashed border-[#2D9E6B]/30 flex items-center justify-center relative">
-                            <div className="absolute bg-[#FAFAFA] px-4 py-1.5 rounded-full border border-[#2D9E6B]/20 flex items-center gap-2 shadow-sm">
-                              <Leaf size={12} className="text-[#2D9E6B]" />
-                              <span className="text-[9px] font-black uppercase tracking-widest text-[#5A7368]">{t.title} ({t.duration})</span>
+                          <div className="w-full flex items-center justify-center relative">
+                            <div className="absolute px-4 py-1.5 flex items-center gap-2">
+                              {t.title.toLowerCase().includes('spacer') || t.title.toLowerCase().includes('powietrze') ? <Leaf size={16} className="text-[#057E85]" /> : <BookOpen size={16} className="text-[#057E85]" />}
+                              <span className="text-sm font-semibold text-[#057E85]">{t.title}</span>
                             </div>
                           </div>
                         </div>
@@ -1562,25 +1557,22 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
                     const actionsPosClass = (isSmall || isMedium) ? 'top-1/2 -translate-y-1/2 right-0' : 'top-0 right-0';
 
                     return (
-                      <div key={t.id} onClick={() => onEditTask(t)} className={`absolute rounded-2xl ${pClass} shadow-sm border z-20 hover:z-50 transition-all cursor-pointer group flex flex-col justify-center ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-xl hover:border-[#2D9E6B] hover:bg-[#FBFFF1] hover:-translate-y-0.5 active:scale-[0.99]'}`} style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}>
-                        <div className={`flex justify-between h-full relative ${(isSmall || isMedium) ? 'items-center' : 'items-start'}`}>
-                          <div className="flex gap-2 sm:gap-4 min-w-0 flex-1">
-                            <div className={`${isSmall ? 'mt-0' : 'mt-1'} flex-shrink-0 flex items-center gap-1.5 ${t.done ? 'text-gray-400' : t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                              <Star size={starSize} fill="currentColor" strokeWidth={1} />
-                              {t.isLocked && showLockInFlex && (
-                                <div className={`flex items-center justify-center rounded border border-[#E8DDD0] bg-white shadow-sm z-30 ${lockFlexClass} ${t.done ? 'opacity-50' : ''}`}>
-                                  <Lock size={lockIconSize} strokeWidth={2.5} className="text-[#5A7368]" />
-                                </div>
-                              )}
-                            </div>
-                            <div className={`min-w-0 flex-1 ${isSmall ? 'pr-16 lg:pr-20' : 'pr-20 lg:pr-32'}`}>
-                              <h4 className={`${titleSize} font-bold transition-colors truncate ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22] group-hover:text-[#1E5C36]'}`} title={t.title}>{t.title}</h4>
-                              {showTime && (
-                                <p className={`text-xs font-bold mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A7368]'}`}>{formatTime(t.sMins)} — {formatTime(t.sMins + t.durMins)}</p>
-                              )}
+                      <div key={t.id} onClick={() => onEditTask(t)} className={`absolute rounded-[14px] ${pClass} shadow-sm border z-20 hover:z-50 transition-all cursor-pointer group flex flex-col justify-center ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-md hover:border-[#D4C9BC]'}`} style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}>
+                        <div className={`flex flex-col h-full relative`}>
+                          <div className="flex justify-between items-start">
+                            <h4 className={`${titleSize} font-bold transition-colors truncate pr-2 flex-1 ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22]'}`} title={t.title}>{t.title}</h4>
+                            <div className="flex items-center gap-2 flex-shrink-0 relative z-30">
+                              <PBadge p={t.p} />
+                              {t.isLocked && <Lock size={12} strokeWidth={2.5} className="text-[#909090]" />}
                             </div>
                           </div>
-                          <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-30 ${t.done ? 'opacity-100' : 'opacity-100 lg:opacity-0 lg:group-hover:opacity-100'}`}>
+                          <div className="mt-auto">
+                            {showTime && (
+                              <p className={`text-[13px] mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A5A5A]'}`}>{formatTime(t.sMins)} — {formatTime(t.sMins + t.durMins)}</p>
+                            )}
+                          </div>
+                          
+                          <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-40 opacity-0 group-hover:opacity-100 bg-white/90 p-1 rounded-xl backdrop-blur-sm`}>
                             {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
                             {!t.isLocked && !t.done && (
                               <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}>
@@ -1590,7 +1582,6 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
                             <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Trash2 size={btnIconSize} /></button>
                             <button onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} className={`${btnClass} rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
                           </div>
-                          {t.isLocked && !showLockInFlex && <div className={`absolute bottom-0 left-0 flex items-center justify-center rounded border border-[#E8DDD0] bg-white shadow-sm z-30 w-[22px] h-[22px] ${t.done ? 'opacity-50' : ''}`}><Lock size={12} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
                         </div>
                       </div>
                     );
@@ -1636,8 +1627,9 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
               </div>
             </div>
           )}
+          </div>
         </div>
-        <div className="xl:col-span-4 space-y-6 pt-16">
+        <div className="xl:col-span-4 h-full">
           <StreakPlant tasks={scheduled} />
         </div>
       </div>
@@ -3057,57 +3049,25 @@ export default function App() {
             onDismissAlert={() => setDismissedAlertKey(currentAlertKey)}
           />
           <main className="flex-1 overflow-y-auto relative bg-[#FAFAFA]">
-            {/* NOWY HEADER RESPANSYWNY */}
-            <header className="w-full px-4 md:px-6 py-3 md:py-4 flex items-center justify-between border-b border-[#E8DDD0] bg-white sticky top-0 z-[60]">
+            {/* NOWY HEADER RESPANSYWNY - UPROSZCZONY */}
+            <header className="w-full px-4 md:px-10 py-6 flex items-center justify-between z-[60]">
               <div className="flex items-center space-x-2 md:space-x-4 truncate">
-                <span className="text-lg md:text-xl font-bold text-[#164229] flex items-baseline gap-1 md:gap-2 truncate">
+                <span className="text-xl md:text-2xl font-bold text-[#1A2F22] flex items-baseline gap-1 md:gap-2 truncate">
                   <span className="truncate">Cześć {user?.name ? user.name.split(' ')[0] : "Natalia"},</span>
-                  <span className="capitalize text-sm md:text-lg text-[#5A7368] font-medium hidden sm:inline">{getNow().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                  <span className="capitalize text-sm md:text-xl text-[#5A7368] font-medium hidden sm:inline ml-1">{getNow().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                 </span>
               </div>
 
               <div className="flex items-center space-x-3 md:space-x-5 flex-shrink-0">
-                {/* Streak i Tracker - widoczne tylko od tabletów w górę */}
-                <div className="hidden md:flex items-center bg-[#F3F4F6] rounded-full px-6 py-2 space-x-5">
-                  <div className="hidden lg:flex items-center space-x-2">
-                    {[
-                      { d: 'Pon', checked: true },
-                      { d: 'Wt', checked: true },
-                      { d: 'Śr', checked: true },
-                      { d: 'Czw', checked: true },
-                      { d: 'Pt', checked: false },
-                      { d: 'Sb', checked: false },
-                      { d: 'Ndz', checked: false },
-                    ].map((day, idx) => (
-                      <div key={idx} className="flex flex-col items-center">
-                        {day.checked ? (
-                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#50C878] text-white">
-                            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border-[1.5px] border-dashed border-[#D1D5DB]"></div>
-                        )}
-                        <span className="text-[9px] text-[#6B7280] mt-0.5 text-center">{day.d}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <span className="text-xl drop-shadow-sm filter">🔥</span>
-                    <span className="text-xl font-bold text-gray-800">{tasks.some(t => t.done) ? 13 : 12}</span>
-                  </div>
-                </div>
-
                 {/* Profil - ikona widoczna zawsze, imię chowane na mobile */}
                 <div className="flex items-center relative">
-                  <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center space-x-2 focus:outline-none bg-[#F3F4F6] md:bg-transparent p-1 md:p-0 rounded-full">
-                    <svg className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="20" cy="20" fill="#E5E7EB" r="20" />
-                      <path d="M20 20C22.2091 20 24 18.2091 24 16C24 13.7909 22.2091 12 20 12C17.7909 12 16 13.7909 16 16C16 18.2091 17.7909 20 20 20Z" fill="#9CA3AF" />
-                      <path d="M20 22C15.5817 22 12 25.5817 12 30H28C28 25.5817 24.4183 22 20 22Z" fill="#9CA3AF" />
+                  <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center space-x-3 focus:outline-none bg-transparent p-1 md:p-0 rounded-full hover:bg-slate-50 transition-all px-2">
+                    <svg className="w-9 h-9 rounded-full bg-[#E8DDD0] flex-shrink-0" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="20" cy="20" fill="#E8DDD0" r="20" />
+                      <path d="M20 20C22.2091 20 24 18.2091 24 16C24 13.7909 22.2091 12 20 12C17.7909 12 16 13.7909 16 16C16 18.2091 17.7909 20 20 20Z" fill="#9FB5AD" />
+                      <path d="M20 22C15.5817 22 12 25.5817 12 30H28C28 25.5817 24.4183 22 20 22Z" fill="#9FB5AD" />
                     </svg>
-                    <span className="hidden md:block text-xs font-medium text-gray-800">{user?.name || "Natalia"}</span>
+                    <span className="hidden md:block text-sm font-bold text-[#1A2F22]">{user?.name || "Natalia"}</span>
                   </button>
 
                   <div className={`absolute top-full right-0 mt-3 w-40 bg-white rounded-2xl shadow-xl border border-[#E8DDD0] py-2 z-[100] origin-top-right transition-all duration-200 ease-out ${profileMenuOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
