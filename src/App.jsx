@@ -1322,17 +1322,20 @@ function StreakPlant({ tasks }) {
         Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie zasila roślinę.
       </p>
 
-      <div className="relative h-80 bg-white rounded-[2rem] flex items-end justify-center pb-6 mb-6 overflow-hidden">
-        <div className="absolute bottom-4 w-40 h-20 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
-          <div className="w-44 h-6 bg-[#3E5249] rounded-sm -mt-2 shadow-md" />
+      <div className="relative h-72 mb-6">
+        {/* Doniczka - na samym dole */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 h-16 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
+          <div className="w-40 h-5 bg-[#3E5249] rounded-sm -mt-1.5 shadow-md" />
         </div>
+        {/* Kaktus - rośnie z góry doniczki */}
         <div
-          className="w-24 bg-[#2D9E6B] rounded-t-[4rem] relative z-10 flex flex-col items-center shadow-inner"
-          style={{ height: '140px', bottom: '80px' }}
+          className="absolute left-1/2 -translate-x-1/2 w-20 bg-[#2D9E6B] rounded-t-[3rem] transition-all duration-1000 ease-out z-10 shadow-inner"
+          style={{ bottom: '64px', height: `${Math.round(30 + (plantHeight / 100) * 160)}px` }}
         >
-          <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[4rem]" />
+          <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[3rem]" />
         </div>
-        <div className={`absolute top-12 text-5xl transition-all duration-700 z-30 ${progress === 100 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
+        {/* Kwiatek - pojawia się przy 100% */}
+        <div className={`absolute left-1/2 -translate-x-1/2 text-5xl transition-all duration-700 z-30 ${progress === 100 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`} style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 20}px` }}>
           🌸
         </div>
       </div>
