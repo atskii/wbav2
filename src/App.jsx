@@ -1455,9 +1455,9 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
           </div>
 
           {/* RESPANSYWNA LINIA OSI CZASU */}
-          <div className="flex-1 overflow-y-auto relative pr-4 custom-scrollbar -mr-4">
-            <div className="absolute left-[2.5rem] md:left-[3.25rem] top-0 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
+          <div className="flex-1 overflow-y-auto relative pr-4 custom-scrollbar -mr-4 min-h-0">
             <div className="relative mt-8" style={{ height: `${minsToRem((timelineEndHour - timelineStart) * 60)}rem` }}>
+              <div className="absolute left-[2.5rem] md:left-[3.25rem] top-0 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
             {hours.map((h, i) => (
               <div key={h} className="absolute left-0 flex items-center w-full" style={{ top: `${minsToRem(i * 60)}rem` }}>
                 <span className="text-[9px] md:text-[10px] font-bold text-[#9FB5AD] w-8 md:w-10 text-right py-1 relative z-10 bg-[#FAFAFA]">{h}:00</span>
@@ -1561,7 +1561,7 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
                         <div className={`flex flex-col h-full relative`}>
                           <div className="flex justify-between items-start">
                             <h4 className={`${titleSize} font-bold transition-colors truncate pr-2 flex-1 ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22]'}`} title={t.title}>{t.title}</h4>
-                            <div className="flex items-center gap-2 flex-shrink-0 relative z-30">
+                            <div className="flex items-center gap-2 flex-shrink-0 relative z-30 transition-opacity duration-200 group-hover:opacity-0">
                               <PBadge p={t.p} />
                               {t.isLocked && <Lock size={12} strokeWidth={2.5} className="text-[#909090]" />}
                             </div>
