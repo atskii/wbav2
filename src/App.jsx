@@ -879,40 +879,40 @@ function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selec
 
       {/* MINI KALENDARZ W LEWYM DOLNYM ROGU */}
       <div className={`px-3 py-5 border-t border-[#E8DDD0] bg-[#FAFAFA] ${collapsed ? "hidden md:block" : "block"}`}>
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-md transition-colors"><ChevronLeft size={12} className="text-[#1A2F22]" /></button>
-            <span className="text-[9px] font-black uppercase tracking-widest text-[#1A2F22]">
-              {selectedDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' })}
-            </span>
-            <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[#E8DDD0] rounded-md transition-colors"><ChevronRight size={12} className="text-[#1A2F22]" /></button>
-          </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center text-[8px] font-black text-[#9FB5AD] mb-2 uppercase tracking-tighter">
-            {['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'].map((d, i) => (
-              <div key={i} className="whitespace-nowrap">{d}</div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-0.5">
-            {/* Najpierw mapujemy puste divy, aby przesunąć pierwszy dzień pod właściwą literę */}
-            {emptyDays.map((_, idx) => (
-              <div key={`empty-${idx}`} className="aspect-square"></div>
-            ))}
-
-            {/* Następnie mapujemy właściwe dni */}
-            {daysInMonth.map((date, idx) => {
-              const isToday = date.toDateString() === todayDate.toDateString();
-              const isSelected = date.toDateString() === selectedDate.toDateString();
-              return (
-                <button
-                  key={`day-${idx}`}
-                  onClick={() => { setSelectedDate(date); onNav("calendar"); }}
-                  className={`aspect-square flex items-center justify-center rounded-md text-[11px] font-bold transition-all ${isSelected ? "bg-[#1E5C36] text-white" : isToday ? "text-[#1E5C36] border border-[#1E5C36]" : "text-[#5A7368] hover:bg-[#E8DDD0]"}`}
-                >
-                  {date.getDate()}
-                </button>
-              );
-            })}
-          </div>
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-md transition-colors"><ChevronLeft size={12} className="text-[#1A2F22]" /></button>
+          <span className="text-[9px] font-black uppercase tracking-widest text-[#1A2F22]">
+            {selectedDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' })}
+          </span>
+          <button onClick={() => changeMonth(1)} className="p-1 hover:bg-[#E8DDD0] rounded-md transition-colors"><ChevronRight size={12} className="text-[#1A2F22]" /></button>
         </div>
+        <div className="grid grid-cols-7 gap-0.5 text-center text-[8px] font-black text-[#9FB5AD] mb-2 uppercase tracking-tighter">
+          {['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'].map((d, i) => (
+            <div key={i} className="whitespace-nowrap">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-0.5">
+          {/* Najpierw mapujemy puste divy, aby przesunąć pierwszy dzień pod właściwą literę */}
+          {emptyDays.map((_, idx) => (
+            <div key={`empty-${idx}`} className="aspect-square"></div>
+          ))}
+
+          {/* Następnie mapujemy właściwe dni */}
+          {daysInMonth.map((date, idx) => {
+            const isToday = date.toDateString() === todayDate.toDateString();
+            const isSelected = date.toDateString() === selectedDate.toDateString();
+            return (
+              <button
+                key={`day-${idx}`}
+                onClick={() => { setSelectedDate(date); onNav("calendar"); }}
+                className={`aspect-square flex items-center justify-center rounded-md text-[11px] font-bold transition-all ${isSelected ? "bg-[#1E5C36] text-white" : isToday ? "text-[#1E5C36] border border-[#1E5C36]" : "text-[#5A7368] hover:bg-[#E8DDD0]"}`}
+              >
+                {date.getDate()}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Profil użytkownika przeniesiony do prawego górnego rogu aplikacji */}
     </aside>
@@ -1461,175 +1461,175 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
           <div className="flex-1 overflow-y-auto relative pr-4 custom-scrollbar -mr-4 min-h-0">
             <div className="relative mt-8" style={{ height: `${minsToRem((timelineEndHour - timelineStart) * 60)}rem` }}>
               <div className="absolute left-[2.5rem] md:left-[3.25rem] top-0 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
-            {hours.map((h, i) => (
-              <div key={h} className="absolute left-0 flex items-center w-full" style={{ top: `${minsToRem(i * 60)}rem` }}>
-                <span className="text-[9px] md:text-[10px] font-bold text-[#9FB5AD] w-8 md:w-10 text-right py-1 relative z-10 bg-[#FAFAFA]">{h}:00</span>
-                <div className="w-2 md:w-4 h-[1px] bg-[#E8DDD0] ml-1 md:ml-2"></div>
-              </div>
-            ))}
+              {hours.map((h, i) => (
+                <div key={h} className="absolute left-0 flex items-center w-full" style={{ top: `${minsToRem(i * 60)}rem` }}>
+                  <span className="text-[9px] md:text-[10px] font-bold text-[#9FB5AD] w-8 md:w-10 text-right py-1 relative z-10 bg-[#FAFAFA]">{h}:00</span>
+                  <div className="w-2 md:w-4 h-[1px] bg-[#E8DDD0] ml-1 md:ml-2"></div>
+                </div>
+              ))}
 
-            {/* KONTENER ZADAŃ - MNIEJSZY MARGINES NA MOBILE */}
-            <div className="absolute top-0 bottom-0 left-12 md:left-20 right-0 flex justify-center pointer-events-none">
-              <div className="w-full max-w-3xl relative h-full pointer-events-auto">
-                {(() => {
-                  const renderItems = timelineWithGaps.map(t => {
-                    const topRem = minsToRem(t.sMins - (timelineStart * 60));
-                    const durMins = t.duration ? parseInt(t.duration) : 45;
-                    const heightRem = minsToRem(Math.max(durMins, 15));
-                    const actualHeight = t.isVisualGap ? minsToRem(t.eMins - t.sMins) : Math.max(heightRem, 2.2);
-                    return { ...t, topRem, heightRem, actualHeight, durMins };
-                  });
+              {/* KONTENER ZADAŃ - MNIEJSZY MARGINES NA MOBILE */}
+              <div className="absolute top-0 bottom-0 left-12 md:left-20 right-0 flex justify-center pointer-events-none">
+                <div className="w-full max-w-3xl relative h-full pointer-events-auto">
+                  {(() => {
+                    const renderItems = timelineWithGaps.map(t => {
+                      const topRem = minsToRem(t.sMins - (timelineStart * 60));
+                      const durMins = t.duration ? parseInt(t.duration) : 45;
+                      const heightRem = minsToRem(Math.max(durMins, 15));
+                      const actualHeight = t.isVisualGap ? minsToRem(t.eMins - t.sMins) : Math.max(heightRem, 2.2);
+                      return { ...t, topRem, heightRem, actualHeight, durMins };
+                    });
 
-                  const tasksOnly = renderItems.filter(t => !t.isVisualGap);
-                  let currentGroup = [];
-                  let maxEnd = 0;
-                  const groups = [];
+                    const tasksOnly = renderItems.filter(t => !t.isVisualGap);
+                    let currentGroup = [];
+                    let maxEnd = 0;
+                    const groups = [];
 
-                  tasksOnly.forEach(t => {
-                    if (currentGroup.length === 0) {
-                      currentGroup.push(t);
-                      maxEnd = t.topRem + t.actualHeight;
-                    } else {
-                      if (t.topRem < maxEnd - 0.2) {
+                    tasksOnly.forEach(t => {
+                      if (currentGroup.length === 0) {
                         currentGroup.push(t);
-                        maxEnd = Math.max(maxEnd, t.topRem + t.actualHeight);
-                      } else {
-                        groups.push(currentGroup);
-                        currentGroup = [t];
                         maxEnd = t.topRem + t.actualHeight;
-                      }
-                    }
-                  });
-                  if (currentGroup.length > 0) groups.push(currentGroup);
-
-                  groups.forEach(group => {
-                    const cols = [];
-                    group.forEach(t => {
-                      let placed = false;
-                      for (let i = 0; i < cols.length; i++) {
-                        const lastInCol = cols[i][cols[i].length - 1];
-                        if (t.topRem >= lastInCol.topRem + lastInCol.actualHeight - 0.2) {
-                          cols[i].push(t);
-                          t.colIndex = i;
-                          placed = true;
-                          break;
+                      } else {
+                        if (t.topRem < maxEnd - 0.2) {
+                          currentGroup.push(t);
+                          maxEnd = Math.max(maxEnd, t.topRem + t.actualHeight);
+                        } else {
+                          groups.push(currentGroup);
+                          currentGroup = [t];
+                          maxEnd = t.topRem + t.actualHeight;
                         }
                       }
-                      if (!placed) {
-                        t.colIndex = cols.length;
-                        cols.push([t]);
-                      }
                     });
-                    const colCount = cols.length;
-                    group.forEach(t => {
-                      t.colCount = colCount;
-                    });
-                  });
+                    if (currentGroup.length > 0) groups.push(currentGroup);
 
-                  return renderItems.map(t => {
-                    if (t.isVisualGap) {
+                    groups.forEach(group => {
+                      const cols = [];
+                      group.forEach(t => {
+                        let placed = false;
+                        for (let i = 0; i < cols.length; i++) {
+                          const lastInCol = cols[i][cols[i].length - 1];
+                          if (t.topRem >= lastInCol.topRem + lastInCol.actualHeight - 0.2) {
+                            cols[i].push(t);
+                            t.colIndex = i;
+                            placed = true;
+                            break;
+                          }
+                        }
+                        if (!placed) {
+                          t.colIndex = cols.length;
+                          cols.push([t]);
+                        }
+                      });
+                      const colCount = cols.length;
+                      group.forEach(t => {
+                        t.colCount = colCount;
+                      });
+                    });
+
+                    return renderItems.map(t => {
+                      if (t.isVisualGap) {
+                        return (
+                          <div key={t.id} className="absolute left-0 right-0 flex items-center justify-center z-10 pointer-events-none" style={{ top: `${t.topRem}rem`, height: `${t.actualHeight}rem` }}>
+                            <div className="w-full flex items-center justify-center relative">
+                              <div className="absolute px-4 py-1.5 flex items-center gap-2">
+                                {t.title.toLowerCase().includes('spacer') || t.title.toLowerCase().includes('powietrze') ? <Leaf size={16} className="text-[#057E85]" /> : <BookOpen size={16} className="text-[#057E85]" />}
+                                <span className="text-sm font-semibold text-[#057E85]">{t.title}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      const widthPct = 100 / t.colCount;
+                      const leftOffset = t.colIndex * widthPct;
+
+                      const isSmall = t.durMins <= 25;
+                      const isMedium = t.durMins > 25 && t.durMins <= 45;
+
+                      const pClass = isSmall ? 'p-1.5 px-2' : isMedium ? 'p-2' : 'p-4';
+                      const minH = isSmall ? '2rem' : isMedium ? '3.1rem' : '4.8rem';
+                      const titleSize = isSmall ? 'text-[11px]' : isMedium ? 'text-xs' : 'text-[13px]';
+                      const starSize = isSmall ? 12 : isMedium ? 16 : 18;
+                      const btnClass = isSmall ? 'w-5 h-5' : isMedium ? 'w-6 h-6' : 'w-7 h-7';
+                      const btnIconSize = isSmall ? 8 : isMedium ? 10 : 12;
+                      const showTime = !isSmall;
+
+                      const showLockInFlex = isSmall || isMedium;
+                      const lockFlexClass = isSmall ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]';
+                      const lockIconSize = isSmall ? 6 : isMedium ? 8 : 10;
+                      const actionsPosClass = (isSmall || isMedium) ? 'top-1/2 -translate-y-1/2 right-0' : 'top-0 right-0';
+
                       return (
-                        <div key={t.id} className="absolute left-0 right-0 flex items-center justify-center z-10 pointer-events-none" style={{ top: `${t.topRem}rem`, height: `${t.actualHeight}rem` }}>
-                          <div className="w-full flex items-center justify-center relative">
-                            <div className="absolute px-4 py-1.5 flex items-center gap-2">
-                              {t.title.toLowerCase().includes('spacer') || t.title.toLowerCase().includes('powietrze') ? <Leaf size={16} className="text-[#057E85]" /> : <BookOpen size={16} className="text-[#057E85]" />}
-                              <span className="text-sm font-semibold text-[#057E85]">{t.title}</span>
+                        <div key={t.id} onClick={() => onEditTask(t)} className={`absolute rounded-[14px] ${pClass} shadow-sm border z-20 hover:z-50 transition-all cursor-pointer group flex flex-col justify-center ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-md hover:border-[#D4C9BC]'}`} style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}>
+                          <div className={`flex flex-col h-full relative`}>
+                            <div className="flex justify-between items-start">
+                              <h4 className={`${titleSize} font-bold transition-colors truncate pr-2 flex-1 ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22]'}`} title={t.title}>{t.title}</h4>
+                              <div className="flex items-center gap-2 flex-shrink-0 relative z-30 transition-opacity duration-200 group-hover:opacity-0">
+                                <PBadge p={t.p} />
+                                {t.isLocked && <Lock size={12} strokeWidth={2.5} className="text-[#909090]" />}
+                              </div>
+                            </div>
+                            <div className="mt-auto">
+                              {showTime && (
+                                <p className={`text-[13px] mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A5A5A]'}`}>{formatTime(t.sMins)} — {formatTime(t.sMins + t.durMins)}</p>
+                              )}
+                            </div>
+
+                            <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-40 opacity-0 group-hover:opacity-100 bg-white/90 p-1 rounded-xl backdrop-blur-sm`}>
+                              {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
+                              {!t.isLocked && !t.done && (
+                                <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}>
+                                  <RotateCcw size={btnIconSize} />
+                                </button>
+                              )}
+                              <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Trash2 size={btnIconSize} /></button>
+                              <button onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} className={`${btnClass} rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
                             </div>
                           </div>
                         </div>
                       );
-                    }
-
-                    const widthPct = 100 / t.colCount;
-                    const leftOffset = t.colIndex * widthPct;
-
-                    const isSmall = t.durMins <= 25;
-                    const isMedium = t.durMins > 25 && t.durMins <= 45;
-
-                    const pClass = isSmall ? 'p-1.5 px-2' : isMedium ? 'p-2' : 'p-4';
-                    const minH = isSmall ? '2rem' : isMedium ? '3.1rem' : '4.8rem';
-                    const titleSize = isSmall ? 'text-[11px]' : isMedium ? 'text-xs' : 'text-[13px]';
-                    const starSize = isSmall ? 12 : isMedium ? 16 : 18;
-                    const btnClass = isSmall ? 'w-5 h-5' : isMedium ? 'w-6 h-6' : 'w-7 h-7';
-                    const btnIconSize = isSmall ? 8 : isMedium ? 10 : 12;
-                    const showTime = !isSmall;
-
-                    const showLockInFlex = isSmall || isMedium;
-                    const lockFlexClass = isSmall ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]';
-                    const lockIconSize = isSmall ? 6 : isMedium ? 8 : 10;
-                    const actionsPosClass = (isSmall || isMedium) ? 'top-1/2 -translate-y-1/2 right-0' : 'top-0 right-0';
-
-                    return (
-                      <div key={t.id} onClick={() => onEditTask(t)} className={`absolute rounded-[14px] ${pClass} shadow-sm border z-20 hover:z-50 transition-all cursor-pointer group flex flex-col justify-center ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-md hover:border-[#D4C9BC]'}`} style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}>
-                        <div className={`flex flex-col h-full relative`}>
-                          <div className="flex justify-between items-start">
-                            <h4 className={`${titleSize} font-bold transition-colors truncate pr-2 flex-1 ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22]'}`} title={t.title}>{t.title}</h4>
-                            <div className="flex items-center gap-2 flex-shrink-0 relative z-30 transition-opacity duration-200 group-hover:opacity-0">
-                              <PBadge p={t.p} />
-                              {t.isLocked && <Lock size={12} strokeWidth={2.5} className="text-[#909090]" />}
-                            </div>
-                          </div>
-                          <div className="mt-auto">
-                            {showTime && (
-                              <p className={`text-[13px] mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A5A5A]'}`}>{formatTime(t.sMins)} — {formatTime(t.sMins + t.durMins)}</p>
-                            )}
-                          </div>
-                          
-                          <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-40 opacity-0 group-hover:opacity-100 bg-white/90 p-1 rounded-xl backdrop-blur-sm`}>
-                            {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
-                            {!t.isLocked && !t.done && (
-                              <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}>
-                                <RotateCcw size={btnIconSize} />
-                              </button>
-                            )}
-                            <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all`}><Trash2 size={btnIconSize} /></button>
-                            <button onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} className={`${btnClass} rounded-full flex items-center justify-center shadow-sm hover:scale-110 transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            </div>
-          </div>
-          {backlog.length > 0 && (
-            <div className="sticky bottom-0 z-[100] mt-10 pl-12 md:pl-20 pointer-events-none flex justify-center">
-              <div className="w-full max-w-3xl pointer-events-auto">
-                <div className="bg-white border-2 border-b-0 border-[#E8DDD0] shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] w-full p-5 pb-3 transition-all">
-                  <button onClick={() => setShowBacklog(!showBacklog)} className="w-full flex items-center justify-between mb-4 group">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-amber-50 text-amber-600 p-2 rounded-xl"><Plus size={18} /></div>
-                      <div className="text-left">
-                        <h3 className="font-bold text-[#1A2F22] text-[13px]">Zadania poza planem ({backlog.length})</h3>
-                        <p className="text-[9px] text-[#5A7368]">Oczekują na kliknięcie "Generuj plan".</p>
-                      </div>
-                    </div>
-                    <div className={`p-2 rounded-full bg-slate-50 transition-transform ${showBacklog ? 'rotate-180' : ''}`}><ChevronDown size={20} /></div>
-                  </button>
-                  {showBacklog && (
-                    <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                      {backlog.map(t => (
-                        <div key={t.id} className="p-4 rounded-2xl border bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B] transition-all cursor-pointer group relative flex flex-col justify-between" onClick={() => onEditTask(t)} style={{ minHeight: '4.8rem' }}>
-                          <div className="flex items-start gap-3 pr-24">
-                            <div className={`mt-0.5 flex-shrink-0 flex items-center gap-1 ${t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                              <Star size={16} fill="currentColor" strokeWidth={1} />
-                              {t.isLocked && <span className="text-red-600 font-black text-[10px] animate-pulse">!</span>}
-                            </div>
-                            <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
-                          </div>
-                          <div className="flex transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 opacity-0 group-hover:opacity-100">
-                            <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm"><Trash2 size={16} /></button>
-                          </div>
-                          {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    });
+                  })()}
                 </div>
               </div>
             </div>
-          )}
+            {backlog.length > 0 && (
+              <div className="sticky bottom-0 z-[100] mt-10 pl-12 md:pl-20 pointer-events-none flex justify-center">
+                <div className="w-full max-w-3xl pointer-events-auto">
+                  <div className="bg-white border-2 border-b-0 border-[#E8DDD0] shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] w-full p-5 pb-3 transition-all">
+                    <button onClick={() => setShowBacklog(!showBacklog)} className="w-full flex items-center justify-between mb-4 group">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-amber-50 text-amber-600 p-2 rounded-xl"><Plus size={18} /></div>
+                        <div className="text-left">
+                          <h3 className="font-bold text-[#1A2F22] text-[13px]">Zadania poza planem ({backlog.length})</h3>
+                          <p className="text-[9px] text-[#5A7368]">Oczekują na kliknięcie "Generuj plan".</p>
+                        </div>
+                      </div>
+                      <div className={`p-2 rounded-full bg-slate-50 transition-transform ${showBacklog ? 'rotate-180' : ''}`}><ChevronDown size={20} /></div>
+                    </button>
+                    {showBacklog && (
+                      <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                        {backlog.map(t => (
+                          <div key={t.id} className="p-4 rounded-2xl border bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B] transition-all cursor-pointer group relative flex flex-col justify-between" onClick={() => onEditTask(t)} style={{ minHeight: '4.8rem' }}>
+                            <div className="flex items-start gap-3 pr-24">
+                              <div className={`mt-0.5 flex-shrink-0 flex items-center gap-1 ${t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                <Star size={16} fill="currentColor" strokeWidth={1} />
+                                {t.isLocked && <span className="text-red-600 font-black text-[10px] animate-pulse">!</span>}
+                              </div>
+                              <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
+                            </div>
+                            <div className="flex transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 opacity-0 group-hover:opacity-100">
+                              <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm"><Trash2 size={16} /></button>
+                            </div>
+                            {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="xl:col-span-4 h-full">
@@ -2362,6 +2362,169 @@ function DebugModal({ onClose, actions }) {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+//  SETTINGS VIEW
+// ═══════════════════════════════════════════════════
+function SettingsView({ user, setUser, add }) {
+  const S = { fontFamily: "'DM Sans',sans-serif" };
+  const H = { fontFamily: "'Lora',serif" };
+
+  const OPTS = ["Wyjście na słońce", "Kilka minut przerwy", "Dobra kawa", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Przerwa od pracy", "Muzyka", "Zmiana otoczenia"];
+
+  const [hours, setHours] = useState(user?.prefs?.hours || 8);
+  const [startHour, setStartHour] = useState(user?.prefs?.startTime ? user.prefs.startTime.split(':')[0] : "08");
+  const [startMinute, setStartMinute] = useState(user?.prefs?.startTime ? user.prefs.startTime.split(':')[1] : "00");
+  const [picks, setPicks] = useState(user?.prefs?.picks || []);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const toggle = b => setPicks(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b]);
+
+  const handleHourChange = (delta) => {
+    let newH = parseInt(startHour, 10) + delta;
+    if (isNaN(newH)) newH = 8 + delta;
+    if (newH < 0) newH = 23;
+    if (newH > 23) newH = 0;
+    setStartHour(String(newH).padStart(2, "0"));
+  };
+
+  const handleMinuteChange = (delta) => {
+    let newM = parseInt(startMinute, 10) + delta;
+    if (isNaN(newM)) newM = delta;
+    if (newM < 0) newM = 59;
+    if (newM > 59) newM = 0;
+    setStartMinute(String(newM).padStart(2, "0"));
+  };
+
+  const handleHourInputBlur = () => {
+    let val = parseInt(startHour, 10);
+    if (isNaN(val)) val = 8;
+    if (val < 0) val = 0;
+    if (val > 23) val = 23;
+    setStartHour(String(val).padStart(2, "0"));
+  };
+
+  const handleMinuteInputBlur = () => {
+    let val = parseInt(startMinute, 10);
+    if (isNaN(val)) val = 0;
+    if (val < 0) val = 0;
+    if (val > 59) val = 59;
+    setStartMinute(String(val).padStart(2, "0"));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const prefs = { hours, startTime: `${startHour}:${startMinute}`, picks };
+      const { error } = await supabase
+        .from('profiles')
+        .update({ prefs })
+        .eq('email', user.email);
+
+      if (error) throw error;
+
+      setUser({ ...user, prefs });
+      add("Ustawienia zostały zaktualizowane!");
+    } catch (err) {
+      console.error(err);
+      add("Błąd podczas zapisywania ustawień.", "warn");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div style={S} className="p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex items-center gap-4 mb-8">
+        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#E8DDD0]">
+          <Settings size={24} className="text-[#1E5C36]" />
+        </div>
+        <div>
+          <h1 style={H} className="text-3xl font-bold text-[#1A2F22]">Ustawienia</h1>
+          <p className="text-[#5A7368]">Dostosuj aplikację do swojego rytmu dnia</p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
+        {/* ROW 1: GODZINY PRACY */}
+        <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
+          <div>
+            <h3 className="text-lg font-bold text-[#1A2F22] mb-1">Czas pracy</h3>
+            <p className="text-sm text-[#5A7368]">Ile godzin dziennie zazwyczaj pracujesz?</p>
+          </div>
+          <div className="flex items-center gap-4 bg-[#F5EFE6] p-2 rounded-2xl w-fit">
+            <button onClick={() => setHours(h => Math.max(1, h - 1))} className="w-10 h-10 rounded-xl bg-white border border-[#E8DDD0] flex items-center justify-center text-lg font-bold text-[#5A7368] hover:border-[#1E5C36] hover:text-[#1E5C36] transition-all shadow-sm">−</button>
+            <span className="text-2xl font-bold text-[#1A2F22] w-12 text-center">{hours}</span>
+            <button onClick={() => setHours(h => Math.min(24, h + 1))} className="w-10 h-10 rounded-xl bg-white border border-[#E8DDD0] flex items-center justify-center text-lg font-bold text-[#5A7368] hover:border-[#1E5C36] hover:text-[#1E5C36] transition-all shadow-sm">+</button>
+          </div>
+        </div>
+
+        {/* ROW 2: CZAS ROZPOCZĘCIA */}
+        <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
+          <div>
+            <h3 className="text-lg font-bold text-[#1A2F22] mb-1">Początek dnia</h3>
+            <p className="text-sm text-[#5A7368]">Od której godziny chcesz rozpoczynać zadania?</p>
+          </div>
+          <div className="flex items-center gap-2 bg-[#F5EFE6] p-2 rounded-2xl w-fit">
+            <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-[#E8DDD0] shadow-sm">
+              <button onClick={() => handleHourChange(1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronUp size={20} strokeWidth={3} /></button>
+              <input
+                type="text"
+                value={startHour}
+                onChange={e => setStartHour(e.target.value.replace(/\D/g, ''))}
+                onBlur={handleHourInputBlur}
+                className="w-12 text-center text-2xl font-bold text-[#1A2F22] bg-transparent outline-none focus:text-[#2D9E6B] transition-colors"
+                maxLength={2}
+              />
+              <button onClick={() => handleHourChange(-1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronDown size={20} strokeWidth={3} /></button>
+            </div>
+            <div className="text-2xl font-bold text-[#1A2F22] pb-1">:</div>
+            <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-[#E8DDD0] shadow-sm">
+              <button onClick={() => handleMinuteChange(1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronUp size={20} strokeWidth={3} /></button>
+              <input
+                type="text"
+                value={startMinute}
+                onChange={e => setStartMinute(e.target.value.replace(/\D/g, ''))}
+                onBlur={handleMinuteInputBlur}
+                className="w-12 text-center text-2xl font-bold text-[#1A2F22] bg-transparent outline-none focus:text-[#2D9E6B] transition-colors"
+                maxLength={2}
+              />
+              <button onClick={() => handleMinuteChange(-1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronDown size={20} strokeWidth={3} /></button>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 3: ULUBIONE AKTYWNOŚCI */}
+        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-[#1A2F22] mb-1">Poprawiacze nastroju</h3>
+            <p className="text-sm text-[#5A7368]">Co najszybciej poprawia Ci nastrój podczas kryzysu?</p>
+          </div>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {OPTS.map(b => (
+              <label key={b} className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all text-sm font-medium ${picks.includes(b) ? "bg-[#E8F4ED] border border-[#2D9E6B] text-[#1E5C36] shadow-sm" : "bg-[#F5EFE6] border border-transparent text-[#5A7368] hover:border-[#E8DDD0]"}`}>
+                <input type="checkbox" checked={picks.includes(b)} onChange={() => toggle(b)} className="hidden" />
+                {picks.includes(b) && <Check size={14} />}
+                <span>{b}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 flex justify-end">
+        <button 
+          onClick={handleSave} 
+          disabled={isSaving}
+          className="flex items-center gap-2 px-8 py-3 bg-[#1E5C36] text-white rounded-2xl font-bold hover:bg-[#164a2c] transition-all shadow-lg hover:shadow-xl disabled:opacity-70"
+        >
+          {isSaving ? <RotateCcw size={18} className="animate-spin" /> : <Check size={18} />}
+          Zapisz ustawienia
+        </button>
       </div>
     </div>
   );
@@ -3132,6 +3295,7 @@ export default function App() {
                 />
               )}
               {activeTab === "warning" && <WarningView loading={isLoading} user={user} />}
+              {activeTab === "settings" && <SettingsView user={user} setUser={setUser} add={add} />}
             </div>
           </main>
 
