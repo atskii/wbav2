@@ -1370,7 +1370,6 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
   const H = { fontFamily: "'Lora', serif" };
   const [showBacklog, setShowBacklog] = useState(false);
 
-  if (loading) return <SkeletonScreen />;
 
   // Godzina startu z onboardingu (domyślnie 6)
   const parsedStart = userPrefs?.startTime ? userPrefs.startTime.split(':').map(Number) : [6, 0];
@@ -1645,20 +1644,32 @@ function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onO
 // ═══════════════════════════════════════════════════
 function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, onFocusTask, onEditTask, loading }) {
   const H = { fontFamily: "'Lora', serif" };
-  const [search, setSearch] = useState("");
+  const [searchRight, setSearchRight] = useState("");
+  const [searchCal, setSearchCal] = useState("");
+  const [viewType, setViewType] = useState("Dzień"); 
+  const calendarScrollRef = useRef(null);
 
-  if (loading) return <SkeletonScreen />;
+  const [nowMinute, setNowMinute] = useState(new Date().getHours() * 60 + new Date().getMinutes());
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const d = new Date();
+      setNowMinute(d.getHours() * 60 + d.getMinutes());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const hours = Array.from({ length: 16 }, (_, i) => i + 7);
 
-  const isSameDate = (textString) => {
+  const hours = Array.from({ length: 17 }, (_, i) => i + 6); // 06:00 to 22:00
+
+  const isSameDate = (textString, targetDate = selectedDate) => {
     if (!textString) return false;
     const txt = textString.toLowerCase();
 
-    const selYear = selectedDate.getFullYear();
-    const selMonth = selectedDate.getMonth() + 1;
-    const selDay = selectedDate.getDate();
-    const selDateOnly = new Date(selYear, selectedDate.getMonth(), selDay);
+    const selYear = targetDate.getFullYear();
+    const selMonth = targetDate.getMonth() + 1;
+    const selDay = targetDate.getDate();
+    const selDateOnly = new Date(selYear, targetDate.getMonth(), selDay);
 
     const endMatch = txt.match(/🛑 do (\d{4})-(\d{1,2})-(\d{1,2})/);
     if (endMatch) {
@@ -1672,7 +1683,7 @@ function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, o
       if (selDateOnly < startDate) return false;
     }
 
-    const dayOfWeek = selectedDate.getDay() === 0 ? 6 : selectedDate.getDay() - 1;
+    const dayOfWeek = targetDate.getDay() === 0 ? 6 : targetDate.getDay() - 1;
     const daysArr = ["pon", "wt", "śr", "czw", "pt", "sob", "ndz"];
 
     if (txt.includes("codziennie") || txt.includes("każdego dnia")) return true;
@@ -1694,149 +1705,263 @@ function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, o
   const timelineTasks = tasks.filter(t => (isSameDate(t.t) || (!t.isLocked && isSameDate(t.deadline))));
 
   const queueTasks = tasks
-    .filter(t => !search || t.title.toLowerCase().includes(search.toLowerCase()));
+    .filter(t => !searchRight || t.title.toLowerCase().includes(searchRight.toLowerCase()));
+
+  useEffect(() => {
+    if (searchCal && calendarScrollRef.current) {
+      const matchedTask = timelineTasks.find(t => t.title.toLowerCase().includes(searchCal.toLowerCase()));
+      if (matchedTask) {
+        let taskHour = 6;
+        if (isSameDate(matchedTask.t)) {
+          const match = matchedTask.t ? matchedTask.t.match(/(\d{1,2}):\d{2}/) : null;
+          taskHour = match ? parseInt(match[1]) : 8;
+        } else if (isSameDate(matchedTask.deadline)) {
+          const match = matchedTask.deadline.match(/o (\d{1,2}):\d{2}/);
+          if (match) taskHour = parseInt(match[1]);
+        }
+        
+        const scrollPosition = Math.max(0, (taskHour - 6) * 86.4 - 50);
+        calendarScrollRef.current.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+      }
+    }
+  }, [searchCal, timelineTasks]);
+
+  if (loading) return <SkeletonScreen />;
+
+  const isToday = new Date().toDateString() === selectedDate.toDateString();
+
+  const handleGoToToday = () => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const selected = new Date(selectedDate);
+    selected.setHours(0,0,0,0);
+    const diffDays = Math.round((today.getTime() - selected.getTime()) / (1000 * 3600 * 24));
+    onChangeDate(diffDays);
+  };
 
   return (
-    <div className="flex h-screen bg-white">
-      {/* LEWA KOLUMNA: Oś czasu */}
-      <div className="flex-1 overflow-y-auto p-6 border-r border-[#E8DDD0] pb-24">
-        <header className="mb-8 flex flex-col gap-1">
-          <div className="flex items-center gap-2 ml-[-0.5rem]">
-            <button onClick={() => onChangeDate(-1)} className="p-2 hover:bg-[#F5EFE6] rounded-full transition-all active:scale-95 text-[#1A2F22]">
-              <ChevronLeft size={20} />
-            </button>
-            <h1 style={H} className="text-[26px] font-bold text-[#1A2F22] capitalize">
-              {selectedDate.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </h1>
-            <button onClick={() => onChangeDate(1)} className="p-2 hover:bg-[#F5EFE6] rounded-full transition-all active:scale-95 text-[#1A2F22]">
-              <ChevronRight size={20} />
-            </button>
-          </div>
-          <p className="text-[#5A7368] text-[13px] ml-2 mt-1">Siatka godzinowa: Twoje zablokowane terminy i ostateczne deadline'y.</p>
+    <div className="flex h-full bg-[#FCFCFD] overflow-hidden">
+      {/* LEWA KOLUMNA: Kalendarz */}
+      <div className="flex-1 flex flex-col p-6 pr-8 h-full">
+        {/* NAGŁÓWEK SEKCJ */}
+        <header className="mb-6 flex flex-col gap-2 shrink-0">
+          <h1 style={H} className="text-3xl font-bold text-[#303030]">
+            Kalendarz
+          </h1>
+          <p className="text-[#1D1B20] text-base">
+            Twój dzień czeka! Zapisz rzeczy, które chcesz dziś zrobić, i uporządkuj swoje zadania.<br/>Pamiętaj, że każdy mały krok ma znaczenie.
+          </p>
         </header>
 
-        <div className="relative">
-          {hours.map(h => {
-            const tasksInThisHour = timelineTasks.filter(t => {
-              let taskHour = -1;
-              if (isSameDate(t.t)) {
-                const match = t.t ? t.t.match(/(\d{1,2}):\d{2}/) : null;
-                taskHour = match ? parseInt(match[1]) : t.hour;
-              } else if (isSameDate(t.deadline)) {
-                const match = t.deadline.match(/o (\d{1,2}):\d{2}/);
-                if (match) taskHour = parseInt(match[1]);
-              }
-              return taskHour === h;
-            });
-
-            return (
-              <div key={h} className="flex border-t border-[#F5EFE6] h-[5.4rem] group">
-                <div className="w-16 -mt-2.5 text-[10px] font-black text-[#9FB5AD] uppercase tracking-tighter z-10">
-                  <span className="bg-white pr-2">{h.toString().padStart(2, '0')}:00</span>
-                </div>
-                <div className="flex-1 relative pr-2">
-                  {tasksInThisHour.map((t, index) => {
-                    const isDeadlineBlock = !isSameDate(t.t) && isSameDate(t.deadline);
-                    const match = t.duration ? t.duration.match(/(\d+)/) : null;
-                    const mins = match ? parseInt(match[1]) : 60;
-                    const heightRem = (mins / 60) * 6;
-
-                    return (
-                      <div
-                        key={t.id}
-                        onClick={() => onEditTask(t)}
-                        style={{
-                          height: `${heightRem}rem`,
-                          minHeight: '3.5rem',
-                          zIndex: 10 + index,
-                          width: `calc(${100 / tasksInThisHour.length}% - 4px)`,
-                          left: `calc(${(100 / tasksInThisHour.length) * index}% + 2px)`
-                        }}
-                        className={`absolute top-0 border-l-4 rounded-xl p-2.5 shadow-md hover:shadow-lg transition-all overflow-hidden cursor-pointer ${isDeadlineBlock ? 'bg-red-50/95 border-red-400' : 'bg-[#E8F4ED]/95 border-[#2D9E6B]'}`}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <p className={`text-[13px] font-bold truncate ${isDeadlineBlock ? 'text-red-700' : 'text-[#1E5C36]'}`}>{t.title}</p>
-                          {isDeadlineBlock ? (
-                            <span className="text-[8px] font-black text-red-500 uppercase tracking-widest hidden sm:block">⚠️ Deadline</span>
-                          ) : (
-                            <span className="text-[8px] font-black text-[#2D9E6B] uppercase tracking-widest hidden sm:block">🔒 Zablokowane</span>
-                          )}
-                        </div>
-                        <p className={`text-[9px] font-bold uppercase tracking-wider mt-1 ${isDeadlineBlock ? 'text-red-600/70' : 'text-[#5A7368]'}`}>
-                          {t.duration || "60 min"}
-                        </p>
-                      </div>
-                    );
-                  })}
+        {/* KONTENER KALENDARZA */}
+        <div className="flex-1 bg-white border border-[#E8E8E8] rounded-[13px] flex flex-col overflow-hidden shadow-sm min-h-0 relative">
+          {/* TOP BAR KALENDARZA */}
+          <div className="h-[70px] border-b border-[#E8E8E8] flex items-center justify-between px-6 shrink-0 bg-white z-20">
+            {/* Lewa strona TOP BAR */}
+            <div className="flex items-center gap-6">
+              <span className="text-lg font-bold text-[#202021] capitalize w-48 truncate">
+                {selectedDate.toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
+              </span>
+              
+              <div className="relative group">
+                <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[#202021] font-medium text-sm transition-colors border border-transparent hover:border-gray-200">
+                  {viewType} <ChevronDown size={16} className="text-gray-500" />
+                </button>
+                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                  {["Dzień", "Tydzień", "Miesiąc"].map(v => (
+                    <button key={v} onClick={() => setViewType(v)} className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${viewType === v ? "font-bold text-[#057E85]" : "text-gray-700"}`}>
+                      {v}
+                    </button>
+                  ))}
                 </div>
               </div>
-            );
-          })}
+
+              {/* WYSZUKIWARKA KALENDARZA */}
+              <div className="relative w-[300px] ml-4">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9D9898]" />
+                <input
+                  type="text"
+                  placeholder="Szukaj zadania w planie..."
+                  value={searchCal}
+                  onChange={(e) => setSearchCal(e.target.value)}
+                  className="w-full pl-9 pr-4 py-1.5 rounded-md border border-[#E8E8E8] text-sm focus:outline-none focus:border-[#057E85] bg-white transition-all shadow-sm placeholder:text-[#75757A]"
+                />
+              </div>
+            </div>
+
+            {/* Prawa strona TOP BAR */}
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleGoToToday} 
+                className="px-4 py-1.5 bg-white border border-[#E8E8E8] rounded-md text-[#202021] font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2"
+              >
+                Dzisiaj <ArrowRight size={16} className="text-[#9D9898] -rotate-45" />
+              </button>
+              
+              <div className="flex items-center gap-1 border border-[#E8E8E8] rounded-md overflow-hidden shadow-sm">
+                <button onClick={() => onChangeDate(-1)} className="p-1.5 bg-white hover:bg-gray-50 text-gray-600 transition-colors">
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="w-px h-5 bg-[#E8E8E8]"></div>
+                <button onClick={() => onChangeDate(1)} className="p-1.5 bg-white hover:bg-gray-50 text-gray-600 transition-colors">
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* SIATKA KALENDARZA */}
+          <div className="flex-1 overflow-y-auto relative pb-10" ref={calendarScrollRef}>
+            {/* Czerwona linia aktualnego czasu */}
+            {isToday && nowMinute >= 6 * 60 && nowMinute <= 23 * 60 && (
+              <div 
+                className="absolute left-[64px] right-0 z-40 pointer-events-none flex items-center transition-all duration-1000"
+                style={{ top: `${(nowMinute - 6 * 60) * (86.4 / 60) + 16}px` }}
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-[#E40D0D] -ml-[5px] relative z-10" />
+                <div className="flex-1 h-[2px] bg-[#E40D0D]" />
+              </div>
+            )}
+
+            <div className="relative pt-4">
+              {hours.map(h => {
+                const tasksInThisHour = timelineTasks.filter(t => {
+                  let taskHour = -1;
+                  if (isSameDate(t.t)) {
+                    const match = t.t ? t.t.match(/(\d{1,2}):\d{2}/) : null;
+                    taskHour = match ? parseInt(match[1]) : t.hour;
+                  } else if (isSameDate(t.deadline)) {
+                    const match = t.deadline.match(/o (\d{1,2}):\d{2}/);
+                    if (match) taskHour = parseInt(match[1]);
+                  }
+                  return taskHour === h;
+                });
+
+                return (
+                  <div key={h} className="flex border-t border-[#F0F0F0] h-[5.4rem] relative group">
+                    <div className="w-16 -mt-2.5 text-[11px] font-medium text-[#909090] text-center bg-white z-10">
+                      {h.toString().padStart(2, "0")}:00
+                    </div>
+                    
+                    {/* Linia pionowa oddzielająca godziny od siatki */}
+                    {h === 6 && <div className="absolute left-16 top-0 bottom-[-100rem] w-[1px] bg-[#F0F0F0] pointer-events-none" />}
+
+                    <div className="flex-1 relative ml-2 pr-4">
+                      {tasksInThisHour.map((t, index) => {
+                        const isDeadlineBlock = !isSameDate(t.t) && isSameDate(t.deadline);
+                        const match = t.duration ? t.duration.match(/(\d+)/) : null;
+                        const mins = match ? parseInt(match[1]) : 60;
+                        const heightRem = (mins / 60) * 5.4;
+
+                        return (
+                          <div
+                            key={t.id}
+                            onClick={() => onEditTask(t)}
+                            style={{
+                              height: `${heightRem}rem`,
+                              minHeight: "3.5rem",
+                              zIndex: 10 + index,
+                              width: `calc(${100 / tasksInThisHour.length}% - 8px)`,
+                              left: `calc(${(100 / tasksInThisHour.length) * index}% + 4px)`
+                            }}
+                            className={`absolute top-0 rounded-[16px] p-3 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer border-2 ${isDeadlineBlock ? "bg-[#FFDBDB]/40 border-red-200 hover:border-red-300" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}
+                          >
+                            <div className="flex justify-between items-start mb-1">
+                              <p className={`text-[12px] font-bold truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#303030]"}`}>{t.title}</p>
+                              {isDeadlineBlock ? (
+                                <span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full hidden sm:block">deadline</span>
+                              ) : (
+                                <span className="text-[10px] text-[#DC8A25] bg-[#FFE5C5] px-2 py-0.5 rounded-full hidden sm:block">zaplanowane</span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[#BDBDBD] mt-0.5 font-medium">
+                              {h.toString().padStart(2, "0")}:00 - {((h + Math.floor(mins / 60)) % 24).toString().padStart(2, "0")}:{(mins % 60).toString().padStart(2, "0")}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* PRAWA KOLUMNA: Pełna baza zadań z wyszukiwarką */}
-      <div className="w-80 bg-[#FAFAFA] p-6 overflow-y-auto hidden lg:block pb-24 border-l border-[#E8DDD0]/50">
-        <h3 style={H} className="text-lg font-bold text-[#1A2F22] mb-6 flex items-center gap-2">
-          <Target size={18} className="text-[#2D9E6B]" /> Wszystkie zadania
-        </h3>
-
-        {/* WYSZUKIWARKA */}
-        <div className="relative mb-6">
-          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9FB5AD]" />
-          <input
-            type="text"
-            placeholder="Szukaj zadania..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E8DDD0] text-[13px] focus:outline-none focus:border-[#2D9E6B] bg-white transition-all shadow-sm placeholder:text-[#9FB5AD]"
-          />
+      {/* PRAWA KOLUMNA: Wszystkie zadania */}
+      <div className="w-[300px] bg-[#F5F7F5] border-l border-[#F0F0F0] rounded-l-[12px] flex flex-col hidden lg:flex shrink-0 h-full relative z-10 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.02)]">
+        {/* STATYCZNY NAGŁÓWEK I WYSZUKIWARKA */}
+        <div className="p-6 pb-4 pt-8 shrink-0 bg-[#F5F7F5] z-20">
+          <h2 className="text-[26px] font-bold text-[#303030] mb-6">Zadania</h2>
+          
+          <div className="relative">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9FB5AD]" />
+            <input
+              type="text"
+              placeholder="Szukaj..."
+              value={searchRight}
+              onChange={(e) => setSearchRight(e.target.value)}
+              className="w-full pl-11 pr-4 py-2.5 rounded-[6px] border border-[#E8E8E8] text-[13px] focus:outline-none focus:border-[#057E85] bg-white transition-all shadow-sm placeholder:text-[#9FB5AD]"
+            />
+          </div>
         </div>
 
-        <div className="space-y-4">
-          {queueTasks.map(t => {
-            const deadlineToday = isSameDate(t.deadline);
-            return (
-              <div
-                key={t.id}
-                onClick={() => onEditTask(t)}
-                className={`bg-white p-4 rounded-3xl border shadow-sm transition-all duration-300 cursor-pointer group hover:-translate-y-1 hover:shadow-lg ${t.done ? 'opacity-60 grayscale border-gray-200' : (deadlineToday ? 'border-red-200 hover:border-red-400' : 'border-[#E8DDD0] hover:border-[#2D9E6B]')}`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <PBadge p={t.p} />
-                    {t.isLocked && <Lock size={10} className="text-[#5A7368]" title="Zablokowane w kalendarzu" />}
+        {/* SKROLOWALNA LISTA ZADAŃ */}
+        <div className="flex-1 overflow-y-auto px-6 pb-8 relative">
+          {/* FAKE TIMELINE LINE */}
+          <div className="absolute left-[33px] top-0 bottom-0 w-px bg-[#BBBBBB] z-0 hidden"></div>
+          
+          <div className="space-y-4">
+            {queueTasks.map((t, idx) => {
+              const deadlineToday = isSameDate(t.deadline);
+              return (
+                <div key={t.id} className="relative z-10 pl-6">
+                  {/* Timeline dot */}
+                  <div className="absolute left-[3px] top-[26px] w-2 h-2 rounded-full bg-[#0A0291] border border-white shadow-sm z-20"></div>
+                  
+                  {/* Linia osi czasu łącząca kropki (z pominięciem ostatniej) */}
+                  {idx !== queueTasks.length - 1 && (
+                    <div className="absolute left-[6px] top-[34px] bottom-[-24px] w-px bg-[#BBBBBB] z-0"></div>
+                  )}
+
+                  <div
+                    onClick={() => onEditTask(t)}
+                    className={`bg-white p-4 rounded-[16px] border border-[#0A0291]/60 transition-all duration-300 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${t.done ? "opacity-60 grayscale border-gray-200" : ""}`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <Star size={14} className={t.p === "wysoki" ? "text-red-400 fill-red-400" : (t.p === "sredni" ? "text-yellow-400 fill-yellow-400" : "text-green-400")} />
+                      </div>
+                      {deadlineToday && !t.done && <span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full font-medium">dzisiaj</span>}
+                      {t.done && <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">zrobione</span>}
+                    </div>
+
+                    <h4 className={`text-[13px] font-bold mb-1 transition-colors leading-snug ${t.done ? "line-through text-gray-500" : "text-[#303030]"}`}>{t.title}</h4>
+                    
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[11px] text-[#BDBDBD] font-medium">
+                        {t.duration || "60 min"}
+                      </span>
+                      <div className="ml-auto flex gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
+                          className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  {deadlineToday && !t.done && <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md border border-red-100">W tym dniu!</span>}
-                  {!deadlineToday && t.deadline && !t.done && <span className="text-[9px] font-bold text-[#5A7368] bg-[#F5EFE6] px-1.5 py-0.5 rounded-md">Dl: {t.deadline.split(' o ')[0]}</span>}
-                  {t.done && <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-md border border-gray-200">Zrobione</span>}
                 </div>
-
-                <h4 className={`text-[13px] font-bold mb-2.5 pr-2 transition-colors ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22] group-hover:text-[#1E5C36]'}`}>{t.title}</h4>
-
-                <div className="flex items-center gap-3">
-                  <span className="text-[9px] font-bold text-[#5A7368] flex items-center gap-1 bg-[#F5EFE6] px-1.5 py-0.5 rounded-md">
-                    <Clock size={10} /> {t.duration || "Brak info"}
-                  </span>
-
-                  <div className="ml-auto flex gap-1.5">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onDelete(t.id); }}
-                      title="Usuń zadanie"
-                      className="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm hover:scale-110 transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
+          
           {queueTasks.length === 0 && (
-            <div className="text-center py-20 opacity-70">
-              <div className="w-16 h-16 bg-[#E8DDD0] rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">{search ? "🔍" : "✨"}</div>
-              <p className="text-[10px] font-black text-[#9FB5AD] uppercase tracking-widest">
-                {search ? "Brak wyników wyszukiwania" : "Wszystko zrobione!"}
+            <div className="text-center py-20 opacity-70 relative z-10 pl-6">
+              <p className="text-[11px] font-medium text-[#9FB5AD]">
+                {searchRight ? "Brak wyników" : "Wszystko zrobione!"}
               </p>
             </div>
           )}
@@ -1846,207 +1971,265 @@ function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, o
   );
 }
 
+
 // ═══════════════════════════════════════════════════
 //  MOOD VIEW (ZAAWANSOWANA ANALITYKA NASTROJU)
 // ═══════════════════════════════════════════════════
 function MoodView({ moods, onOpenModal, onEditMood, todayDate }) {
-  const H = { fontFamily: "'Lora', serif" };
-  const [filter, setFilter] = useState("Kwartał");
+  const [filter, setFilter] = useState("Tydzień");
   const [hovered, setHovered] = useState(null);
+  const [showAvg, setShowAvg] = useState(true);
   const [editingMood, setEditingMood] = useState(null);
   const [editingNote, setEditingNote] = useState("");
-  const [showAvg, setShowAvg] = useState(false);
 
-  let daysToShow = 90;
-  if (filter === "Tydzień") daysToShow = 7;
-  if (filter === "Miesiąc") daysToShow = 30;
+  const daysToShow = filter === "Tydzień" ? 7 : filter === "Miesiąc" ? 30 : filter === "Kwartał" ? 90 : 7;
+  const targetDate = new Date(todayDate);
+  targetDate.setHours(0, 0, 0, 0);
 
-  const today = new Date(todayDate || new Date());
-  today.setHours(0, 0, 0, 0);
+  const data = [];
+  const daysLabels = ["Ndz", "Pon", "Wt", "Śr", "Czw", "Pt", "Sb"];
+  let sumV = 0, countV = 0;
 
-  const width = 1200;
-  const height = 250;
-  const paddingX = 60; // Zwiększony margines, aby zmieścić minki po lewej
-  const innerWidth = width - 2 * paddingX;
+  for (let i = daysToShow - 1; i >= 0; i--) {
+    const d = new Date(targetDate);
+    d.setDate(d.getDate() - i);
+    const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const m = moods.find(x => x.d === dStr);
+    
+    let label = dStr;
+    if (filter === "Tydzień") {
+      label = daysLabels[d.getDay()];
+    } else if (filter === "Miesiąc" && i % 5 === 0) {
+      label = `${d.getDate()}.${d.getMonth() + 1}`;
+    } else if (filter === "Kwartał" && i % 15 === 0) {
+      label = `${d.getDate()}.${d.getMonth() + 1}`;
+    } else if (filter !== "Tydzień") {
+      label = "";
+    }
 
-  const points = [];
-  let sumV = 0;
-  let countV = 0;
-
-  moods.forEach(m => {
-    // Bezpieczne parsowanie daty bez przesunięć UTC
-    const [y, mo, da] = m.d.split('-');
-    const d = new Date(parseInt(y), parseInt(mo) - 1, parseInt(da));
-    d.setHours(0, 0, 0, 0);
-
-    const diffDays = Math.round((today - d) / (1000 * 60 * 60 * 24));
-
-    if (diffDays >= 0 && diffDays < daysToShow) {
-      const x = paddingX + (1 - diffDays / (daysToShow - 1)) * innerWidth;
-      const y = height - 20 - (m.v / 6) * (height - 60); // Podział przez 6 (skala 0-6)
-      points.push({ x, y, data: m, diffDays });
-
-      // Dodajemy do średniej
+    if (m) {
       sumV += m.v;
       countV++;
     }
-  });
+    data.push({ d: dStr, label, v: m ? m.v : null, note: m?.note });
+  }
 
-  points.sort((a, b) => b.diffDays - a.diffDays);
-
-  // Obliczanie dynamicznej średniej
   const avgV = countV > 0 ? sumV / countV : 0;
-  const avgY = countV > 0 ? height - 20 - (avgV / 6) * (height - 60) : 0;
 
-  const linePath = points.length > 0 ? `M ${points.map(p => `${p.x},${p.y}`).join(" L ")}` : "";
+  const width = 1000;
+  const height = 300; 
+  const paddingX = 40; 
+  
+  const points = data.map((d, i) => {
+    if (d.v === null) return null;
+    const x = paddingX + (i / (daysToShow - 1)) * (width - paddingX - 40);
+    const yPos = 20 + (d.v / 6) * (height - 40);
+    return { x, y: yPos, data: d };
+  }).filter(Boolean);
+
+  const avgY = 20 + (avgV / 6) * (height - 40);
+
+  const linePath = points.map((p, i) => (i === 0 ? `M ${p.x},${p.y}` : `L ${p.x},${p.y}`)).join(" ");
   const firstX = points.length > 0 ? points[0].x : paddingX;
-  const lastX = points.length > 0 ? points[points.length - 1].x : width - paddingX;
+  const lastX = points.length > 0 ? points[points.length - 1].x : width - 40;
   const areaPath = points.length > 0 ? `${linePath} L ${lastX},${height} L ${firstX},${height} Z` : "";
 
   const hitRadius = Math.min(25, Math.max(6, (width / daysToShow) / 2));
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full pb-32 animate-in fade-in duration-500">
+    <div className="w-full h-full p-4 lg:p-6 flex flex-col items-center bg-[#FCFCFD] overflow-hidden min-h-0 relative">
+      
+      {/* NAGŁÓWEK */}
+      <div className="w-full max-w-6xl flex flex-col mb-4 shrink-0">
+        <h1 className="text-[24px] font-bold text-[#303030] leading-[130%] mb-1">Monitor nastroju</h1>
+        <p className="text-sm text-[#1D1B20] max-w-3xl">Poświęć chwilę, aby zaznaczyć, jak się czujesz. To pomoże Ci lepiej zrozumieć siebie i śledzić swoje samopoczucie.</p>
+      </div>
 
-      {/* ODDZIELONY NAGŁÓWEK OPISOWY */}
-      <header className="mb-6">
-        <h1 style={H} className="text-3xl font-bold text-[#1A2F22] mb-4">Monitor nastroju</h1>
-        <p className="text-[#5A7368] text-[13px] max-w-xl">Śledź swoje samopoczucie w relacji do obowiązków akademickich.</p>
-      </header>
-
-      {/* NOWE BIAŁE MENU (ŚREDNIA I REJESTRACJA) */}
-      <div className="flex justify-between items-center bg-white p-2.5 rounded-2xl border border-[#E8DDD0] shadow-sm mb-8">
-        <div className="flex items-center gap-2 pl-2">
-          <button
+      {/* ACTION BAR */}
+      <div className="w-full max-w-6xl flex flex-col md:flex-row justify-between items-center bg-white border-b border-[#E8E8E8] pb-4 mb-4 gap-4 shrink-0">
+        {/* LEWA: Filtry trendów */}
+        <div className="flex bg-white rounded-xl overflow-hidden self-start md:self-auto">
+          <button 
             onClick={() => setShowAvg(!showAvg)}
-            className={`px-4 py-2 rounded-xl text-[13px] font-bold transition-all border-2 ${showAvg ? "bg-[#1e3a8a] text-white border-[#1e3a8a] shadow-md" : "bg-transparent text-[#5A7368] border-transparent hover:bg-[#F5EFE6]"}`}
+            className={`px-4 py-2 text-sm transition-all border border-[#F4F4F4] rounded-l-xl z-10 relative ${showAvg ? "font-bold text-[#000000] bg-white shadow-sm" : "font-semibold text-[#707070] bg-[#FAFAFA]"}`}
           >
             Średnia
           </button>
-          {/* Puste miejsce na przyszłe funkcje np. Wzrost/Spadek */}
+          <button className="px-4 py-2 text-sm font-semibold text-[#707070] border border-[#F4F4F4] bg-white -ml-[1px]">Wzrost</button>
+          <button className="px-4 py-2 text-sm font-semibold text-[#707070] border border-[#F4F4F4] rounded-r-xl bg-white -ml-[1px]">Spadek</button>
         </div>
-        <button onClick={onOpenModal} className="px-5 py-2.5 bg-[#1E5C36] text-white rounded-xl text-[13px] font-bold shadow-md hover:bg-[#164a2c] active:scale-95 transition-all flex items-center gap-2">
-          <Smile size={16} /> Zarejestruj swój nastrój
-        </button>
+
+        {/* PRAWA: Główne akcje */}
+        <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
+          <button className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all">
+            <Calendar size={14} />
+            <span className="text-xs font-semibold">Wybierz datę</span>
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all">
+            <Search size={14} />
+            <span className="text-xs font-semibold">Analiza AI</span>
+          </button>
+          <button onClick={onOpenModal} className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all">
+            <Smile size={14} />
+            <span className="text-xs font-semibold">Zarejestruj swój nastrój</span>
+          </button>
+        </div>
       </div>
 
-      {/* GŁÓWNY KONTENER WYKRESU */}
-      <div className="bg-white rounded-[2.5rem] border border-[#E8DDD0] p-8 shadow-sm relative">
-        <div className="flex justify-between items-center mb-12 pl-12">
-          <h3 className="font-bold text-[#1A2F22] text-[13px]">Wykres Twojego nastroju w czasie</h3>
-          <div className="flex items-center gap-1 bg-[#F5EFE6] p-1 rounded-xl">
-            {["Dzień", "Tydzień", "Miesiąc", "Kwartał", "Rok"].map(f => {
-              const isDisabled = f === "Rok" || f === "Dzień";
-              return (
-                <button key={f} onClick={() => !isDisabled && setFilter(f)} disabled={isDisabled}
-                  className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all ${isDisabled ? "text-gray-400 cursor-not-allowed opacity-40" : filter === f ? "bg-white text-[#1A2F22] shadow-sm" : "text-[#5A7368] hover:text-[#1A2F22]"}`}>
-                  {f}
-                </button>
-              )
-            })}
+      {/* KARTA WYKRESU */}
+      <div className="w-full max-w-6xl bg-white rounded-[10px] p-4 lg:p-6 shadow-sm border border-[#E8E8E8] flex-1 min-h-0 flex flex-col">
+        {/* Header Karty */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4 shrink-0">
+          <h2 className="text-xl font-bold text-[#151515]">Wykres Twojego nastroju w czasie</h2>
+          
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 w-full md:w-auto">
+            {/* Zakresy czasu */}
+            <div className="flex rounded-lg overflow-hidden self-stretch md:self-auto">
+              {["Dzień", "Tydzień", "Miesiąc", "Kwartał", "Rok"].map((f, i) => {
+                const isDisabled = f === "Rok" || f === "Dzień";
+                const isFirst = i === 0;
+                const isLast = i === 4;
+                const roundedClass = isFirst ? "rounded-l-lg" : isLast ? "rounded-r-lg" : "";
+                
+                return (
+                  <button key={f} onClick={() => !isDisabled && setFilter(f)} disabled={isDisabled}
+                    className={`px-3 lg:px-4 py-2 text-xs transition-all border border-[#F4F4F4] -ml-[1px] first:ml-0 ${roundedClass} ${isDisabled ? "text-[#707070] cursor-not-allowed bg-white" : filter === f ? "bg-white font-bold text-[#000000] shadow-sm relative z-10" : "bg-white font-semibold text-[#707070] hover:text-[#151515]"}`}>
+                    {f}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Legenda */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="w-2.5 h-2.5 rounded-full border-2 border-[#1A949A]" />
+              <span className="text-xs font-semibold text-[#5A5A5A]">Twój nastrój</span>
+            </div>
           </div>
         </div>
 
-        <div className="relative w-full h-[250px]">
-          {/* OŚ Y - 7 MINEK PO LEWEJ STRONIE (Renderowane jako HTML poza SVG) */}
+        {/* Główny obszar wykresu */}
+        <div className="relative w-full flex-1 min-h-0 mt-2 mb-6">
+          
+          {/* Oś Y - 7 MINEK PO LEWEJ STRONIE */}
           {[0, 1, 2, 3, 4, 5, 6].map(level => {
-            const yPos = height - 20 - (level / 6) * (height - 60);
+            const yPos = 20 + (level / 6) * (height - 40);
             return (
-              <div key={`html-emoji-${level}`} className="absolute text-xl" style={{ left: 0, top: `${(yPos / height) * 100}%`, transform: 'translateY(-50%)' }}>
-                {EMOJIS[level]}
+              <div key={`html-emoji-${level}`} className="absolute text-xl flex items-center justify-center bg-transparent text-[#5A5A5A] w-6 h-6 rounded-full" style={{ left: 0, top: `${(yPos / height) * 100}%`, transform: 'translateY(-50%)' }}>
+                <span className="opacity-90">{EMOJIS[level]}</span>
               </div>
             );
           })}
 
+          {/* Oś X - ETYKIETY */}
+          <div className="absolute left-[40px] right-[40px] bottom-[-25px] flex justify-between">
+            {data.map((d, i) => {
+              if (!d.label) return null;
+              return (
+                <div key={i} className="text-xs font-semibold text-[#8B8692] -ml-3 text-center w-8">
+                  {d.label}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* SVG CHART */}
           <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible absolute top-0 left-0" preserveAspectRatio="none">
             <defs>
-              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2D9E6B" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#2D9E6B" stopOpacity="0.0" />
+              <linearGradient id="chartGradientNew" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#6ECCD2" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#6ECCD2" stopOpacity="0.0" />
               </linearGradient>
             </defs>
 
-            {/* OŚ Y - LINIE SIATKI */}
+            {/* POZIOME LINIE SIATKI */}
             {[0, 1, 2, 3, 4, 5, 6].map(level => {
-              const yPos = height - 20 - (level / 6) * (height - 60);
+              const yPos = 20 + (level / 6) * (height - 40);
               return (
                 <g key={`grid-${level}`}>
-                  <line x1={paddingX} y1={yPos} x2={width} y2={yPos} stroke="#F5EFE6" strokeWidth="2" strokeDasharray="5,5" />
+                  <line x1={paddingX} y1={yPos} x2={width} y2={yPos} stroke="#F4F4F4" strokeWidth="1.5" />
                 </g>
               );
             })}
 
+            {/* OBSZAR I LINIA WYKRESU */}
             {points.length > 0 && (
               <>
-                <path d={areaPath} fill="url(#chartGradient)" />
-                <path d={linePath} fill="none" stroke="#2D9E6B" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d={areaPath} fill="url(#chartGradientNew)" />
+                <path d={linePath} fill="none" stroke="#1A949A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </>
             )}
 
-            {/* POGRUBIONA, GRANATOWA LINIA ŚREDNIEJ */}
+            {/* LINIA ŚREDNIEJ */}
             {showAvg && countV > 0 && (
               <g className="animate-in fade-in duration-500">
-                <line x1={paddingX} y1={avgY} x2={width} y2={avgY} stroke="#1e3a8a" strokeWidth="4" strokeDasharray="12,8" strokeLinecap="round" />
-                <rect x={width - 150} y={avgY - 30} width="150" height="28" rx="8" fill="#1e3a8a" />
-                <text x={width - 75} y={avgY - 11} fill="white" fontSize="13" fontWeight="bold" textAnchor="middle">
+                <line x1={paddingX} y1={avgY} x2={width} y2={avgY} stroke="#02848C" strokeWidth="2" strokeDasharray="8,6" strokeLinecap="round" />
+                <rect x={width - 120} y={avgY - 24} width="110" height="20" rx="4" fill="#02848C" />
+                <text x={width - 65} y={avgY - 10} fill="white" fontSize="10" fontWeight="bold" textAnchor="middle">
                   Średnia: {avgV.toFixed(1)} / 6.0
                 </text>
               </g>
             )}
 
             {/* INTERAKTYWNE PUNKTY */}
-            {points.map((p, i) => (
-              <g key={i}>
-                <circle cx={p.x} cy={p.y} r={4} fill="#2D9E6B" />
-                {hovered?.d === p.data.d && <circle cx={p.x} cy={p.y} r={8} fill="#1E5C36" className="animate-ping opacity-30" />}
-                <circle cx={p.x} cy={p.y} r={hitRadius} fill="transparent" className="cursor-pointer" onMouseEnter={() => !editingMood && setHovered(p.data)} onMouseLeave={() => !editingMood && setHovered(null)} onClick={() => { setHovered(null); setEditingMood(p.data); setEditingNote(p.data.note || ""); }} />
-              </g>
-            ))}
+            {points.map((p, i) => {
+              const isHovered = hovered?.d === p.data.d;
+              return (
+                <g key={i}>
+                  {isHovered && (
+                    <line x1={p.x} y1={p.y} x2={p.x} y2={height} stroke="#1A949A" strokeWidth="1" strokeDasharray="4,4" />
+                  )}
+                  <circle cx={p.x} cy={p.y} r={isHovered ? 6 : 4} fill="#1A949A" className="transition-all" />
+                  {isHovered && <circle cx={p.x} cy={p.y} r={12} fill="#1A949A" className="opacity-20" />}
+                  <circle cx={p.x} cy={p.y} r={hitRadius} fill="transparent" className="cursor-pointer" onMouseEnter={() => !editingMood && setHovered(p.data)} onMouseLeave={() => !editingMood && setHovered(null)} onClick={() => { setHovered(null); setEditingMood(p.data); setEditingNote(p.data.note || ""); }} />
+                </g>
+              );
+            })}
           </svg>
 
           {/* DYMEK INFORMACYJNY (HOVER) */}
           {hovered && !editingMood && (
-            <div className={`absolute z-50 bg-white border border-[#2D9E6B]/30 shadow-2xl rounded-2xl p-4 w-72 pointer-events-none transform -translate-y-[115%] ${((points.find(p => p.data.d === hovered.d)?.x / width) * 100) > 80 ? '-translate-x-[90%]' :
+            <div className={`absolute z-50 bg-white border border-[#E8E8E8] shadow-lg rounded-xl p-3 w-56 pointer-events-none transform -translate-y-[115%] ${((points.find(p => p.data.d === hovered.d)?.x / width) * 100) > 80 ? '-translate-x-[90%]' :
               ((points.find(p => p.data.d === hovered.d)?.x / width) * 100) < 20 ? '-translate-x-[10%]' :
                 '-translate-x-1/2'
               }`}
               style={{ left: `${(points.find(p => p.data.d === hovered.d)?.x / width) * 100}%`, top: `${(points.find(p => p.data.d === hovered.d)?.y / height) * 100}%` }}>
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex justify-between items-start mb-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-3xl">{EMOJIS[hovered.v]}</span>
-                  <span className="text-xs font-bold text-[#1E5C36] bg-[#E8F4ED] px-2 py-1 rounded-md">{MOOD_L[hovered.v]}</span>
+                  <span className="text-xl">{EMOJIS[hovered.v]}</span>
+                  <span className="text-[10px] font-bold text-[#02848C] bg-[#E5F2F3] px-2 py-0.5 rounded-md">{MOOD_L[hovered.v]}</span>
                 </div>
-                <span className="text-[10px] font-black text-[#9FB5AD]">{hovered.d}</span>
+                <span className="text-[9px] font-black text-[#8B8692]">{hovered.d}</span>
               </div>
-              <p className="text-xs text-[#5A7368] mt-2 leading-relaxed italic border-l-2 border-[#E8DDD0] pl-2">"{hovered.note || "Brak notatki."}"</p>
-              <p className="text-[10px] text-[#9FB5AD] mt-3 font-bold uppercase tracking-wider text-center">Kliknij kropkę, aby edytować</p>
+              <p className="text-[11px] text-[#5A5A5A] mt-1 leading-relaxed italic border-l-2 border-[#F4F4F4] pl-2">"{hovered.note || "Brak notatki."}"</p>
+              <p className="text-[9px] text-[#8B8692] mt-2 font-bold uppercase tracking-wider text-center">Kliknij kropkę, aby edytować</p>
             </div>
           )}
 
           {/* DYMEK EDYCJI (CLICK) */}
           {editingMood && (
-            <div className={`absolute z-50 bg-white border-2 border-[#2D9E6B] shadow-2xl rounded-3xl p-5 w-96 transform -translate-y-[105%] ${((points.find(p => p.data.d === editingMood.d)?.x / width) * 100) > 80 ? '-translate-x-[95%]' :
+            <div className={`absolute z-50 bg-white border-2 border-[#02848C] shadow-2xl rounded-2xl p-4 w-72 transform -translate-y-[105%] ${((points.find(p => p.data.d === editingMood.d)?.x / width) * 100) > 80 ? '-translate-x-[95%]' :
               ((points.find(p => p.data.d === editingMood.d)?.x / width) * 100) < 20 ? '-translate-x-[5%]' :
                 '-translate-x-1/2'
               }`}
               style={{ left: `${(points.find(p => p.data.d === editingMood.d)?.x / width) * 100}%`, top: `${(points.find(p => p.data.d === editingMood.d)?.y / height) * 100}%` }}>
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-sm font-bold text-[#1A2F22]">Edytuj dzień: <span className="text-[#2D9E6B]">{editingMood.d}</span></span>
-                <button onClick={() => setEditingMood(null)} className="text-[#9FB5AD] hover:text-red-500 transition-colors bg-red-50 p-1.5 rounded-full"><X size={16} /></button>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs font-bold text-[#151515]">Edytuj dzień: <span className="text-[#02848C]">{editingMood.d}</span></span>
+                <button onClick={() => setEditingMood(null)} className="text-[#8B8692] hover:text-red-500 transition-colors bg-red-50 p-1 rounded-full"><X size={14} /></button>
               </div>
 
-              <div className="mb-4">
-                <p className="text-xs font-bold text-[#5A7368] mb-2 uppercase tracking-wide">Notatka:</p>
+              <div className="mb-3">
+                <p className="text-[10px] font-bold text-[#5A5A5A] mb-1 uppercase tracking-wide">Notatka:</p>
                 <textarea
                   value={editingNote}
                   onChange={(e) => setEditingNote(e.target.value)}
                   placeholder="Jak minął dzień?"
-                  className="w-full bg-[#F5EFE6] border border-[#E8DDD0] rounded-xl p-3 text-sm focus:outline-none focus:border-[#2D9E6B] resize-none h-20 transition-all placeholder:text-[#9FB5AD]"
+                  className="w-full bg-[#FAFAFA] border border-[#F4F4F4] rounded-lg p-2 text-xs focus:outline-none focus:border-[#02848C] resize-none h-16 transition-all placeholder:text-[#8B8692]"
                 />
               </div>
 
-              <div className="mb-2">
-                <p className="text-xs font-bold text-[#5A7368] mb-2 uppercase tracking-wide">Nastrój:</p>
+              <div className="mb-1">
+                <p className="text-[10px] font-bold text-[#5A5A5A] mb-1 uppercase tracking-wide">Nastrój:</p>
                 <div className="flex gap-1 justify-between">
                   {EMOJIS.map((emoji, index) => (
                     <button
@@ -2055,7 +2238,7 @@ function MoodView({ moods, onOpenModal, onEditMood, todayDate }) {
                         onEditMood(editingMood.d, index, editingNote);
                         setEditingMood(null);
                       }}
-                      className={`text-2xl p-1.5 rounded-xl hover:bg-[#F5EFE6] transition-all hover:scale-125 ${editingMood.v === index ? 'bg-[#E8F4ED] scale-110 shadow-sm border border-[#2D9E6B]/30' : ''}`}
+                      className={`text-xl p-1 rounded-lg hover:bg-[#FAFAFA] transition-all hover:scale-125 ${editingMood.v === index ? 'bg-[#E5F2F3] scale-110 shadow-sm border border-[#02848C]/30' : ''}`}
                       title={MOOD_L[index]}
                     >
                       {emoji}
@@ -2073,7 +2256,6 @@ function MoodView({ moods, onOpenModal, onEditMood, todayDate }) {
 
 function WarningView({ loading, user }) {
   const H = { fontFamily: "'Lora',serif" };
-  if (loading) return <SkeletonScreen />;
 
   return (
     <div className="p-10 max-w-6xl mx-auto w-full pb-32">
@@ -3214,7 +3396,7 @@ export default function App() {
             activeAlert={activeAlert}
             onDismissAlert={() => setDismissedAlertKey(currentAlertKey)}
           />
-          <main className="flex-1 overflow-y-auto relative bg-[#FAFAFA]">
+          <main className="flex-1 overflow-hidden relative bg-[#FAFAFA] flex flex-col">
             {/* NOWY HEADER RESPANSYWNY - UPROSZCZONY */}
             <header className="w-full px-4 md:px-10 py-6 flex items-center justify-between z-[60]">
               <div className="flex items-center space-x-2 md:space-x-4 truncate">
@@ -3251,7 +3433,7 @@ export default function App() {
               </div>
             </header>
 
-            <div className="w-full">
+            <div className="flex-1 min-h-0 relative flex flex-col w-full">
               {activeTab === "dashboard" && (
                 <DashboardView
                   tasks={tasks}
