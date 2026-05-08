@@ -23,21 +23,20 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
 
   const hours = Array.from({ length: 17 }, (_, i) => i + 6);
 
-  // Wrapper using shared checkIsDate with selectedDate as default
   const isSameDate = (textString, targetDate = selectedDate) => checkIsDate(textString, targetDate);
 
-  const timelineTasks = tasks.filter(t => (isSameDate(t.t) || (!t.isLocked && isSameDate(t.deadline))));
+  const timelineTasks = tasks.filter(t => (isSameDate(t.t, selectedDate) || (!t.isLocked && isSameDate(t.deadline, selectedDate))));
   const queueTasks = tasks.filter(t => !searchRight || t.title.toLowerCase().includes(searchRight.toLowerCase()));
 
   useEffect(() => {
-    if (searchCal && calendarScrollRef.current) {
+    if (searchCal && calendarScrollRef.current && viewType === "Dzień") {
       const matchedTask = timelineTasks.find(t => t.title.toLowerCase().includes(searchCal.toLowerCase()));
       if (matchedTask) {
         let taskHour = 6;
-        if (isSameDate(matchedTask.t)) {
+        if (isSameDate(matchedTask.t, selectedDate)) {
           const match = matchedTask.t ? matchedTask.t.match(/(\d{1,2}):\d{2}/) : null;
           taskHour = match ? parseInt(match[1]) : 8;
-        } else if (isSameDate(matchedTask.deadline)) {
+        } else if (isSameDate(matchedTask.deadline, selectedDate)) {
           const match = matchedTask.deadline.match(/o (\d{1,2}):\d{2}/);
           if (match) taskHour = parseInt(match[1]);
         }
@@ -45,10 +44,11 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
         calendarScrollRef.current.scrollTo({ top: scrollPosition, behavior: 'smooth' });
       }
     }
-  }, [searchCal, timelineTasks]);
+  }, [searchCal, timelineTasks, selectedDate, viewType]);
 
   if (loading) return <SkeletonScreen />;
   const isToday = new Date().toDateString() === selectedDate.toDateString();
+  
   const handleGoToToday = () => {
     const today = new Date(); today.setHours(0,0,0,0);
     const selected = new Date(selectedDate); selected.setHours(0,0,0,0);
@@ -56,79 +56,258 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     onChangeDate(diffDays);
   };
 
+  const getStartOfWeek = (date) => {
+    const d = new Date(date);
+    const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
+    d.setDate(d.getDate() - day);
+    d.setHours(0,0,0,0);
+    return d;
+  };
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(getStartOfWeek(selectedDate));
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+
+  const getDaysOfMonth = (date) => {
+    const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    const firstDayIndex = (startOfMonth.getDay() + 6) % 7;
+    const days = [];
+    
+    const prevMonthEnd = new Date(date.getFullYear(), date.getMonth(), 0);
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const d = new Date(prevMonthEnd);
+      d.setDate(prevMonthEnd.getDate() - i);
+      days.push({ date: d, isCurrentMonth: false });
+    }
+    
+    for (let i = 1; i <= endOfMonth.getDate(); i++) {
+      days.push({ date: new Date(date.getFullYear(), date.getMonth(), i), isCurrentMonth: true });
+    }
+    
+    const totalCells = days.length <= 35 ? 35 : 42;
+    let nextMonthDay = 1;
+    while (days.length < totalCells) {
+      days.push({ date: new Date(date.getFullYear(), date.getMonth() + 1, nextMonthDay++), isCurrentMonth: false });
+    }
+    return days;
+  };
+
+  const renderDailyView = () => (
+    <div className="flex-1 overflow-y-auto relative pb-10" ref={calendarScrollRef}>
+      {isToday && nowMinute >= 6*60 && nowMinute <= 23*60 && (
+        <div className="absolute left-[64px] right-0 z-40 pointer-events-none flex items-center transition-all duration-1000" style={{ top: `${(nowMinute - 6*60) * (86.4/60) + 16}px` }}>
+          <div className="w-2.5 h-2.5 rounded-full bg-[#E40D0D] -ml-[5px] relative z-10" />
+          <div className="flex-1 h-[2px] bg-[#E40D0D]" />
+        </div>
+      )}
+      <div className="relative pt-4">
+        {hours.map(h => {
+          const tasksInThisHour = timelineTasks.filter(t => {
+            let taskHour = -1;
+            if (isSameDate(t.t, selectedDate)) { const match = t.t ? t.t.match(/(\d{1,2}):\d{2}/) : null; taskHour = match ? parseInt(match[1]) : t.hour; }
+            else if (isSameDate(t.deadline, selectedDate)) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
+            return taskHour === h;
+          });
+          return (
+            <div key={h} className="flex border-t border-[#F0F0F0] h-[5.4rem] relative group">
+              <div className="w-16 -mt-2.5 text-[11px] font-medium text-[#909090] text-center bg-white z-10">{h.toString().padStart(2,"0")}:00</div>
+              {h === 6 && <div className="absolute left-16 top-0 bottom-[-100rem] w-[1px] bg-[#F0F0F0] pointer-events-none" />}
+              <div className="flex-1 relative ml-2 pr-4">
+                {tasksInThisHour.map((t, index) => {
+                  const isDeadlineBlock = !isSameDate(t.t, selectedDate) && isSameDate(t.deadline, selectedDate);
+                  const match = t.duration ? t.duration.match(/(\d+)/) : null;
+                  const mins = match ? parseInt(match[1]) : 60;
+                  const heightRem = (mins / 60) * 5.4;
+                  return (
+                    <div key={t.id} onClick={() => onEditTask(t)} style={{ height: `${heightRem}rem`, minHeight: "3.5rem", zIndex: 10+index, width: `calc(${100/tasksInThisHour.length}% - 8px)`, left: `calc(${(100/tasksInThisHour.length)*index}% + 4px)` }}
+                      className={`absolute top-0 rounded-[16px] p-3 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer border-2 ${isDeadlineBlock ? "bg-[#FFDBDB]/40 border-red-200 hover:border-red-300" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}>
+                      <div className="flex justify-between items-start mb-1">
+                        <p className={`text-[12px] font-bold truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#303030]"}`}>{t.title}</p>
+                        {isDeadlineBlock ? (<span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full hidden sm:block">deadline</span>) : (<span className="text-[10px] text-[#DC8A25] bg-[#FFE5C5] px-2 py-0.5 rounded-full hidden sm:block">zaplanowane</span>)}
+                      </div>
+                      <p className="text-[11px] text-[#BDBDBD] mt-0.5 font-medium">{h.toString().padStart(2,"0")}:00 - {((h+Math.floor(mins/60))%24).toString().padStart(2,"0")}:{(mins%60).toString().padStart(2,"0")}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const renderWeeklyView = () => (
+    <div className="flex-1 flex flex-col min-h-0 bg-white">
+      <div className="flex border-b border-[#E8E8E8] pl-16 overflow-hidden">
+        {weekDays.map((date, i) => {
+          const isTodayWeek = new Date().toDateString() === date.toDateString();
+          return (
+            <div key={i} className="flex-1 text-center py-3 border-l border-[#F0F0F0] min-w-[60px] md:min-w-[100px]">
+              <div className={`text-[10px] md:text-[11px] font-medium uppercase mb-1 ${isTodayWeek ? "text-[#057E85]" : "text-[#75757A]"}`}>{date.toLocaleDateString("pl-PL", { weekday: 'short' })}</div>
+              <div className={`w-8 h-8 md:w-10 md:h-10 mx-auto rounded-full flex items-center justify-center text-sm md:text-lg font-bold ${isTodayWeek ? "bg-[#057E85] text-white shadow-sm" : "text-[#303030] hover:bg-gray-100 cursor-pointer transition-colors"}`} onClick={() => { onChangeDate(Math.round((date - selectedDate) / (1000 * 3600 * 24))); setViewType("Dzień"); }}>
+                {date.getDate()}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex-1 overflow-y-auto overflow-x-auto relative pb-10 flex" ref={calendarScrollRef}>
+        <div className="w-16 flex-shrink-0 pt-4 bg-white z-10 relative">
+          {hours.map(h => (
+            <div key={h} className="h-[5.4rem] relative">
+              <div className="absolute -top-2.5 right-2 text-[10px] font-medium text-[#909090] bg-white px-1">{h.toString().padStart(2,"0")}:00</div>
+            </div>
+          ))}
+        </div>
+        <div className="flex-1 flex pt-4 relative min-w-[420px] md:min-w-[700px]">
+          {hours.map(h => (
+            <div key={h} className="absolute left-0 right-0 border-t border-[#F0F0F0] pointer-events-none" style={{ top: `${(h-6)*5.4 + 1}rem` }} />
+          ))}
+          {weekDays.map((date, i) => {
+            const dayTasks = tasks.filter(t => (isSameDate(t.t, date) || (!t.isLocked && isSameDate(t.deadline, date))));
+            const isTodayWeek = new Date().toDateString() === date.toDateString();
+            
+            return (
+              <div key={i} className="flex-1 border-l border-[#F0F0F0] relative min-w-[60px] md:min-w-[100px]">
+                {isTodayWeek && nowMinute >= 6*60 && nowMinute <= 23*60 && (
+                  <div className="absolute left-0 right-0 z-40 pointer-events-none flex items-center" style={{ top: `${(nowMinute - 6*60) * (5.4/60) + 1}rem` }}>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#E40D0D] -ml-[3px]" />
+                    <div className="w-full h-[2px] bg-[#E40D0D]" />
+                  </div>
+                )}
+                {dayTasks.map((t, index) => {
+                  let taskHour = 6;
+                  if (isSameDate(t.t, date)) { const match = t.t ? t.t.match(/(\d{1,2}):\d{2}/) : null; taskHour = match ? parseInt(match[1]) : t.hour || 8; }
+                  else if (isSameDate(t.deadline, date)) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
+                  if(taskHour < 6 || taskHour > 22) return null;
+                  
+                  const isDeadlineBlock = !isSameDate(t.t, date) && isSameDate(t.deadline, date);
+                  const matchDuration = t.duration ? t.duration.match(/(\d+)/) : null;
+                  const mins = matchDuration ? parseInt(matchDuration[1]) : 60;
+                  const heightRem = (mins / 60) * 5.4;
+                  const topRem = (taskHour - 6) * 5.4 + 1;
+                  
+                  return (
+                    <div key={t.id} onClick={() => onEditTask(t)} style={{ top: `${topRem}rem`, height: `${heightRem}rem`, minHeight: "2.5rem", zIndex: 10+index }}
+                      className={`absolute left-0.5 right-0.5 md:left-1 md:right-1 rounded-md p-1 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer border-l-4 ${isDeadlineBlock ? "bg-[#FFDBDB]/80 border-l-[#D04F4F]" : "bg-[#E8F0FE] border-l-[#0A0291]"}`}>
+                      <p className={`text-[9px] md:text-[10px] font-bold leading-tight ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#0A0291]"}`}>{t.title}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderMonthlyView = () => {
+    const days = getDaysOfMonth(selectedDate);
+    const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
+    
+    return (
+      <div className="flex-1 flex flex-col min-h-0 bg-white">
+        <div className="grid grid-cols-7 border-b border-[#E8E8E8]">
+          {dayNames.map(d => (
+            <div key={d} className="text-center py-2 md:py-3 text-[10px] md:text-[11px] font-bold text-[#75757A] uppercase tracking-wider border-r border-[#F0F0F0] last:border-0">
+              {d}
+            </div>
+          ))}
+        </div>
+        <div className="flex-1 grid grid-cols-7 grid-rows-5 overflow-hidden">
+          {days.map((item, idx) => {
+            const isTodayMonth = new Date().toDateString() === item.date.toDateString();
+            const dayTasks = tasks.filter(t => (isSameDate(t.t, item.date) || (!t.isLocked && isSameDate(t.deadline, item.date))));
+            
+            return (
+              <div key={idx} onClick={() => { onChangeDate(Math.round((item.date - selectedDate) / (1000 * 3600 * 24))); setViewType("Dzień"); }} className={`border-r border-b border-[#F0F0F0] p-1 flex flex-col hover:bg-gray-50 cursor-pointer transition-colors ${item.isCurrentMonth ? "bg-white" : "bg-gray-50/50"}`}>
+                <div className="flex justify-center mb-0.5 md:mb-1">
+                  <div className={`w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full text-[10px] md:text-xs font-bold ${isTodayMonth ? "bg-[#057E85] text-white shadow-sm" : item.isCurrentMonth ? "text-[#303030]" : "text-[#C0C0C0]"}`}>
+                    {item.date.getDate()}
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden flex flex-col gap-0.5 md:gap-1">
+                  {dayTasks.slice(0, 3).map(t => {
+                    const isDeadlineBlock = !isSameDate(t.t, item.date) && isSameDate(t.deadline, item.date);
+                    return (
+                      <div key={t.id} className={`px-1 py-0.5 md:px-1.5 rounded text-[8px] md:text-[9px] font-bold truncate ${isDeadlineBlock ? "bg-[#FFDBDB] text-[#D04F4F]" : "bg-[#E8F0FE] text-[#0A0291]"}`}>
+                        {t.title}
+                      </div>
+                    )
+                  })}
+                  {dayTasks.length > 3 && (
+                    <div className="text-[8px] md:text-[9px] font-medium text-[#75757A] pl-1">
+                      +{dayTasks.length - 3} więcej
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-full bg-[#FCFCFD] overflow-hidden">
       <div className="flex-1 flex flex-col p-6 pr-8 h-full">
         <header className="mb-6 flex flex-col gap-2 shrink-0">
           <h1 className="font-lora text-3xl font-bold text-[#303030]">Kalendarz</h1>
-          <p className="text-[#1D1B20] text-base">Twój dzień czeka! Zapisz rzeczy, które chcesz dziś zrobić, i uporządkuj swoje zadania.<br />Pamiętaj, że każdy mały krok ma znaczenie.</p>
+          <p className="text-[#1D1B20] text-base">Twój czas, twoje zasady! Zaplanuj dzień, tydzień lub cały miesiąc.<br />Pamiętaj, że każdy mały krok ma znaczenie.</p>
         </header>
         <div className="flex-1 bg-white border border-[#E8E8E8] rounded-[13px] flex flex-col overflow-hidden shadow-sm min-h-0 relative">
           <div className="h-[70px] border-b border-[#E8E8E8] flex items-center justify-between px-6 shrink-0 bg-white z-20">
             <div className="flex items-center gap-6">
-              <span className="text-lg font-bold text-[#202021] capitalize w-48 truncate">{selectedDate.toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}</span>
-              <div className="relative group">
+              <span className="text-lg font-bold text-[#202021] capitalize w-48 truncate">
+                {viewType === "Dzień" && selectedDate.toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
+                {viewType === "Tydzień" && `${weekDays[0].getDate()} ${weekDays[0].toLocaleDateString("pl-PL",{month:"short"})} - ${weekDays[6].getDate()} ${weekDays[6].toLocaleDateString("pl-PL",{month:"short"})}`}
+                {viewType === "Miesiąc" && selectedDate.toLocaleDateString("pl-PL", { month: "long", year: "numeric" })}
+              </span>
+              <div className="relative group z-[100]">
                 <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[#202021] font-medium text-sm transition-colors border border-transparent hover:border-gray-200">{viewType} <ChevronDown size={16} className="text-gray-500" /></button>
-                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                   {["Dzień", "Tydzień", "Miesiąc"].map(v => (<button key={v} onClick={() => setViewType(v)} className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${viewType === v ? "font-bold text-[#057E85]" : "text-gray-700"}`}>{v}</button>))}
                 </div>
               </div>
-              <div className="relative w-[300px] ml-4">
+              <div className="relative w-[300px] ml-4 hidden md:block">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9D9898]" />
-                <input type="text" placeholder="Szukaj zadania w planie..." value={searchCal} onChange={(e) => setSearchCal(e.target.value)} className="w-full pl-9 pr-4 py-1.5 rounded-md border border-[#E8E8E8] text-sm focus:outline-none focus:border-[#057E85] bg-white transition-all shadow-sm placeholder:text-[#75757A]" />
+                <input type="text" placeholder="Szukaj w planie..." value={searchCal} onChange={(e) => setSearchCal(e.target.value)} className="w-full pl-9 pr-4 py-1.5 rounded-md border border-[#E8E8E8] text-sm focus:outline-none focus:border-[#057E85] bg-white transition-all shadow-sm placeholder:text-[#75757A]" />
               </div>
             </div>
             <div className="flex items-center gap-3">
               <button onClick={handleGoToToday} className="px-4 py-1.5 bg-white border border-[#E8E8E8] rounded-md text-[#202021] font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">Dzisiaj <ArrowRight size={16} className="text-[#9D9898] -rotate-45" /></button>
               <div className="flex items-center gap-1 border border-[#E8E8E8] rounded-md overflow-hidden shadow-sm">
-                <button onClick={() => onChangeDate(-1)} className="p-1.5 bg-white hover:bg-gray-50 text-gray-600 transition-colors"><ChevronLeft size={18} /></button>
+                <button onClick={() => {
+                  if (viewType === "Tydzień") onChangeDate(-7);
+                  else if (viewType === "Miesiąc") {
+                    const d = new Date(selectedDate);
+                    d.setMonth(d.getMonth() - 1);
+                    onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+                  }
+                  else onChangeDate(-1);
+                }} className="p-1.5 bg-white hover:bg-gray-50 text-gray-600 transition-colors"><ChevronLeft size={18} /></button>
                 <div className="w-px h-5 bg-[#E8E8E8]"></div>
-                <button onClick={() => onChangeDate(1)} className="p-1.5 bg-white hover:bg-gray-50 text-gray-600 transition-colors"><ChevronRight size={18} /></button>
+                <button onClick={() => {
+                  if (viewType === "Tydzień") onChangeDate(7);
+                  else if (viewType === "Miesiąc") {
+                    const d = new Date(selectedDate);
+                    d.setMonth(d.getMonth() + 1);
+                    onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+                  }
+                  else onChangeDate(1);
+                }} className="p-1.5 bg-white hover:bg-gray-50 text-gray-600 transition-colors"><ChevronRight size={18} /></button>
               </div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto relative pb-10" ref={calendarScrollRef}>
-            {isToday && nowMinute >= 6*60 && nowMinute <= 23*60 && (
-              <div className="absolute left-[64px] right-0 z-40 pointer-events-none flex items-center transition-all duration-1000" style={{ top: `${(nowMinute - 6*60) * (86.4/60) + 16}px` }}>
-                <div className="w-2.5 h-2.5 rounded-full bg-[#E40D0D] -ml-[5px] relative z-10" />
-                <div className="flex-1 h-[2px] bg-[#E40D0D]" />
-              </div>
-            )}
-            <div className="relative pt-4">
-              {hours.map(h => {
-                const tasksInThisHour = timelineTasks.filter(t => {
-                  let taskHour = -1;
-                  if (isSameDate(t.t)) { const match = t.t ? t.t.match(/(\d{1,2}):\d{2}/) : null; taskHour = match ? parseInt(match[1]) : t.hour; }
-                  else if (isSameDate(t.deadline)) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
-                  return taskHour === h;
-                });
-                return (
-                  <div key={h} className="flex border-t border-[#F0F0F0] h-[5.4rem] relative group">
-                    <div className="w-16 -mt-2.5 text-[11px] font-medium text-[#909090] text-center bg-white z-10">{h.toString().padStart(2,"0")}:00</div>
-                    {h === 6 && <div className="absolute left-16 top-0 bottom-[-100rem] w-[1px] bg-[#F0F0F0] pointer-events-none" />}
-                    <div className="flex-1 relative ml-2 pr-4">
-                      {tasksInThisHour.map((t, index) => {
-                        const isDeadlineBlock = !isSameDate(t.t) && isSameDate(t.deadline);
-                        const match = t.duration ? t.duration.match(/(\d+)/) : null;
-                        const mins = match ? parseInt(match[1]) : 60;
-                        const heightRem = (mins / 60) * 5.4;
-                        return (
-                          <div key={t.id} onClick={() => onEditTask(t)} style={{ height: `${heightRem}rem`, minHeight: "3.5rem", zIndex: 10+index, width: `calc(${100/tasksInThisHour.length}% - 8px)`, left: `calc(${(100/tasksInThisHour.length)*index}% + 4px)` }}
-                            className={`absolute top-0 rounded-[16px] p-3 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer border-2 ${isDeadlineBlock ? "bg-[#FFDBDB]/40 border-red-200 hover:border-red-300" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}>
-                            <div className="flex justify-between items-start mb-1">
-                              <p className={`text-[12px] font-bold truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#303030]"}`}>{t.title}</p>
-                              {isDeadlineBlock ? (<span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full hidden sm:block">deadline</span>) : (<span className="text-[10px] text-[#DC8A25] bg-[#FFE5C5] px-2 py-0.5 rounded-full hidden sm:block">zaplanowane</span>)}
-                            </div>
-                            <p className="text-[11px] text-[#BDBDBD] mt-0.5 font-medium">{h.toString().padStart(2,"0")}:00 - {((h+Math.floor(mins/60))%24).toString().padStart(2,"0")}:{(mins%60).toString().padStart(2,"0")}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          {viewType === "Dzień" && renderDailyView()}
+          {viewType === "Tydzień" && renderWeeklyView()}
+          {viewType === "Miesiąc" && renderMonthlyView()}
         </div>
       </div>
       <div className="w-[300px] bg-[#F5F7F5] border-l border-[#F0F0F0] rounded-l-[12px] flex flex-col hidden lg:flex shrink-0 h-full relative z-10 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.02)]">
@@ -143,7 +322,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
           <div className="absolute left-[33px] top-0 bottom-0 w-px bg-[#BBBBBB] z-0 hidden"></div>
           <div className="space-y-4">
             {queueTasks.map((t, idx) => {
-              const deadlineToday = isSameDate(t.deadline);
+              const deadlineToday = isSameDate(t.deadline, selectedDate);
               return (
                 <div key={t.id} className="relative z-10 pl-6">
                   <div className="absolute left-[3px] top-[26px] w-2 h-2 rounded-full bg-[#0A0291] border border-white shadow-sm z-20"></div>
