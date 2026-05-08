@@ -12,7 +12,7 @@ export default function StreakPlant({ tasks }) {
   const plantHeight = Math.max(15, progress);
 
   return (
-    <div className="pt-[52px]">
+    <div className="pt-4 xl:pt-[52px]">
       <h3 className="font-lora text-xl font-bold text-[#1A2F22] mb-2">Twoja roślinka streaku</h3>
       <p className="text-xs text-[#5A7368] mb-6 leading-relaxed">
         Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie zasila roślinę.

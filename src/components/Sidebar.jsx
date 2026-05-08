@@ -6,7 +6,7 @@ import {
 // ═══════════════════════════════════════════════════
 //  APP: SIDEBAR / LAYOUT
 // ═══════════════════════════════════════════════════
-export default function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selectedDate, setSelectedDate, todayDate, activeAlert, onDismissAlert }) {
+export default function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selectedDate, setSelectedDate, todayDate, activeAlert, onDismissAlert, isMobileOpen, setIsMobileOpen }) {
 
 
   // Logika generowania dni w mini-kalendarzu
@@ -36,13 +36,27 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
   ];
 
   return (
-    <aside className={`${collapsed ? "w-20 md:w-64" : "w-64"} flex-shrink-0 bg-white border-r border-[#E8DDD0] flex flex-col transition-all duration-300 h-screen sticky top-0 z-50`}>
-      <div className={`px-5 py-6 border-b border-[#E8DDD0] flex items-center ${collapsed ? "justify-center md:justify-between" : "justify-between"}`}>
-        <span className={`font-lora text-[#1E5C36] font-bold text-xl tracking-tight ${collapsed ? "hidden md:inline" : "inline"}`}>Wellbeing app</span>
-        <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all md:hidden">
-          <Menu size={18} />
-        </button>
-      </div>
+    <>
+      {/* Mobile overlay */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 bg-black/20 z-[60] md:hidden" onClick={() => setIsMobileOpen(false)} />
+      )}
+      
+      <aside className={`
+        fixed md:sticky top-0 left-0 z-[70] h-screen bg-white border-r border-[#E8DDD0] flex flex-col transition-transform duration-300
+        ${isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0"}
+        ${collapsed ? "md:w-20" : "md:w-64"}
+        flex-shrink-0
+      `}>
+        <div className={`px-5 py-6 border-b border-[#E8DDD0] flex items-center ${collapsed ? "justify-center md:justify-between" : "justify-between"}`}>
+          <span className={`font-lora text-[#1E5C36] font-bold text-xl tracking-tight ${collapsed ? "hidden md:inline" : "inline"}`}>Wellbeing app</span>
+          <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all hidden md:block">
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+          <button onClick={() => setIsMobileOpen(false)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all md:hidden">
+            <X size={20} />
+          </button>
+        </div>
 
       <nav className="px-3 py-3 space-y-1">
         {navItems.map(n => {
@@ -57,7 +71,7 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
                 </div>
               )}
 
-              <button onClick={() => { if (hasAlert) onDismissAlert(); onNav(n.id); }} className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-bold transition-all relative overflow-hidden ${active === n.id ? (hasAlert ? "bg-[#1e3a2b] text-white shadow-md" : "bg-[#1E5C36] text-white shadow-lg shadow-green-900/20") : (hasAlert ? "bg-[#1e3a2b] text-white shadow-md hover:bg-[#162c20]" : "text-[#5A7368] hover:bg-[#F5EFE6]")}`}>
+              <button onClick={() => { if (hasAlert) onDismissAlert(); onNav(n.id); setIsMobileOpen && setIsMobileOpen(false); }} className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-bold transition-all relative overflow-hidden ${active === n.id ? (hasAlert ? "bg-[#1e3a2b] text-white shadow-md" : "bg-[#1E5C36] text-white shadow-lg shadow-green-900/20") : (hasAlert ? "bg-[#1e3a2b] text-white shadow-md hover:bg-[#162c20]" : "text-[#5A7368] hover:bg-[#F5EFE6]")}`}>
 
                 {hasAlert && (
                   <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#D32F2F]"></div>
@@ -130,6 +144,7 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
       </div>
 
       {/* Profil użytkownika przeniesiony do prawego górnego rogu aplikacji */}
-    </aside>
+      </aside>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 
 // Lib
 import { supabase } from "./lib/supabase";
@@ -44,6 +44,7 @@ export default function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [tasks, setTasks] = useState([]);
   const [moods, setMoods] = useState([]);
@@ -710,13 +711,21 @@ export default function App() {
             todayDate={getNow()}
             activeAlert={activeAlert}
             onDismissAlert={() => setDismissedAlertKey(currentAlertKey)}
+            isMobileOpen={isMobileSidebarOpen}
+            setIsMobileOpen={setIsMobileSidebarOpen}
           />
           <main className="flex-1 overflow-hidden relative bg-[#FAFAFA] flex flex-col">
             {/* NOWY HEADER RESPANSYWNY - UPROSZCZONY */}
             <header className="w-full px-4 md:px-10 py-6 flex items-center justify-between z-[60]">
               <div className="flex items-center space-x-2 md:space-x-4 truncate">
+                <button 
+                  className="md:hidden p-1 mr-1 text-[#1A2F22]" 
+                  onClick={() => setIsMobileSidebarOpen(true)}
+                >
+                  <Menu size={24} />
+                </button>
                 <span className="text-xl md:text-2xl font-bold text-[#1A2F22] flex items-baseline gap-1 md:gap-2 truncate">
-                  <span className="truncate">Cześć {user?.name ? user.name.split(' ')[0] : "Natalia"},</span>
+                  <span className="truncate">Cześć {user?.name ? user.name.split(' ')[0] : "Natalia"}!</span>
                   <span className="capitalize text-sm md:text-xl text-[#5A7368] font-medium hidden sm:inline ml-1">{getNow().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                 </span>
               </div>

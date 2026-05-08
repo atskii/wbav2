@@ -70,18 +70,28 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
   const formatTime = (mins) => `${Math.floor(mins / 60)}:${(mins % 60).toString().padStart(2, '0')}`;
 
   return (
-    <div className="px-6 pt-2 pb-6 max-w-6xl mx-auto w-full h-[calc(100vh-88px)] flex flex-col">
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-16 items-start flex-1 overflow-hidden">
-        <div className="xl:col-span-8 relative max-w-4xl mx-auto w-full h-full flex flex-col min-h-0">
+    <div className="px-4 md:px-6 pt-2 pb-6 max-w-6xl mx-auto w-full xl:h-[calc(100vh-88px)] flex flex-col overflow-y-auto xl:overflow-hidden">
+      <div className="xl:grid xl:grid-cols-12 xl:gap-16 items-start flex-1 min-h-0">
+        <div className="xl:col-span-8 relative max-w-4xl mx-auto w-full xl:h-full flex flex-col min-h-0">
           {/* NAGŁÓWEK DASHBOARDU PRZENIESIONY TUTAJ - NAD PLAN DNI */}
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 lg:gap-0 mb-6 flex-shrink-0">
-            <div className="flex flex-col items-start gap-1">
-              <h1 className="text-3xl lg:text-4xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
-              <div className="flex items-center gap-3 mt-2">
+            <div className="flex flex-col items-start gap-1 w-full lg:w-auto">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
+              
+              <div className="flex gap-2 w-full lg:w-auto mt-4 mb-2 lg:hidden">
+                <button onClick={onOpenTaskModal} className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">
+                  Dodaj zadanie <Plus size={16} />
+                </button>
+                <button onClick={onGeneratePlan} className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] transition-all shadow-sm active:scale-95">
+                  <RefreshCw size={16} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between w-full lg:w-auto lg:justify-start gap-3 mt-2">
                 <button onClick={() => onChangeDate(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-full transition-all active:scale-95 text-[#1A2F22]">
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
-                <span className="text-[18px] lg:text-[20px] font-bold text-[#1A2F22] capitalize text-center">
+                <span className="text-[16px] lg:text-[20px] font-bold text-[#1A2F22] capitalize text-center">
                   {selectedDate.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </span>
                 <button onClick={() => onChangeDate(1)} className="p-1 hover:bg-[#E8DDD0] rounded-full transition-all active:scale-95 text-[#1A2F22]">
@@ -90,7 +100,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
               </div>
             </div>
 
-            <div className="flex gap-2 w-full lg:w-auto mt-2">
+            <div className="hidden lg:flex gap-2 w-full lg:w-auto mt-2">
               <button onClick={onGeneratePlan} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">
                 <RefreshCw size={15} /> Generuj
               </button>
@@ -101,7 +111,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
           </div>
 
           {/* RESPANSYWNA LINIA OSI CZASU */}
-          <div className="flex-1 overflow-y-auto relative pr-4 custom-scrollbar -mr-4 min-h-0">
+          <div className="xl:flex-1 xl:overflow-y-auto relative pr-2 md:pr-4 custom-scrollbar -mr-2 md:-mr-4 min-h-0">
             <div className="relative mt-8" style={{ height: `${minsToRem((timelineEndHour - timelineStart) * 60)}rem` }}>
               <div className="absolute left-[2.5rem] md:left-[3.25rem] top-0 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
               {hours.map((h, i) => (
@@ -271,7 +281,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
             )}
           </div>
         </div>
-        <div className="xl:col-span-4 h-full">
+        <div className="xl:col-span-4 xl:h-full w-full mt-8 xl:mt-0">
           <StreakPlant tasks={scheduled} />
         </div>
       </div>
