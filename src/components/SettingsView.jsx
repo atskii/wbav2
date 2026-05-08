@@ -34,7 +34,8 @@ export default function SettingsView({ user, setUser, add }) {
     }
   };
   return (
-    <div className="font-dm-sans p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="h-full w-full overflow-y-auto">
+      <div className="font-dm-sans p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-32">
       <div className="flex items-center gap-4 mb-8">
         <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#E8DDD0]"><Settings size={24} className="text-[#1E5C36]" /></div>
         <div><h1 className="font-lora text-3xl font-bold text-[#1A2F22]">Ustawienia</h1><p className="text-[#5A7368]">Dostosuj aplikację do swojego rytmu dnia</p></div>
@@ -52,9 +53,9 @@ export default function SettingsView({ user, setUser, add }) {
           <div><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Początek dnia</h3><p className="text-sm text-[#5A7368]">Od której godziny chcesz rozpoczynać zadania?</p></div>
           <div className="flex items-center gap-2 bg-[#F5EFE6] p-2 rounded-2xl w-fit">
             <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-[#E8DDD0] shadow-sm">
-              <button onClick={() => handleHourChange(1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronUp size={20} strokeWidth={3} /></button>
+              <button onClick={() => handleHourChange(-1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronUp size={20} strokeWidth={3} /></button>
               <input type="text" value={startHour} onChange={e => setStartHour(e.target.value.replace(/\D/g, ''))} onBlur={handleHourInputBlur} className="w-12 text-center text-2xl font-bold text-[#1A2F22] bg-transparent outline-none focus:text-[#2D9E6B] transition-colors" maxLength={2} />
-              <button onClick={() => handleHourChange(-1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronDown size={20} strokeWidth={3} /></button>
+              <button onClick={() => handleHourChange(1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronDown size={20} strokeWidth={3} /></button>
             </div>
             <div className="text-2xl font-bold text-[#1A2F22] pb-1">:</div>
             <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-[#E8DDD0] shadow-sm">
@@ -82,6 +83,7 @@ export default function SettingsView({ user, setUser, add }) {
           {isSaving ? <RotateCcw size={18} className="animate-spin" /> : <Check size={18} />}
           Zapisz ustawienia
         </button>
+      </div>
       </div>
     </div>
   );

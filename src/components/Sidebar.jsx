@@ -1,6 +1,6 @@
 import {
   Home, Calendar, Smile, AlertTriangle, X,
-  ChevronLeft, ChevronRight, Menu, Settings
+  ChevronLeft, ChevronRight, Menu, Settings, LifeBuoy
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════
@@ -31,7 +31,7 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
     { id: "dashboard", icon: <Home size={16} />, label: "Strona główna" },
     { id: "calendar", icon: <Calendar size={16} />, label: "Kalendarz" },
     { id: "mood", icon: <Smile size={16} />, label: "Monitor nastroju" },
-    { id: "warning", icon: <AlertTriangle size={16} />, label: "System ostrzegania" },
+    { id: "warning", icon: <LifeBuoy size={16} />, label: "Pomoc" },
     { id: "settings", icon: <Settings size={16} />, label: "Ustawienia" },
   ];
 

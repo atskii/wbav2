@@ -4,11 +4,12 @@ import { CONTACTS } from "../lib/constants";
 export default function WarningView({ loading, user }) {
 
   return (
-    <div className="p-10 max-w-6xl mx-auto w-full pb-32">
-      <header className="mb-10">
-        <p className="text-[#5A7368] font-bold text-sm mb-1">Cześć {user?.name || "Natalia"}!</p>
-        <h1 className="font-lora text-4xl font-bold text-[#1A2F22] mb-4">System ostrzegania</h1>
-        <p className="text-[#5A7368] text-sm max-w-3xl leading-relaxed">
+    <div className="h-full w-full overflow-y-auto">
+      <div className="p-10 max-w-6xl mx-auto w-full pb-32">
+        <header className="mb-10">
+          <p className="text-[#5A7368] font-bold text-sm mb-1">Cześć {user?.name || "Natalia"}!</p>
+          <h1 className="font-lora text-4xl font-bold text-[#1A2F22] mb-4">Pomoc</h1>
+          <p className="text-[#5A7368] text-sm max-w-3xl leading-relaxed">
           Wsparcie jest bliżej, niż myślisz. Jeśli czujesz, że potrzebujesz wsparcia, skontaktuj się z osobami, które są gotowe Ci pomóc. Poniżej znajdziesz listę organizacji oferujących bezpłatną pomoc.
         </p>
       </header>
@@ -32,6 +33,7 @@ export default function WarningView({ loading, user }) {
             </div>
           </div>
         ))}
+      </div>
       </div>
     </div>
   );
