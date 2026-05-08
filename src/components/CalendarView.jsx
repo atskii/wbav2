@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Search, ChevronDown, ChevronLeft, ChevronRight, ArrowRight,
-  Star, Trash2
+  Star, Trash2, X
 } from "lucide-react";
 import SkeletonScreen from "./ui/Skeleton";
 import { checkIsDate } from "../lib/dateHelpers";
@@ -10,8 +10,11 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
   const [searchRight, setSearchRight] = useState("");
   const [searchCal, setSearchCal] = useState("");
   const [viewType, setViewType] = useState("Dzień");
+  const [popoverDay, setPopoverDay] = useState(null);
   const calendarScrollRef = useRef(null);
+  const popoverRef = useRef(null);
   const [nowMinute, setNowMinute] = useState(new Date().getHours() * 60 + new Date().getMinutes());
+  const [popoverStyle, setPopoverStyle] = useState({});
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -20,6 +23,20 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     }, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!popoverDay || !popoverRef.current) return;
+    const el = popoverRef.current;
+    const rect = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const style = {};
+    if (rect.right > vw - 8) style.left = `${el.offsetLeft - (rect.right - vw) - 16}px`;
+    if (rect.left < 8) style.left = `${el.offsetLeft + (8 - rect.left)}px`;
+    if (rect.bottom > vh - 8) style.top = `${el.offsetTop - (rect.bottom - vh) - 16}px`;
+    if (rect.top < 8) style.top = `${el.offsetTop + (8 - rect.top)}px`;
+    if (Object.keys(style).length > 0) setPopoverStyle(style);
+  }, [popoverDay]);
 
   const hours = Array.from({ length: 17 }, (_, i) => i + 6);
 
@@ -206,50 +223,105 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     </div>
   );
 
+
   const renderMonthlyView = () => {
     const days = getDaysOfMonth(selectedDate);
     const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
+    const popoverItem = popoverDay ? days.find(d => d.date.toDateString() === popoverDay.toDateString()) : null;
+    const popoverTasks = popoverItem ? tasks.filter(t => (isSameDate(t.t, popoverItem.date) || (!t.isLocked && isSameDate(t.deadline, popoverItem.date)))) : [];
     
     return (
-      <div className="flex-1 flex flex-col min-h-0 bg-white">
-        <div className="grid grid-cols-7 border-b border-[#E8E8E8]">
+      <div className="flex-1 flex flex-col min-h-0 bg-white relative">
+        <div className="grid grid-cols-7 border-b border-[#E8E8E8] shrink-0">
           {dayNames.map(d => (
             <div key={d} className="text-center py-2 md:py-3 text-[10px] md:text-[11px] font-bold text-[#75757A] uppercase tracking-wider border-r border-[#F0F0F0] last:border-0">
               {d}
             </div>
           ))}
         </div>
-        <div className="flex-1 grid grid-cols-7 grid-rows-5 overflow-hidden">
-          {days.map((item, idx) => {
-            const isTodayMonth = new Date().toDateString() === item.date.toDateString();
-            const dayTasks = tasks.filter(t => (isSameDate(t.t, item.date) || (!t.isLocked && isSameDate(t.deadline, item.date))));
-            
-            return (
-              <div key={idx} onClick={() => { onChangeDate(Math.round((item.date - selectedDate) / (1000 * 3600 * 24))); setViewType("Dzień"); }} className={`border-r border-b border-[#F0F0F0] p-1 flex flex-col hover:bg-gray-50 cursor-pointer transition-colors ${item.isCurrentMonth ? "bg-white" : "bg-gray-50/50"}`}>
-                <div className="flex justify-center mb-0.5 md:mb-1">
-                  <div className={`w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full text-[10px] md:text-xs font-bold ${isTodayMonth ? "bg-[#057E85] text-white shadow-sm" : item.isCurrentMonth ? "text-[#303030]" : "text-[#C0C0C0]"}`}>
-                    {item.date.getDate()}
+        <div className="flex-1 overflow-y-auto">
+          <div className="grid grid-cols-7 auto-rows-[minmax(6rem,1fr)] relative">
+            {days.map((item, idx) => {
+              const isTodayMonth = new Date().toDateString() === item.date.toDateString();
+              const dayTasks = tasks.filter(t => (isSameDate(t.t, item.date) || (!t.isLocked && isSameDate(t.deadline, item.date))));
+              
+              return (
+                <div key={idx} className={`border-r border-b border-[#F0F0F0] p-1 flex flex-col transition-colors ${item.isCurrentMonth ? "bg-white" : "bg-gray-50/50"}`}>
+                  <div className="flex justify-center mb-0.5 md:mb-1">
+                    <div 
+                      onClick={() => { onChangeDate(Math.round((item.date - selectedDate) / (1000 * 3600 * 24))); setViewType("Dzień"); }} 
+                      className={`w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full text-[10px] md:text-xs font-bold hover:bg-gray-200 cursor-pointer transition-colors ${isTodayMonth ? "bg-[#057E85] text-white hover:bg-[#04666d] shadow-sm" : item.isCurrentMonth ? "text-[#303030]" : "text-[#C0C0C0]"}`}>
+                      {item.date.getDate()}
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-hidden flex flex-col gap-0.5" onClick={() => { if(dayTasks.length > 0) { setPopoverStyle({}); setPopoverDay(item.date); } }}>
+                    {dayTasks.slice(0, 3).map(t => {
+                      const isDeadlineBlock = !isSameDate(t.t, item.date) && isSameDate(t.deadline, item.date);
+                      let timeStr = "";
+                      if (isDeadlineBlock) {
+                        const m = t.deadline.match(/o (\d{1,2}:\d{2})/);
+                        if (m) timeStr = m[1];
+                      } else if (t.t) {
+                        const m = t.t.match(/(\d{1,2}:\d{2})/);
+                        if (m) timeStr = m[1];
+                        else if (t.hour) timeStr = `${t.hour}:00`;
+                      }
+                      return (
+                        <div key={t.id} onClick={(e) => { e.stopPropagation(); onEditTask(t); }} className="flex items-center gap-1.5 px-1 py-0.5 rounded text-[10px] hover:bg-gray-100 truncate cursor-pointer transition-colors">
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${isDeadlineBlock ? "bg-[#D04F4F]" : "bg-[#057E85]"}`} />
+                          {timeStr && <span className="font-medium text-[#5A7368] text-[9px]">{timeStr}</span>}
+                          <span className={`font-bold truncate ${isDeadlineBlock ? "text-[#303030]" : "text-[#303030]"}`}>{t.title}</span>
+                        </div>
+                      )
+                    })}
+                    {dayTasks.length > 3 && (
+                      <div onClick={(e) => { e.stopPropagation(); setPopoverStyle({}); setPopoverDay(item.date); }} className="text-[10px] font-bold text-[#303030] pl-1 hover:text-[#057E85] cursor-pointer mt-0.5 transition-colors">
+                        +{dayTasks.length - 3} więcej
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="flex-1 overflow-hidden flex flex-col gap-0.5 md:gap-1">
-                  {dayTasks.slice(0, 3).map(t => {
-                    const isDeadlineBlock = !isSameDate(t.t, item.date) && isSameDate(t.deadline, item.date);
-                    return (
-                      <div key={t.id} className={`px-1 py-0.5 md:px-1.5 rounded text-[8px] md:text-[9px] font-bold truncate ${isDeadlineBlock ? "bg-[#FFDBDB] text-[#D04F4F]" : "bg-[#E8F0FE] text-[#0A0291]"}`}>
-                        {t.title}
-                      </div>
-                    )
-                  })}
-                  {dayTasks.length > 3 && (
-                    <div className="text-[8px] md:text-[9px] font-medium text-[#75757A] pl-1">
-                      +{dayTasks.length - 3} więcej
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
+
+        {/* POPOVER — rendered outside the grid, uses fixed positioning to stay on screen */}
+        {popoverDay && popoverItem && (
+          <>
+            <div className="fixed inset-0 z-[998]" onClick={() => setPopoverDay(null)} />
+            <div ref={popoverRef} style={popoverStyle} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 md:w-72 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] border border-[#E8DDD0] z-[999] overflow-hidden cursor-default" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0F0]">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase text-[#75757A]">{dayNames[(popoverDay.getDay()+6)%7]}</span>
+                  <span className="text-xl font-bold text-[#303030] leading-none">{popoverDay.getDate()}</span>
+                </div>
+                <button onClick={() => setPopoverDay(null)} className="p-1 hover:bg-gray-100 rounded-full text-[#75757A] transition-colors"><X size={16}/></button>
+              </div>
+              <div className="p-2 max-h-72 overflow-y-auto space-y-0.5">
+                {popoverTasks.map(t => {
+                  const isDeadlineBlock = !isSameDate(t.t, popoverItem.date) && isSameDate(t.deadline, popoverItem.date);
+                  let timeStr = "";
+                  if (isDeadlineBlock) {
+                    const m = t.deadline.match(/o (\d{1,2}:\d{2})/);
+                    if (m) timeStr = m[1];
+                  } else if (t.t) {
+                    const m = t.t.match(/(\d{1,2}:\d{2})/);
+                    if (m) timeStr = m[1];
+                    else if (t.hour) timeStr = `${t.hour}:00`;
+                  }
+                  return (
+                    <div key={t.id} onClick={() => { setPopoverDay(null); onEditTask(t); }} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${isDeadlineBlock ? "bg-[#D04F4F]" : "bg-[#057E85]"}`} />
+                      {timeStr && <span className="font-medium text-[#5A7368] text-[10px] w-8 shrink-0">{timeStr}</span>}
+                      <span className={`text-[11px] font-bold truncate group-hover:text-[#057E85] transition-colors ${isDeadlineBlock ? "text-[#303030]" : "text-[#303030]"}`}>{t.title}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   };
