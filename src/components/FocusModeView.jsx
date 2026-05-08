@@ -7,7 +7,7 @@ import { X, Play, Pause, RotateCcw, Check, Target } from "lucide-react";
 export default function FocusModeView({ task, onClose, onComplete }) {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
-  const H = { fontFamily: "'Lora',serif" };
+
 
   useEffect(() => {
     let interval = null;
@@ -35,7 +35,7 @@ export default function FocusModeView({ task, onClose, onComplete }) {
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#2D9E6B]/20 text-[#2D9E6B] font-bold text-xs uppercase tracking-widest mb-8 border border-[#2D9E6B]/30">
           <Target size={14} /> Tryb Głębokiej Pracy
         </div>
-        <h1 style={H} className="text-3xl font-bold mb-4">{task.title}</h1>
+        <h1 className="font-lora text-3xl font-bold mb-4">{task.title}</h1>
         {task.desc && <p className="text-[#9FB5AD] text-sm mb-12 max-w-sm mx-auto">{task.desc}</p>}
         <div className="relative flex items-center justify-center mb-12">
           <div className={`absolute w-64 h-64 rounded-full border-[6px] transition-all duration-1000 ${isActive ? 'border-[#2D9E6B] scale-105 opacity-100 animate-pulse' : 'border-white/10 scale-100 opacity-50'}`} />

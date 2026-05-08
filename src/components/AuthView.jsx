@@ -9,8 +9,7 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
   const [err, setErr] = useState("");
-  const S = { fontFamily: "'DM Sans',sans-serif" };
-  const H = { fontFamily: "'Lora',serif" };
+
 
   // Hardcoded accounts for closed MVP
   const ACCOUNTS = {
@@ -33,9 +32,9 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
     }
   };
   return (
-    <div style={S} className="min-h-screen bg-[#F5EFE6] flex flex-col">
+    <div className="font-dm-sans min-h-screen bg-[#F5EFE6] flex flex-col">
       <nav className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4 flex items-center justify-between">
-        <button onClick={onBack}><span style={H} className="text-[#1E5C36] font-bold text-xl">Wellbeing app</span></button>
+        <button onClick={onBack}><span className="font-lora text-[#1E5C36] font-bold text-xl">Wellbeing app</span></button>
         <div className="flex gap-2">
           <button onClick={() => onSwitch("login")} className="px-5 py-2 text-sm font-semibold rounded-full border-2 transition-all bg-[#1E5C36] text-white border-[#1E5C36]">Zaloguj się</button>
           <button disabled className="px-5 py-2 text-sm font-semibold rounded-full border-2 bg-gray-400 text-gray-500 border-gray-400 cursor-not-allowed opacity-50 line-through">Zarejestruj się</button>
@@ -43,7 +42,7 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
       </nav>
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative overflow-hidden">
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl shadow-green-900/10 p-8 w-full max-w-sm border border-[#E8DDD0]">
-          <h2 style={H} className="text-2xl font-bold text-[#1A2F22] text-center mb-1">
+          <h2 className="font-lora text-2xl font-bold text-[#1A2F22] text-center mb-1">
             Zaloguj się
           </h2>
           <p className="text-center text-[#5A7368] text-sm mb-6">

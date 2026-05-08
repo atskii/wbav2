@@ -6,8 +6,7 @@ import { supabase } from "../lib/supabase";
 //  SETTINGS VIEW
 // ═══════════════════════════════════════════════════
 export default function SettingsView({ user, setUser, add }) {
-  const S = { fontFamily: "'DM Sans',sans-serif" };
-  const H = { fontFamily: "'Lora',serif" };
+
   const OPTS = ["Wyjście na słońce", "Kilka minut przerwy", "Dobra kawa", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Przerwa od pracy", "Muzyka", "Zmiana otoczenia"];
   const [hours, setHours] = useState(user?.prefs?.hours || 8);
   const [startHour, setStartHour] = useState(user?.prefs?.startTime ? user.prefs.startTime.split(':')[0] : "08");
@@ -35,10 +34,10 @@ export default function SettingsView({ user, setUser, add }) {
     }
   };
   return (
-    <div style={S} className="p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="font-dm-sans p-6 md:p-10 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4 mb-8">
         <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#E8DDD0]"><Settings size={24} className="text-[#1E5C36]" /></div>
-        <div><h1 style={H} className="text-3xl font-bold text-[#1A2F22]">Ustawienia</h1><p className="text-[#5A7368]">Dostosuj aplikację do swojego rytmu dnia</p></div>
+        <div><h1 className="font-lora text-3xl font-bold text-[#1A2F22]">Ustawienia</h1><p className="text-[#5A7368]">Dostosuj aplikację do swojego rytmu dnia</p></div>
       </div>
       <div className="bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
         <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">

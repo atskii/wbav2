@@ -7,7 +7,7 @@ import {
 //  APP: SIDEBAR / LAYOUT
 // ═══════════════════════════════════════════════════
 export default function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selectedDate, setSelectedDate, todayDate, activeAlert, onDismissAlert }) {
-  const H = { fontFamily: "'Lora', serif" };
+
 
   // Logika generowania dni w mini-kalendarzu
   const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
@@ -38,7 +38,7 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
   return (
     <aside className={`${collapsed ? "w-20 md:w-64" : "w-64"} flex-shrink-0 bg-white border-r border-[#E8DDD0] flex flex-col transition-all duration-300 h-screen sticky top-0 z-50`}>
       <div className={`px-5 py-6 border-b border-[#E8DDD0] flex items-center ${collapsed ? "justify-center md:justify-between" : "justify-between"}`}>
-        <span style={H} className={`text-[#1E5C36] font-bold text-xl tracking-tight ${collapsed ? "hidden md:inline" : "inline"}`}>Wellbeing app</span>
+        <span className={`font-lora text-[#1E5C36] font-bold text-xl tracking-tight ${collapsed ? "hidden md:inline" : "inline"}`}>Wellbeing app</span>
         <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all md:hidden">
           <Menu size={18} />
         </button>
@@ -75,7 +75,7 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
                     <button onClick={(e) => { e.stopPropagation(); onDismissAlert(); }} className="absolute top-2 right-2 text-[#1A432E] opacity-50 hover:opacity-100 transition-opacity p-1 bg-[#fceeb5] rounded-full hover:bg-yellow-200" title="Zamknij ostrzeżenie">
                       <X size={14} />
                     </button>
-                    <h2 style={H} className="text-base font-bold text-[#1A432E] leading-tight mb-2 pr-6">Zauważyliśmy coś ważnego</h2>
+                    <h2 className="font-lora text-base font-bold text-[#1A432E] leading-tight mb-2 pr-6">Zauważyliśmy coś ważnego</h2>
                     <p className="text-[#1A432E] text-[11px] leading-relaxed mb-4">
                       {activeAlert.text}
                     </p>

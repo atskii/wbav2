@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Shared typography — replaces inline style={{ fontFamily }} objects */
+.font-lora {
+  font-family: 'Lora', serif;
+}
+.font-dm-sans {
+  font-family: 'DM Sans', sans-serif;
+}
+
 
 body {
   margin: 0;

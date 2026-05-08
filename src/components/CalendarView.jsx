@@ -4,9 +4,9 @@ import {
   Star, Trash2
 } from "lucide-react";
 import SkeletonScreen from "./ui/Skeleton";
+import { checkIsDate } from "../lib/dateHelpers";
 
 export default function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, onFocusTask, onEditTask, loading }) {
-  const H = { fontFamily: "'Lora', serif" };
   const [searchRight, setSearchRight] = useState("");
   const [searchCal, setSearchCal] = useState("");
   const [viewType, setViewType] = useState("Dzień");
@@ -23,37 +23,8 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
 
   const hours = Array.from({ length: 17 }, (_, i) => i + 6);
 
-  const isSameDate = (textString, targetDate = selectedDate) => {
-    if (!textString) return false;
-    const txt = textString.toLowerCase();
-    const selYear = targetDate.getFullYear();
-    const selMonth = targetDate.getMonth() + 1;
-    const selDay = targetDate.getDate();
-    const selDateOnly = new Date(selYear, targetDate.getMonth(), selDay);
-    const endMatch = txt.match(/🛑 do (\d{4})-(\d{1,2})-(\d{1,2})/);
-    if (endMatch) {
-      const endDate = new Date(parseInt(endMatch[1]), parseInt(endMatch[2]) - 1, parseInt(endMatch[3]));
-      if (selDateOnly > endDate) return false;
-    }
-    const startMatch = textString.match(/\((\d{1,2})[\./ -](\d{1,2})[\./ -](\d{4})\)/);
-    if (startMatch && (txt.includes("codziennie") || txt.includes("co tydzień") || txt.includes("w dni robocze"))) {
-      const startDate = new Date(parseInt(startMatch[3]), parseInt(startMatch[2]) - 1, parseInt(startMatch[1]));
-      if (selDateOnly < startDate) return false;
-    }
-    const dayOfWeek = targetDate.getDay() === 0 ? 6 : targetDate.getDay() - 1;
-    const daysArr = ["pon", "wt", "śr", "czw", "pt", "sob", "ndz"];
-    if (txt.includes("codziennie") || txt.includes("każdego dnia")) return true;
-    if (txt.includes("w dni robocze") && dayOfWeek >= 0 && dayOfWeek <= 4) return true;
-    if (txt.includes("co tydzień") || txt.includes("co tydzien")) {
-      if (txt.includes(daysArr[dayOfWeek])) return true;
-      if (dayOfWeek === 5 && txt.includes("sb")) return true;
-    }
-    const ymd = textString.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
-    if (ymd && parseInt(ymd[1]) === selYear && parseInt(ymd[2]) === selMonth && parseInt(ymd[3]) === selDay) return true;
-    const dmy = textString.match(/(\d{1,2})[\./ -](\d{1,2})[\./ -](\d{4})/);
-    if (dmy && parseInt(dmy[3]) === selYear && parseInt(dmy[2]) === selMonth && parseInt(dmy[1]) === selDay) return true;
-    return false;
-  };
+  // Wrapper using shared checkIsDate with selectedDate as default
+  const isSameDate = (textString, targetDate = selectedDate) => checkIsDate(textString, targetDate);
 
   const timelineTasks = tasks.filter(t => (isSameDate(t.t) || (!t.isLocked && isSameDate(t.deadline))));
   const queueTasks = tasks.filter(t => !searchRight || t.title.toLowerCase().includes(searchRight.toLowerCase()));
@@ -89,7 +60,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     <div className="flex h-full bg-[#FCFCFD] overflow-hidden">
       <div className="flex-1 flex flex-col p-6 pr-8 h-full">
         <header className="mb-6 flex flex-col gap-2 shrink-0">
-          <h1 style={H} className="text-3xl font-bold text-[#303030]">Kalendarz</h1>
+          <h1 className="font-lora text-3xl font-bold text-[#303030]">Kalendarz</h1>
           <p className="text-[#1D1B20] text-base">Twój dzień czeka! Zapisz rzeczy, które chcesz dziś zrobić, i uporządkuj swoje zadania.<br />Pamiętaj, że każdy mały krok ma znaczenie.</p>
         </header>
         <div className="flex-1 bg-white border border-[#E8E8E8] rounded-[13px] flex flex-col overflow-hidden shadow-sm min-h-0 relative">

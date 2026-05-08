@@ -11,7 +11,7 @@ import StreakPlant from "./StreakPlant";
 //  DASHBOARD VIEW (ZAMROŻONY PLAN Z GUZIKIEM GENERUJ)
 // ═══════════════════════════════════════════════════
 export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onAlert, onFocusTask, loading, onGeneratePlan, userPrefs }) {
-  const H = { fontFamily: "'Lora', serif" };
+
   const [showBacklog, setShowBacklog] = useState(false);
 
 
@@ -76,12 +76,12 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
           {/* NAGŁÓWEK DASHBOARDU PRZENIESIONY TUTAJ - NAD PLAN DNI */}
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 lg:gap-0 mb-6 flex-shrink-0">
             <div className="flex flex-col items-start gap-1">
-              <h1 style={H} className="text-3xl lg:text-4xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
+              <h1 className="text-3xl lg:text-4xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
               <div className="flex items-center gap-3 mt-2">
                 <button onClick={() => onChangeDate(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-full transition-all active:scale-95 text-[#1A2F22]">
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
-                <span className="text-[18px] lg:text-[20px] font-bold text-[#1A2F22] capitalize text-center" style={{ fontFamily: "'Lora', serif" }}>
+                <span className="text-[18px] lg:text-[20px] font-bold text-[#1A2F22] capitalize text-center">
                   {selectedDate.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </span>
                 <button onClick={() => onChangeDate(1)} className="p-1 hover:bg-[#E8DDD0] rounded-full transition-all active:scale-95 text-[#1A2F22]">

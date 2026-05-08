@@ -9,8 +9,7 @@ export default function Onboarding({ onComplete }) {
   const [startMinute, setStartMinute] = useState("00");
 
   const [picks, setPicks] = useState([]);
-  const S = { fontFamily: "'DM Sans',sans-serif" };
-  const H = { fontFamily: "'Lora',serif" };
+
   const OPTS = ["Wyjście na słońce", "Kilka minut przerwy", "Dobra kawa", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Przerwa od pracy", "Muzyka", "Zmiana otoczenia"];
 
   const toggle = b => setPicks(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b]);
@@ -48,8 +47,8 @@ export default function Onboarding({ onComplete }) {
   };
 
   return (
-    <div style={S} className="min-h-screen bg-[#F5EFE6] flex flex-col">
-      <nav className="bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4"><span style={H} className="text-[#1E5C36] font-bold text-xl">Wellbeing app</span></nav>
+    <div className="font-dm-sans min-h-screen bg-[#F5EFE6] flex flex-col">
+      <nav className="bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4"><span className="font-lora text-[#1E5C36] font-bold text-xl">Wellbeing app</span></nav>
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative overflow-hidden">
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg border border-[#E8DDD0]">
           <div className="flex justify-center gap-2 mb-7">
@@ -58,7 +57,7 @@ export default function Onboarding({ onComplete }) {
             ))}
           </div>
           {step === 0 && <>
-            <h2 style={H} className="text-2xl font-bold text-center text-[#1A2F22] mb-2">Pytanie 1 z 3</h2>
+            <h2 className="font-lora text-2xl font-bold text-center text-[#1A2F22] mb-2">Pytanie 1 z 3</h2>
             <p className="text-center text-[#5A7368] mb-8 text-sm">Ile godzin dziennie spędzasz w pracy?</p>
             <div className="flex items-center justify-center gap-6">
               <button onClick={() => setHours(h => Math.max(1, h - 1))} className="w-12 h-12 rounded-2xl border-2 border-[#E8DDD0] flex items-center justify-center text-xl font-bold text-[#5A7368] transition-all">−</button>
@@ -67,7 +66,7 @@ export default function Onboarding({ onComplete }) {
             </div>
           </>}
           {step === 1 && <>
-            <h2 style={H} className="text-2xl font-bold text-center text-[#1A2F22] mb-2">Pytanie 2 z 3</h2>
+            <h2 className="font-lora text-2xl font-bold text-center text-[#1A2F22] mb-2">Pytanie 2 z 3</h2>
             <p className="text-center text-[#5A7368] mb-4 text-sm">Od której godziny chcesz rozpoczynać swoje zadania?</p>
 
             <div className="flex items-center justify-center gap-4 my-6">
@@ -100,7 +99,7 @@ export default function Onboarding({ onComplete }) {
             <p className="text-center text-[11px] font-bold text-[#9FB5AD] uppercase tracking-widest mt-2">Możesz też wpisać godzinę z klawiatury</p>
           </>}
           {step === 2 && <>
-            <h2 style={H} className="text-2xl font-bold text-center text-[#1A2F22] mb-1">Pytanie 3 z 3</h2>
+            <h2 className="font-lora text-2xl font-bold text-center text-[#1A2F22] mb-1">Pytanie 3 z 3</h2>
             <p className="text-center text-[#5A7368] text-sm mb-1">Co najszybciej poprawia Ci nastrój kiedy masz kryzys w ciągu dnia?</p>
             <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 mt-4">
               {OPTS.map(b => (

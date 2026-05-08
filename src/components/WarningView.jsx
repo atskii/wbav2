@@ -2,12 +2,12 @@ import { Phone, Clock, ExternalLink, Settings } from "lucide-react";
 import { CONTACTS } from "../lib/constants";
 
 export default function WarningView({ loading, user }) {
-  const H = { fontFamily: "'Lora',serif" };
+
   return (
     <div className="p-10 max-w-6xl mx-auto w-full pb-32">
       <header className="mb-10">
         <p className="text-[#5A7368] font-bold text-sm mb-1">Cześć {user?.name || "Natalia"}!</p>
-        <h1 style={H} className="text-4xl font-bold text-[#1A2F22] mb-4">System ostrzegania</h1>
+        <h1 className="font-lora text-4xl font-bold text-[#1A2F22] mb-4">System ostrzegania</h1>
         <p className="text-[#5A7368] text-sm max-w-3xl leading-relaxed">
           Wsparcie jest bliżej, niż myślisz. Jeśli czujesz, że potrzebujesz wsparcia, skontaktuj się z osobami, które są gotowe Ci pomóc. Poniżej znajdziesz listę organizacji oferujących bezpłatną pomoc.
         </p>
@@ -23,7 +23,7 @@ export default function WarningView({ loading, user }) {
         {CONTACTS.map((c, i) => (
           <div key={i} className="bg-white border border-[#E8DDD0] rounded-[2.5rem] p-8 shadow-sm hover:shadow-md transition-all group">
             <p className="text-[10px] font-black uppercase text-[#9FB5AD] tracking-[0.15em] mb-1">{c.org}</p>
-            <h3 style={H} className="text-xl font-bold text-[#1A2F22] mb-4 group-hover:text-[#2D9E6B] transition-colors">{c.name}</h3>
+            <h3 className="font-lora text-xl font-bold text-[#1A2F22] mb-4 group-hover:text-[#2D9E6B] transition-colors">{c.name}</h3>
             <p className="text-xs text-[#5A7368] leading-[1.7] mb-8 min-h-[4rem]">{c.desc}</p>
             <div className="flex items-center justify-between pt-6 border-t border-[#F5EFE6]">
               <div className="flex items-center gap-2"><Phone size={14} className="text-[#2D9E6B]" /><span className="text-sm font-black text-[#1A2F22]">{c.phone}</span></div>
