@@ -6,7 +6,7 @@ import {
 // ═══════════════════════════════════════════════════
 //  APP: SIDEBAR / LAYOUT
 // ═══════════════════════════════════════════════════
-export default function Sidebar({ active, onNav, user, onLogout, collapsed, setCollapsed, selectedDate, setSelectedDate, todayDate, activeAlert, onDismissAlert, isMobileOpen, setIsMobileOpen }) {
+export default function Sidebar({ active, onNav, user, onLogout, selectedDate, setSelectedDate, todayDate, activeAlert, onDismissAlert, isMobileOpen, setIsMobileOpen }) {
 
 
   // Logika generowania dni w mini-kalendarzu
@@ -45,14 +45,10 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
       <aside className={`
         fixed md:sticky top-0 left-0 z-[70] h-screen bg-white border-r border-[#E8DDD0] flex flex-col transition-transform duration-300
         ${isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0"}
-        ${collapsed ? "md:w-20" : "md:w-64"}
-        flex-shrink-0
+        md:w-64 flex-shrink-0
       `}>
-        <div className={`px-5 py-6 border-b border-[#E8DDD0] flex items-center ${collapsed ? "justify-center md:justify-between" : "justify-between"}`}>
-          <span className={`font-lora text-[#1E5C36] font-bold text-xl tracking-tight ${collapsed ? "hidden md:inline" : "inline"}`}>Wellbeing app</span>
-          <button onClick={() => setCollapsed(!collapsed)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all hidden md:block">
-            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
+        <div className={`px-5 py-6 border-b border-[#E8DDD0] flex items-center justify-between`}>
+          <span className={`font-lora text-[#1E5C36] font-bold text-xl tracking-tight inline`}>Wellbeing app</span>
           <button onClick={() => setIsMobileOpen(false)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all md:hidden">
             <X size={20} />
           </button>
@@ -65,7 +61,7 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
 
           return (
             <div key={n.id} className="relative flex flex-col items-end">
-              {hasAlert && !collapsed && (
+              {hasAlert && (
                 <div className="text-right mb-0.5 pr-2 w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <span className="text-[8px] font-bold text-[#A51A1A] tracking-[0.15em] uppercase">AKCJA WYMAGANA</span>
                 </div>
@@ -80,10 +76,10 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
                 <span className={`flex-shrink-0 ${hasAlert ? "animate-ring text-white" : ""}`}>
                   {n.icon}
                 </span>
-                <span className={`${collapsed ? "hidden md:inline" : "inline"}`}>{n.label}</span>
+                <span className="inline">{n.label}</span>
               </button>
 
-              {hasAlert && !collapsed && (
+              {hasAlert && (
                 <div className="absolute top-full left-0 right-0 mt-2 z-[100] animate-in fade-in zoom-in-95 duration-300">
                   <div className="bg-[#fceeb5] p-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.2)] mx-1 relative border border-[#E8DDD0]">
                     <button onClick={(e) => { e.stopPropagation(); onDismissAlert(); }} className="absolute top-2 right-2 text-[#1A432E] opacity-50 hover:opacity-100 transition-opacity p-1 bg-[#fceeb5] rounded-full hover:bg-yellow-200" title="Zamknij ostrzeżenie">
@@ -107,7 +103,7 @@ export default function Sidebar({ active, onNav, user, onLogout, collapsed, setC
       <div className="flex-1" />
 
       {/* MINI KALENDARZ W LEWYM DOLNYM ROGU */}
-      <div className={`px-3 py-5 border-t border-[#E8DDD0] bg-[#FAFAFA] ${collapsed ? "hidden md:block" : "block"}`}>
+      <div className={`px-3 py-5 border-t border-[#E8DDD0] bg-[#FAFAFA] block`}>
         <div className="flex items-center justify-center gap-2 mb-4">
           <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-md transition-colors"><ChevronLeft size={12} className="text-[#1A2F22]" /></button>
           <span className="text-[9px] font-black uppercase tracking-widest text-[#1A2F22]">

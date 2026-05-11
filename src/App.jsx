@@ -36,7 +36,6 @@ export default function App() {
   const [user, setUser] = usePersist("wba_user", null);
 
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showMoodModal, setShowMoodModal] = useState(false);
   const [focusedTask, setFocusedTask] = useState(null);
@@ -724,8 +723,6 @@ export default function App() {
             onNav={handleNav}
             user={user}
             onLogout={() => { setUser(null); setView("landing"); }}
-            collapsed={isSidebarCollapsed}
-            setCollapsed={setSidebarCollapsed}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
             todayDate={getNow()}
