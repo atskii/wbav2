@@ -7,7 +7,8 @@ export default function DebugModal({ onClose, actions }) {
     { id: "scenarios", label: "Ostrzeżenia" },
     { id: "tasks", label: "Zadania" },
     { id: "moods", label: "Nastroje" },
-    { id: "time", label: "Czas" }
+    { id: "time", label: "Czas" },
+    { id: "account", label: "Konto" }
   ];
   const scenarios = [
     { id: 1, name: "1. Ostre wyczerpanie emocjonalne", desc: "Symuluje 3 dni z rzędu z krytycznie niskim nastrojem (np. 😫). Średnia z 3 dni spada poniżej 2.0." },
@@ -56,6 +57,19 @@ export default function DebugModal({ onClose, actions }) {
             <div className="space-y-4">
               <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between"><div><h4 className="font-bold text-[#1A2F22] mb-1">Cofnij o 1 dzień</h4><p className="text-xs text-gray-500">Oszukuje zegar aplikacji, cofając go o równe 24 godziny.</p></div><button onClick={actions.timeTravelBack} className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200">Cofnij</button></div>
               <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between"><div><h4 className="font-bold text-[#1A2F22] mb-1">Przewiń o 1 dzień do przodu</h4><p className="text-xs text-gray-500">Oszukuje zegar aplikacji, przyspieszając go o 24 godziny.</p></div><button onClick={actions.timeTravelForward} className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200">Przyspiesz</button></div>
+            </div>
+          )}
+          {activeTab === "account" && (
+            <div className="space-y-4">
+              <div className="p-4 border border-red-200 bg-red-50 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-red-600 mb-1">Totalna czystka (Hard Reset)</h4>
+                  <p className="text-xs text-red-500">Usuwa wszystkie zadania, nastroje oraz preferencje. Wymusza ponowny onboarding (nowe konto).</p>
+                </div>
+                <button onClick={actions.totalWipe} className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 ml-4 whitespace-nowrap shadow-sm">
+                  Wyczyść wszystko
+                </button>
+              </div>
             </div>
           )}
         </div>

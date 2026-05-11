@@ -224,6 +224,26 @@ export default function App() {
       setShowDebugModal(false);
     },
 
+    totalWipe: async () => {
+      try {
+        await supabase.from('tasks').delete().eq('user_email', user.email);
+        await supabase.from('moods').delete().eq('user_email', user.email);
+        await supabase.from('profiles').delete().eq('email', user.email);
+        
+        setTasks([]);
+        setMoods([]);
+        setUser(null);
+        setView("landing");
+        localStorage.removeItem('wba_user');
+        
+        add('Zresetowano konto całkowicie (Test)', 'info');
+        setShowDebugModal(false);
+      } catch (err) {
+        console.error(err);
+        add('Błąd przy czyszczeniu konta', 'warn');
+      }
+    },
+
     generateFakeMoods: async () => {
       const fakeMoods = [];
       const datesToReplace = [];
@@ -718,8 +738,8 @@ export default function App() {
             {/* NOWY HEADER RESPANSYWNY - UPROSZCZONY */}
             <header className="w-full px-4 md:px-10 py-6 flex items-center justify-between z-[60]">
               <div className="flex items-center space-x-2 md:space-x-4 truncate">
-                <button 
-                  className="md:hidden p-1 mr-1 text-[#1A2F22]" 
+                <button
+                  className="md:hidden p-1 mr-1 text-[#1A2F22]"
                   onClick={() => setIsMobileSidebarOpen(true)}
                 >
                   <Menu size={24} />

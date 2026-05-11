@@ -19,6 +19,7 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
     "Agnieszka Wojtasiak-Terech": "UP7890",
     "testuser": "testuser",
     "Kamila Łuczak": "UP2345",
+    "Kajetan Młynarczyk": "UP2222",
   };
 
   const submit = () => {
