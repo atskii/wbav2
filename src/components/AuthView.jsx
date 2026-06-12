@@ -20,6 +20,12 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
     "testuser": "testuser",
     "Kamila Łuczak": "UP2345",
     "Kajetan Młynarczyk": "UP2222",
+    "Anna Malenda-Iwankiewicz": "UP1234",
+    "admin": "admin",
+    "Użytkownik 1": "UP1234",
+    "Krzysztof Piontek": "UP4444",
+    "Iwona Chomiak-Orsa": "UP2222",
+    "Renata Brajer-Marczak": "UP5555",
   };
 
   const submit = () => {

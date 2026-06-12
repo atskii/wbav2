@@ -29,6 +29,9 @@ import MoodView from "./components/MoodView";
 import WarningView from "./components/WarningView";
 import SettingsView from "./components/SettingsView";
 import DebugModal from "./components/DebugModal";
+import AdminPanel from "./components/AdminPanel";
+
+const ADMIN_EMAILS = ["admin"];
 
 export default function App() {
   const [view, setView] = useState("landing");
@@ -53,6 +56,12 @@ export default function App() {
   // Pobieranie danych z Supabase oraz sprawdzanie statusu onboardingu
   useEffect(() => {
     if (user && user.email) {
+      // Admin nie potrzebuje danych użytkownika ani onboardingu
+      if (ADMIN_EMAILS.includes(user.email)) {
+        setView("app");
+        return;
+      }
+
       const fetchData = async () => {
         setIsLoading(true);
         try {
@@ -112,6 +121,8 @@ export default function App() {
   const activeAlert = (rawActiveAlert && currentAlertKey !== dismissedAlertKey) ? rawActiveAlert : null;
 
   const [showDebugModal, setShowDebugModal] = useState(false);
+
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
   const handleTriggerScenario = async (scenarioId) => {
     setDismissedAlertKey(null);
@@ -228,13 +239,13 @@ export default function App() {
         await supabase.from('tasks').delete().eq('user_email', user.email);
         await supabase.from('moods').delete().eq('user_email', user.email);
         await supabase.from('profiles').delete().eq('email', user.email);
-        
+
         setTasks([]);
         setMoods([]);
         setUser(null);
         setView("landing");
         localStorage.removeItem('wba_user');
-        
+
         add('Zresetowano konto całkowicie (Test)', 'info');
         setShowDebugModal(false);
       } catch (err) {
@@ -295,6 +306,66 @@ export default function App() {
   useEffect(() => {
     if (view === "landing" && user) setView("app");
   }, [user, view]);
+
+  // --- REALTIME: Nasłuchiwanie zdalnych komend dla zwykłych użytkowników ---
+  useEffect(() => {
+    if (!user || !user.email || isAdmin) return;
+
+    const channel = supabase
+      .channel('remote-commands-' + user.email)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'remote_commands',
+          filter: `target_email=eq.${user.email}`,
+        },
+        async (payload) => {
+          const cmd = payload.new;
+          if (cmd.status !== 'pending') return;
+
+          console.log('[RemoteCommand] Received:', cmd.command_name, cmd.payload);
+
+          // Wykonaj komendę lokalnie
+          try {
+            if (cmd.command_name === 'triggerScenario' && cmd.payload) {
+              await debugActions.triggerScenario(cmd.payload);
+            } else if (cmd.command_name === 'addRandomTasks') {
+              await debugActions.addRandomTasks();
+            } else if (cmd.command_name === 'generateFakeMoods') {
+              await debugActions.generateFakeMoods();
+            } else if (cmd.command_name === 'totalWipe') {
+              await debugActions.totalWipe();
+            } else if (cmd.command_name === 'clearTasks') {
+              await debugActions.clearTasks();
+            } else if (cmd.command_name === 'clearMoods') {
+              await debugActions.clearMoods();
+            }
+
+            // Oznacz komendę jako wykonaną
+            await supabase
+              .from('remote_commands')
+              .update({ status: 'done' })
+              .eq('id', cmd.id);
+
+            add(`Zdalna komenda "${cmd.command_name}" wykonana.`, 'info');
+          } catch (err) {
+            console.error('[RemoteCommand] Error:', err);
+            await supabase
+              .from('remote_commands')
+              .update({ status: 'error' })
+              .eq('id', cmd.id);
+            add(`Błąd zdalnej komendy: ${cmd.command_name}`, 'warn');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.email, isAdmin]);
 
   // --- SKRÓTY KLAWISZOWE: Debug Modal (Shift+D) ---
   useEffect(() => {
@@ -704,6 +775,22 @@ export default function App() {
       }} />
     </>
   );
+
+  // --- ADMIN PANEL: Renderuj panel administracyjny zamiast głównego widoku ---
+  if (isAdmin) {
+    return (
+      <>
+        <Font />
+        <Toasts ts={ts} rm={rm} />
+        <AdminPanel
+          user={user}
+          onLogout={() => { setUser(null); setView("landing"); }}
+          addToast={add}
+          supabase={supabase}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#F5EFE6] font-sans selection:bg-[#2D9E6B] selection:text-white overflow-hidden">
