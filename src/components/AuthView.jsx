@@ -26,6 +26,9 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
     "Krzysztof Piontek": "UP4444",
     "Iwona Chomiak-Orsa": "UP2222",
     "Renata Brajer-Marczak": "UP5555",
+    "Katarzyna Grzesik": "UP1234",
+    "Maciej Krahel": "UP4444",
+    "Marcin Pełka": "UP1111",
   };
 
   const submit = () => {

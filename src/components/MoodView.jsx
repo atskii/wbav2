@@ -39,11 +39,11 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate }) 
   const points = data.map((d, i) => {
     if (d.v === null) return null;
     const x = paddingX + (i / (daysToShow - 1)) * (width - paddingX - 40);
-    const yPos = 20 + (d.v / 6) * (height - 40);
+    const yPos = 20 + (1 - d.v / 6) * (height - 40);
     return { x, y: yPos, data: d };
   }).filter(Boolean);
 
-  const avgY = 20 + (avgV / 6) * (height - 40);
+  const avgY = 20 + (1 - avgV / 6) * (height - 40);
   const linePath = points.map((p, i) => (i === 0 ? `M ${p.x},${p.y}` : `L ${p.x},${p.y}`)).join(" ");
   const firstX = points.length > 0 ? points[0].x : paddingX;
   const lastX = points.length > 0 ? points[points.length - 1].x : width - 40;
@@ -88,7 +88,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate }) 
         </div>
         <div className="relative w-full flex-1 min-h-0 mt-2 mb-6">
           {[0,1,2,3,4,5,6].map(level => {
-            const yPos = 20 + (level / 6) * (height - 40);
+            const yPos = 20 + (1 - level / 6) * (height - 40);
             return (<div key={`html-emoji-${level}`} className="absolute text-xl flex items-center justify-center bg-transparent text-[#5A5A5A] w-6 h-6 rounded-full" style={{ left: 0, top: `${(yPos / height) * 100}%`, transform: 'translateY(-50%)' }}><span className="opacity-90">{EMOJIS[level]}</span></div>);
           })}
           <div className="absolute left-[40px] right-[40px] bottom-[-25px] flex justify-between">
@@ -96,7 +96,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate }) 
           </div>
           <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible absolute top-0 left-0" preserveAspectRatio="none">
             <defs><linearGradient id="chartGradientNew" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6ECCD2" stopOpacity="0.4" /><stop offset="100%" stopColor="#6ECCD2" stopOpacity="0.0" /></linearGradient></defs>
-            {[0,1,2,3,4,5,6].map(level => { const yPos = 20 + (level / 6) * (height - 40); return (<g key={`grid-${level}`}><line x1={paddingX} y1={yPos} x2={width} y2={yPos} stroke="#F4F4F4" strokeWidth="1.5" /></g>); })}
+            {[0,1,2,3,4,5,6].map(level => { const yPos = 20 + (1 - level / 6) * (height - 40); return (<g key={`grid-${level}`}><line x1={paddingX} y1={yPos} x2={width} y2={yPos} stroke="#F4F4F4" strokeWidth="1.5" /></g>); })}
             {points.length > 0 && (<><path d={areaPath} fill="url(#chartGradientNew)" /><path d={linePath} fill="none" stroke="#1A949A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>)}
             {showAvg && countV > 0 && (<g className="animate-in fade-in duration-500"><line x1={paddingX} y1={avgY} x2={width} y2={avgY} stroke="#02848C" strokeWidth="2" strokeDasharray="8,6" strokeLinecap="round" /><rect x={width - 120} y={avgY - 24} width="110" height="20" rx="4" fill="#02848C" /><text x={width - 65} y={avgY - 10} fill="white" fontSize="10" fontWeight="bold" textAnchor="middle">Średnia: {avgV.toFixed(1)} / 6.0</text></g>)}
             {points.map((p, i) => { const isHovered = hovered?.d === p.data.d; return (<g key={i}>{isHovered && (<line x1={p.x} y1={p.y} x2={p.x} y2={height} stroke="#1A949A" strokeWidth="1" strokeDasharray="4,4" />)}<circle cx={p.x} cy={p.y} r={isHovered ? 6 : 4} fill="#1A949A" className="transition-all" />{isHovered && <circle cx={p.x} cy={p.y} r={12} fill="#1A949A" className="opacity-20" />}<circle cx={p.x} cy={p.y} r={hitRadius} fill="transparent" className="cursor-pointer" onMouseEnter={() => !editingMood && setHovered(p.data)} onMouseLeave={() => !editingMood && setHovered(null)} onClick={() => { setHovered(null); setEditingMood(p.data); setEditingNote(p.data.note || ""); }} /></g>); })}
