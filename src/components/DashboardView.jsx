@@ -21,7 +21,13 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
   const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
   const flexScheduled = tasks.filter(t => !t.isLocked && t.sMins !== null && t.sMins !== undefined && t.pDate === dateStr);
-  const lockedScheduled = tasks.filter(t => t.isLocked && t.t && checkIsDate(t.t, selectedDate)).map(t => {
+  const lockedScheduled = tasks.filter(t => {
+    if (!t.isLocked || !t.t) return false;
+    // pDate jest głównym źródłem prawdy o przynależności do dnia
+    if (t.pDate) return t.pDate === dateStr;
+    // Fallback dla starych zadań bez pDate
+    return checkIsDate(t.t, selectedDate);
+  }).map(t => {
     const match = t.t.match(/(\d{1,2}):(\d{2})/);
     const startMins = match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
     const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;

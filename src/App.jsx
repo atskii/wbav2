@@ -645,6 +645,37 @@ export default function App() {
     }
   };
 
+  // ─── Pomocnicza: generowanie dat instancji cyklicznych ───────
+  const generujDatyCykliczne = (pDateStr, recurrence, recurrenceEndStr) => {
+    const daty = [];
+    const dzis = new Date(); dzis.setHours(0, 0, 0, 0);
+    const startDate = pDateStr ? (() => { const [y, m, d] = pDateStr.split('-').map(Number); return new Date(y, m - 1, d); })() : new Date(dzis);
+    const maxDate = new Date(dzis); maxDate.setDate(maxDate.getDate() + 365);
+    const endDate = recurrenceEndStr ? (() => { const [y, m, d] = recurrenceEndStr.split('-').map(Number); return new Date(y, m - 1, d); })() : null;
+    const granica = endDate && endDate < maxDate ? endDate : maxDate;
+    let current = new Date(startDate);
+
+    const skok = () => {
+      if (recurrence === 'codziennie') {
+        current.setDate(current.getDate() + 1);
+      } else if (recurrence.startsWith('co tydzień')) {
+        current.setDate(current.getDate() + 7);
+      } else if (recurrence === 'w dni robocze') {
+        do { current.setDate(current.getDate() + 1); } while (current.getDay() === 0 || current.getDay() === 6);
+      }
+    };
+
+    skok(); // Pierwszy skok (oryginał = istniejący rekord)
+    while (current <= granica) {
+      const y = current.getFullYear();
+      const m = String(current.getMonth() + 1).padStart(2, '0');
+      const d = String(current.getDate()).padStart(2, '0');
+      daty.push(`${y}-${m}-${d}`);
+      skok();
+    }
+    return daty;
+  };
+
   const saveTask = async (t) => {
     let taskToSave = { ...t, user_email: user.email };
     const durMatch = taskToSave.duration ? taskToSave.duration.match(/(\d+)/) : null;
@@ -660,6 +691,7 @@ export default function App() {
       const { id, ...taskDataWithoutId } = taskToSave;
 
       if (taskToSave.id) {
+        // ── EDYCJA istniejącego zadania ──
         const { error } = await supabase
           .from('tasks')
           .update(taskDataWithoutId)
@@ -668,20 +700,86 @@ export default function App() {
 
         setTasks(prev => sortSmartQueue(prev.map(task => task.id === taskToSave.id ? { ...task, ...taskToSave } : task)));
       } else {
-        const { data, error } = await supabase
-          .from('tasks')
-          .insert(taskDataWithoutId)
-          .select();
-        if (error) throw error;
+        // ── TWORZENIE nowego zadania ──
+        const isRecurring = taskDataWithoutId.recurrence
+          && taskDataWithoutId.recurrence !== 'jednorazowo'
+          && taskDataWithoutId.recurrence !== 'zmaterializowane';
 
-        setTasks(prev => sortSmartQueue([data[0], ...prev]));
+        if (isRecurring) {
+          // Materializacja: wstawiamy oryginał jako 'jednorazowo', a przyszłe daty jako 'zmaterializowane'
+          // Czyścimy pole `t` z fragmentów cykliczności (🔁..., 🛑...)
+          let cleanedT = taskDataWithoutId.t || '';
+          cleanedT = cleanedT.replace(/\s*🛑\s*do\s*\S+/g, '').replace(/\s*🔁\s*.*/g, '').trim();
+          const originalData = { ...taskDataWithoutId, recurrence: 'jednorazowo', t: cleanedT };
+          const { data: origData, error: origErr } = await supabase
+            .from('tasks')
+            .insert(originalData)
+            .select();
+          if (origErr) throw origErr;
+
+          // Generujemy instancje cykliczne
+          const daty = generujDatyCykliczne(taskDataWithoutId.pDate, taskDataWithoutId.recurrence, taskDataWithoutId.recurrenceEnd);
+
+          let zmaterializowane = [];
+          if (daty.length > 0) {
+            // Pomocnicza: zamienia daty w polach `t` i `deadline` na nową datę instancji
+            const podmienDate = (str, nowaData) => {
+              if (!str) return str;
+              const [y, m, d] = nowaData.split('-');
+              const newDatePL = `${parseInt(d)}.${parseInt(m)}.${y}`; // DD.MM.YYYY
+              // Zamień format PL (DD.MM.YYYY) w stringu
+              let result = str.replace(/\d{1,2}\.\d{1,2}\.\d{4}/, newDatePL);
+              // Zamień format ISO (YYYY-MM-DD) w stringu
+              result = result.replace(/\d{4}-\d{1,2}-\d{1,2}/, nowaData);
+              // Zamień "o DD.MM.YYYY" w deadline
+              result = result.replace(/(\d{1,2})[\.\/ -](\d{1,2})[\.\/ -](\d{4})/, newDatePL);
+              return result;
+            };
+
+            const noweInstancje = daty.map(nowaData => ({
+              ...taskDataWithoutId,
+              pDate: nowaData,
+              t: podmienDate(taskDataWithoutId.t, nowaData),
+              deadline: podmienDate(taskDataWithoutId.deadline, nowaData),
+              lockDateTime: taskDataWithoutId.lockDateTime ? (() => {
+                // Zamień datę w lockDateTime (format YYYY-MM-DDTHH:MM)
+                const timePart = taskDataWithoutId.lockDateTime.split('T')[1] || '00:00';
+                return `${nowaData}T${timePart}`;
+              })() : taskDataWithoutId.lockDateTime,
+              done: false,
+              recurrence: 'zmaterializowane',
+              recurrenceEnd: null,
+              sMins: null,
+              eMins: null,
+            }));
+
+            const { data: insData, error: insErr } = await supabase
+              .from('tasks')
+              .insert(noweInstancje)
+              .select();
+            if (insErr) throw insErr;
+            zmaterializowane = insData || [];
+          }
+
+          setTasks(prev => sortSmartQueue([...prev, origData[0], ...zmaterializowane]));
+          add(`Zadanie cykliczne dodane! Wygenerowano ${daty.length + 1} instancji. 🔁`);
+        } else {
+          // Zwykłe jednorazowe zadanie
+          const { data, error } = await supabase
+            .from('tasks')
+            .insert(taskDataWithoutId)
+            .select();
+          if (error) throw error;
+
+          setTasks(prev => sortSmartQueue([data[0], ...prev]));
+          add("Zadanie dodane pomyślnie!");
+        }
       }
 
       if (durationAlert) {
         add("Czas minimalny na zadanie to 15 minut. Został on wydłużony do 15.", "warn");
-      } else {
-        if (t.id) add("Zmiany zostały zapisane.");
-        else add("Zadanie dodane pomyślnie!");
+      } else if (t.id) {
+        add("Zmiany zostały zapisane.");
       }
     } catch (err) {
       console.error(err);

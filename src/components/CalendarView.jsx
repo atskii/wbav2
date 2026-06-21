@@ -42,8 +42,24 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
 
   const isSameDate = (textString, targetDate = selectedDate) => checkIsDate(textString, targetDate);
 
-  const timelineTasks = tasks.filter(t => (isSameDate(t.t, selectedDate) || (!t.isLocked && isSameDate(t.deadline, selectedDate))));
-  const queueTasks = tasks.filter(t => !searchRight || t.title.toLowerCase().includes(searchRight.toLowerCase()));
+  // Pomocnicza: formatuj Date na 'YYYY-MM-DD' do porównania z pDate
+  const formatYMD = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const selectedYMD = formatYMD(selectedDate);
+
+  // Główne źródło prawdy o przynależności do dnia = pDate.
+  // Fallback na parsowanie t/deadline tylko dla starych zadań bez pDate.
+  const isTaskForDate = (t, targetDate) => {
+    const targetYMD = formatYMD(targetDate);
+    if (t.pDate) return t.pDate === targetYMD;
+    return (isSameDate(t.t, targetDate) || (!t.isLocked && isSameDate(t.deadline, targetDate)));
+  };
+
+  const timelineTasks = tasks.filter(t => isTaskForDate(t, selectedDate));
+  // Prawa kolumna: backlog (brak pDate) + zadania zaplanowane na wybrany dzień
+  const queueTasks = tasks.filter(t => {
+    if (searchRight && !t.title.toLowerCase().includes(searchRight.toLowerCase())) return false;
+    return !t.pDate || t.pDate === selectedYMD;
+  });
 
   useEffect(() => {
     if (searchCal && calendarScrollRef.current && viewType === "Dzień") {
@@ -124,8 +140,9 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
         {hours.map(h => {
           const tasksInThisHour = timelineTasks.filter(t => {
             let taskHour = -1;
-            if (isSameDate(t.t, selectedDate)) { const match = t.t ? t.t.match(/(\d{1,2}):\d{2}/) : null; taskHour = match ? parseInt(match[1]) : t.hour; }
-            else if (isSameDate(t.deadline, selectedDate)) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
+            // Wyciągnij godzinę z pola `t` (czas blokady) lub `deadline` — do pozycjonowania na osi Y
+            if (t.t) { const match = t.t.match(/(\d{1,2}):\d{2}/); taskHour = match ? parseInt(match[1]) : (t.hour || -1); }
+            if (taskHour === -1 && t.deadline) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
             return taskHour === h;
           });
           return (
@@ -134,7 +151,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
               {h === 6 && <div className="absolute left-16 top-0 bottom-[-100rem] w-[1px] bg-[#F0F0F0] pointer-events-none" />}
               <div className="flex-1 relative ml-2 pr-4">
                 {tasksInThisHour.map((t, index) => {
-                  const isDeadlineBlock = !isSameDate(t.t, selectedDate) && isSameDate(t.deadline, selectedDate);
+                  const isDeadlineBlock = !t.isLocked && t.deadline && isSameDate(t.deadline, selectedDate) && !(t.t && t.t.includes('🔒'));
                   const match = t.duration ? t.duration.match(/(\d+)/) : null;
                   const mins = match ? parseInt(match[1]) : 60;
                   const heightRem = (mins / 60) * 5.4;
@@ -185,7 +202,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
             <div key={h} className="absolute left-0 right-0 border-t border-[#F0F0F0] pointer-events-none" style={{ top: `${(h-6)*5.4 + 1}rem` }} />
           ))}
           {weekDays.map((date, i) => {
-            const dayTasks = tasks.filter(t => (isSameDate(t.t, date) || (!t.isLocked && isSameDate(t.deadline, date))));
+            const dayTasks = tasks.filter(t => isTaskForDate(t, date));
             const isTodayWeek = new Date().toDateString() === date.toDateString();
             
             return (
@@ -198,11 +215,11 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                 )}
                 {dayTasks.map((t, index) => {
                   let taskHour = 6;
-                  if (isSameDate(t.t, date)) { const match = t.t ? t.t.match(/(\d{1,2}):\d{2}/) : null; taskHour = match ? parseInt(match[1]) : t.hour || 8; }
-                  else if (isSameDate(t.deadline, date)) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
+                  if (t.t) { const match = t.t.match(/(\d{1,2}):\d{2}/); taskHour = match ? parseInt(match[1]) : t.hour || 8; }
+                  else if (t.deadline) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
                   if(taskHour < 6 || taskHour > 22) return null;
                   
-                  const isDeadlineBlock = !isSameDate(t.t, date) && isSameDate(t.deadline, date);
+                  const isDeadlineBlock = !t.isLocked && t.deadline && isSameDate(t.deadline, date) && !(t.t && t.t.includes('🔒'));
                   const matchDuration = t.duration ? t.duration.match(/(\d+)/) : null;
                   const mins = matchDuration ? parseInt(matchDuration[1]) : 60;
                   const heightRem = (mins / 60) * 5.4;
@@ -228,7 +245,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     const days = getDaysOfMonth(selectedDate);
     const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
     const popoverItem = popoverDay ? days.find(d => d.date.toDateString() === popoverDay.toDateString()) : null;
-    const popoverTasks = popoverItem ? tasks.filter(t => (isSameDate(t.t, popoverItem.date) || (!t.isLocked && isSameDate(t.deadline, popoverItem.date)))) : [];
+    const popoverTasks = popoverItem ? tasks.filter(t => isTaskForDate(t, popoverItem.date)) : [];
     
     return (
       <div className="flex-1 flex flex-col min-h-0 bg-white relative">
@@ -243,7 +260,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
           <div className="grid grid-cols-7 auto-rows-[minmax(6rem,1fr)] relative">
             {days.map((item, idx) => {
               const isTodayMonth = new Date().toDateString() === item.date.toDateString();
-              const dayTasks = tasks.filter(t => (isSameDate(t.t, item.date) || (!t.isLocked && isSameDate(t.deadline, item.date))));
+              const dayTasks = tasks.filter(t => isTaskForDate(t, item.date));
               
               return (
                 <div key={idx} className={`border-r border-b border-[#F0F0F0] p-1 flex flex-col transition-colors ${item.isCurrentMonth ? "bg-white" : "bg-gray-50/50"}`}>
