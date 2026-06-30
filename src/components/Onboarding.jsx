@@ -58,7 +58,7 @@ export default function Onboarding({ onComplete }) {
           </div>
           {step === 0 && <>
             <h2 className="font-lora text-2xl font-bold text-center text-[#1A2F22] mb-2">Pytanie 1 z 3</h2>
-            <p className="text-center text-[#5A7368] mb-8 text-sm">Ile godzin dziennie spędzasz w pracy?</p>
+            <p className="text-center text-[#5A7368] mb-8 text-sm">Ile godzin dziennie chcesz poświęcić na realizacje swoich zadań?</p>
             <div className="flex items-center justify-center gap-6">
               <button onClick={() => setHours(h => Math.max(1, h - 1))} className="w-12 h-12 rounded-2xl border-2 border-[#E8DDD0] flex items-center justify-center text-xl font-bold text-[#5A7368] transition-all">−</button>
               <span className="text-6xl font-bold text-[#1A2F22] w-20 text-center">{hours}</span>

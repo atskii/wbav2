@@ -42,7 +42,7 @@ export default function SettingsView({ user, setUser, add }) {
       </div>
       <div className="bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
         <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
-          <div><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Czas pracy</h3><p className="text-sm text-[#5A7368]">Ile godzin dziennie zazwyczaj pracujesz?</p></div>
+          <div><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Czas pracy</h3><p className="text-sm text-[#5A7368]">Ile godzin dziennie chcesz poświęcić na realizacje swoich zadań?</p></div>
           <div className="flex items-center gap-4 bg-[#F5EFE6] p-2 rounded-2xl w-fit">
             <button onClick={() => setHours(h => Math.max(1, h - 1))} className="w-10 h-10 rounded-xl bg-white border border-[#E8DDD0] flex items-center justify-center text-lg font-bold text-[#5A7368] hover:border-[#1E5C36] hover:text-[#1E5C36] transition-all shadow-sm">−</button>
             <span className="text-2xl font-bold text-[#1A2F22] w-12 text-center">{hours}</span>
