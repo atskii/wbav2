@@ -29,9 +29,11 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
     "Katarzyna Grzesik": "UP1234",
     "Maciej Krahel": "UP4444",
     "Marcin Pełka": "UP1111",
+    "Patrycja Polaczuk-Rutkowska": "UP1234",
+    "Anna Marciszewska": "UP2222"
   };
 
-  const submit = () => {
+  function submit() {
     setErr("");
     if (!loginInput || !pw) { setErr("Uzupełnij login i hasło."); return; }
     const expectedPw = ACCOUNTS[loginInput];
@@ -40,7 +42,7 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
     } else {
       setErr("Błędny login lub hasło. Brak dostępu.");
     }
-  };
+  }
   return (
     <div className="font-dm-sans min-h-screen bg-[#F5EFE6] flex flex-col">
       <nav className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4 flex items-center justify-between">

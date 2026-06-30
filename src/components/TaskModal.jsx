@@ -7,7 +7,8 @@ import { PRIOS } from "../lib/constants";
 // ═══════════════════════════════════════════════════
 export default function TaskModal({ onClose, onSave, taskToEdit }) {
   const [title, setTitle] = useState(taskToEdit?.title || "");
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [showRecurrenceTutorial, setShowRecurrenceTutorial] = useState(true);
+  const [showLockTutorial, setShowLockTutorial] = useState(true);
 
   const [duration, setDuration] = useState(taskToEdit?.duration ? taskToEdit.duration.replace(" min", "") : "60");
   const [deadline, setDeadline] = useState(taskToEdit?.deadline ? taskToEdit.deadline.replace(" o ", "T") : "");
@@ -16,10 +17,13 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
   const [desc, setDesc] = useState(taskToEdit?.desc || "");
 
   const [isLocked, setIsLocked] = useState(taskToEdit?.isLocked || false);
-  const [showLockPanel, setShowLockPanel] = useState(false);
+  const [activePanel, setActivePanel] = useState(null);
   const [lockDateTime, setLockDateTime] = useState(taskToEdit?.lockDateTime || "");
   const [recurrence, setRecurrence] = useState(taskToEdit?.recurrence || "jednorazowo");
   const [recurrenceEnd, setRecurrenceEnd] = useState(taskToEdit?.recurrenceEnd || "");
+
+  const isRecurrenceActive = isLocked && recurrence !== "jednorazowo";
+  const isSingleLockActive = isLocked && recurrence === "jednorazowo";
 
   const submit = () => {
     if (!title) return;
@@ -136,97 +140,140 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
           </div>
         </div>
 
-        <div className="flex items-end justify-between gap-4 mt-10 relative">
+        <div className="flex flex-row justify-center items-center gap-[5px] mt-10 relative w-full">
 
-          {/* NOWY KONTENER NA KŁÓDKĘ I DYMEK TUTORIALOWY */}
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              {/* 1. PRZYCISK KŁÓDKI */}
-              <button
-                onClick={() => setShowLockPanel(!showLockPanel)}
-                className={`flex items-center gap-2 px-4 py-4 rounded-2xl font-bold transition-all text-sm border-2 relative z-10 ${isLocked ? 'bg-[#E8F4ED] text-[#1E5C36] border-[#1E5C36] shadow-md' : 'bg-white text-[#9FB5AD] border-[#E8DDD0] hover:border-[#9FB5AD]'}`}
-              >
-                <span className="text-xl leading-none">{isLocked ? "🔒" : "🔓"}</span>
-              </button>
+          {/* PANEL CYKLICZNOŚCI */}
+          {activePanel === 'recurrence' && (
+            <div className="absolute bottom-[115%] left-0 w-72 bg-white rounded-3xl shadow-2xl border border-[#E8DDD0] p-6 z-50 animate-in slide-in-from-bottom-2">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-sm font-bold text-[#1A2F22]">Ustaw cykliczność</h4>
+                <button onClick={() => setActivePanel(null)}><X size={16} className="text-[#9FB5AD] hover:text-red-500" /></button>
+              </div>
 
-              {/* 2. DYMEK KOMIKSOWY - Pojawia się NAD kłódką, aby okno go nie ucinało */}
-              {showTutorial && (
-                <div className="absolute bottom-full left-0 mb-4 w-72 p-5 bg-[#1A2F22] text-white rounded-[2rem] shadow-2xl z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  {/* Przycisk X do zamknięcia dymka */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowTutorial(false); }}
-                    className="absolute top-3 right-4 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer"
-                  >
-                    <X size={14} className="text-[#2D9E6B]" />
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-[#5A7368] mb-1 block">Początek cyklu (data i godzina)</label>
+                  <input type="datetime-local" value={lockDateTime} onChange={e => setLockDateTime(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#E8DDD0] text-sm outline-none focus:border-[#2D9E6B]" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-[#5A7368] mb-1 block">Cykliczność (Google Style)</label>
+                  <select value={recurrence} onChange={e => setRecurrence(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#E8DDD0] text-sm outline-none focus:border-[#2D9E6B] bg-white cursor-pointer">
+                    <option value="jednorazowo">Tylko raz</option>
+                    <option value="codziennie">Codziennie</option>
+                    <option value="w dni robocze">W dni robocze (Pon-Pt)</option>
+                    <option value="co tydzień">Co tydzień</option>
+                  </select>
+                </div>
+                {recurrence !== "jednorazowo" && (
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[#5A7368] mb-1 block">Zakończ cykl (opcjonalnie)</label>
+                    <input type="date" value={recurrenceEnd} onChange={e => setRecurrenceEnd(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#E8DDD0] text-sm outline-none focus:border-[#2D9E6B] bg-white" />
+                  </div>
+                )}
+                <button
+                  onClick={() => { setIsLocked(true); setActivePanel(null); }}
+                  className="w-full py-2 bg-[#2D9E6B] text-white rounded-xl font-bold text-xs hover:bg-[#1E5C36] transition-all"
+                >
+                  Zastosuj cykliczność
+                </button>
+                {isRecurrenceActive && (
+                  <button onClick={() => { setRecurrence("jednorazowo"); setRecurrenceEnd(""); setLockDateTime(""); setIsLocked(false); setActivePanel(null); }} className="w-full py-2 text-red-500 rounded-xl font-bold text-xs hover:bg-red-50 transition-all mt-1">
+                    Usuń cykliczność
                   </button>
-
-                  <div className="pr-4">
-                    <p className="text-[11px] leading-relaxed mb-2">
-                      <strong className="text-[#2D9E6B] block mb-0.5">Deadline:</strong>
-                      To informacja, do kiedy musisz skończyć. Aplikacja sama ułoży plan.
-                    </p>
-                    <p className="text-[11px] leading-relaxed">
-                      <strong className="text-amber-400 block mb-0.5">Kłódka (Blokada):</strong>
-                      Sztywno rezerwuje godziny. Nic innego się w ten czas nie wciśnie.
-                    </p>
-                  </div>
-
-                  {/* Trójkątny ogon dymka skierowany w DÓŁ, prosto na kłódkę */}
-                  <div className="absolute top-full left-6 w-0 h-0 border-x-[10px] border-x-transparent border-t-[12px] border-t-[#1A2F22]"></div>
-                </div>
-              )}
-
-              {/* 3. ORYGINALNY PANEL USTAWIANIA CZASU */}
-              {showLockPanel && (
-                <div className="absolute bottom-[115%] left-0 w-72 bg-white rounded-3xl shadow-2xl border border-[#E8DDD0] p-6 z-50 animate-in slide-in-from-bottom-2">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-sm font-bold text-[#1A2F22]">Zablokuj w kalendarzu</h4>
-                    <button onClick={() => setShowLockPanel(false)}><X size={16} className="text-[#9FB5AD] hover:text-red-500" /></button>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-[10px] font-black uppercase text-[#5A7368] mb-1 block">Dokładna data i godzina</label>
-                      <input type="datetime-local" value={lockDateTime} onChange={e => setLockDateTime(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#E8DDD0] text-sm outline-none focus:border-[#2D9E6B]" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase text-[#5A7368] mb-1 block">Cykliczność (Google Style)</label>
-                      <select value={recurrence} onChange={e => setRecurrence(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#E8DDD0] text-sm outline-none focus:border-[#2D9E6B] bg-white cursor-pointer">
-                        <option value="jednorazowo">Tylko raz</option>
-                        <option value="codziennie">Codziennie</option>
-                        <option value="w dni robocze">W dni robocze (Pon-Pt)</option>
-                        <option value="co tydzień">Co tydzień</option>
-                      </select>
-                    </div>
-                    {recurrence !== "jednorazowo" && (
-                      <div>
-                        <label className="text-[10px] font-black uppercase text-[#5A7368] mb-1 block">Zakończ cykl (opcjonalnie)</label>
-                        <input type="date" value={recurrenceEnd} onChange={e => setRecurrenceEnd(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#E8DDD0] text-sm outline-none focus:border-[#2D9E6B] bg-white" />
-                      </div>
-                    )}
-                    <button
-                      onClick={() => { setIsLocked(true); setShowLockPanel(false); }}
-                      className="w-full py-2 bg-[#2D9E6B] text-white rounded-xl font-bold text-xs hover:bg-[#1E5C36] transition-all"
-                    >
-                      Zastosuj kłódkę
-                    </button>
-                    {isLocked && (
-                      <button onClick={() => { setIsLocked(false); setLockDateTime(""); setShowLockPanel(false); }} className="w-full py-2 text-red-500 rounded-xl font-bold text-xs hover:bg-red-50 transition-all mt-1">
-                        Usuń blokadę
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="flex flex-1 gap-2">
-            <button onClick={onClose} className="flex-1 py-4 font-bold text-[#5A7368] hover:bg-slate-50 rounded-2xl transition-all">Anuluj</button>
-            <button onClick={submit} className="flex-[2] py-4 bg-[#1E5C36] text-white rounded-2xl font-bold text-base shadow-xl hover:bg-[#164a2c] transition-all">
-              {taskToEdit ? "Zapisz zmiany" : "Dodaj zadanie"}
+          {/* PANEL KŁÓDKI */}
+          {activePanel === 'lock' && (
+            <div className="absolute bottom-[115%] left-1/2 -translate-x-1/2 w-72 bg-white rounded-3xl shadow-2xl border border-[#E8DDD0] p-6 z-50 animate-in slide-in-from-bottom-2">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-sm font-bold text-[#1A2F22]">Zablokuj termin</h4>
+                <button onClick={() => setActivePanel(null)}><X size={16} className="text-[#9FB5AD] hover:text-red-500" /></button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-[#5A7368] mb-1 block">Dokładna data i godzina</label>
+                  <input type="datetime-local" value={lockDateTime} onChange={e => setLockDateTime(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#E8DDD0] text-sm outline-none focus:border-[#2D9E6B]" />
+                </div>
+                <button
+                  onClick={() => { setIsLocked(true); setActivePanel(null); }}
+                  className="w-full py-2 bg-[#2D9E6B] text-white rounded-xl font-bold text-xs hover:bg-[#1E5C36] transition-all"
+                >
+                  Zastosuj kłódkę
+                </button>
+                {isSingleLockActive && (
+                  <button onClick={() => { setIsLocked(false); setLockDateTime(""); setActivePanel(null); }} className="w-full py-2 text-red-500 rounded-xl font-bold text-xs hover:bg-red-50 transition-all mt-1">
+                    Usuń blokadę
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* PRZYCISKI GŁÓWNE Z OSOBNYMI DYMKAMI */}
+          
+          <div className="relative shrink-0">
+            {showRecurrenceTutorial && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300 border-2 border-[#2D9E6B]">
+                <button onClick={(e) => { e.stopPropagation(); setShowRecurrenceTutorial(false); }} className="absolute top-1 right-2 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer">
+                  <X size={12} className="text-[#2D9E6B]" />
+                </button>
+                <p className="text-[10px] leading-relaxed pr-2">
+                  <strong className="text-[#2D9E6B] block mb-0.5">Cykliczność:</strong>
+                  Powtarzalność, np. co tydzień.
+                </p>
+                <div className="absolute top-[calc(100%-1px)] left-1/2 -translate-x-1/2 w-0 h-0 border-x-[8px] border-x-transparent border-t-[10px] border-t-[#1A2F22]"></div>
+              </div>
+            )}
+            <button
+              onClick={() => setActivePanel(activePanel === 'recurrence' ? null : 'recurrence')}
+              disabled={isSingleLockActive}
+              className={`flex flex-row justify-center items-center gap-2 w-[146px] h-[56px] border-[1.6px] rounded-[16px] transition-all ${isSingleLockActive ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200' : (activePanel === 'recurrence' || isRecurrenceActive ? 'bg-[#E8F4ED] border-[#1E5C36] shadow-inner' : 'bg-white border-[#E8DDD0] hover:bg-gray-50')}`}
+            >
+              <img src="/ikonka_cykliczności.png" alt="Cykliczność" className={`w-[29px] h-[29px] transition-all ${isSingleLockActive ? 'opacity-40 grayscale' : ''}`} />
+              <span className={`font-['Inter'] font-bold text-[14px] leading-[16px] text-left transition-all ${isSingleLockActive ? 'text-gray-400 line-through' : 'text-black'}`}>
+                Ustaw<br/>cykliczność
+              </span>
             </button>
           </div>
+
+          <div className="relative shrink-0">
+            {showLockTutorial && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300 delay-100 border-2 border-amber-400">
+                <button onClick={(e) => { e.stopPropagation(); setShowLockTutorial(false); }} className="absolute top-1 right-2 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer">
+                  <X size={12} className="text-amber-400" />
+                </button>
+                <p className="text-[10px] leading-relaxed pr-2">
+                  <strong className="text-amber-400 block mb-0.5">Kłódka:</strong>
+                  Sztywno rezerwuje godziny.
+                </p>
+                <div className="absolute top-[calc(100%-1px)] left-1/2 -translate-x-1/2 w-0 h-0 border-x-[8px] border-x-transparent border-t-[10px] border-t-[#1A2F22]"></div>
+              </div>
+            )}
+            <button
+              onClick={() => setActivePanel(activePanel === 'lock' ? null : 'lock')}
+              disabled={isRecurrenceActive}
+              className={`flex flex-row justify-center items-center gap-2 w-[120px] h-[56px] border-[1.6px] rounded-[16px] transition-all ${isRecurrenceActive ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200' : (activePanel === 'lock' || isSingleLockActive ? 'bg-[#E8F4ED] border-[#1E5C36] shadow-inner' : 'bg-white border-[#E8DDD0] hover:bg-gray-50')}`}
+            >
+              <img src="/ikonka_klodki.png" alt="Kłódka" className={`w-[24px] h-[29px] object-contain transition-all ${isRecurrenceActive ? 'opacity-40 grayscale' : ''}`} />
+              <span className={`font-['Inter'] font-bold text-[14px] leading-[16px] text-left transition-all ${isRecurrenceActive ? 'text-gray-400 line-through' : 'text-black'}`}>
+                Zablokuj<br/>termin
+              </span>
+            </button>
+          </div>
+
+          <button 
+            onClick={submit} 
+            className="flex flex-row justify-center items-center flex-1 h-[56px] bg-[#1E5C36] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] rounded-[16px] hover:bg-[#164a2c] transition-all min-w-[120px]"
+          >
+            <span className="font-['Inter'] font-bold text-[16px] leading-[24px] text-center text-white whitespace-nowrap">
+              {taskToEdit ? "Zapisz" : "Dodaj zadanie"}
+            </span>
+          </button>
+
         </div>
       </div>
     </div>
