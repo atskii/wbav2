@@ -607,7 +607,8 @@ export default function App() {
             const { error } = await supabase
               .from('tasks')
               .update(taskDataWithoutId)
-              .eq('id', id);
+              .eq('id', id)
+              .eq('user_email', user.email);
 
             if (error) throw error;
           })
@@ -628,7 +629,8 @@ export default function App() {
       const { error } = await supabase
         .from('tasks')
         .update({ sMins: null, eMins: null, pDate: null })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_email', user.email);
 
       if (error) throw error;
 
@@ -679,7 +681,8 @@ export default function App() {
       const { error } = await supabase
         .from('tasks')
         .update({ done: !task.done })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_email', user.email);
 
       if (error) throw error;
 
@@ -743,7 +746,8 @@ export default function App() {
         const { error } = await supabase
           .from('tasks')
           .update(taskDataWithoutId)
-          .eq('id', taskToSave.id);
+          .eq('id', taskToSave.id)
+          .eq('user_email', user.email);
         if (error) throw error;
 
         setTasks(prev => sortSmartQueue(prev.map(task => task.id === taskToSave.id ? { ...task, ...taskToSave } : task)));
@@ -848,7 +852,8 @@ export default function App() {
       const { error } = await supabase
         .from('tasks')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_email', user.email);
       if (error) throw error;
       setTasks(p => p.filter(t => t.id !== id));
       add("Zadanie usunięte.");
