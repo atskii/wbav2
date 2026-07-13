@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
-export default function Onboarding({ onComplete }) {
+export default function Onboarding({ initialName = "", onComplete }) {
   const [step, setStep] = useState(0);
+  const [name, setName] = useState(initialName);
   const [hours, setHours] = useState(8);
 
   const [startHour, setStartHour] = useState("08");
@@ -52,11 +53,27 @@ export default function Onboarding({ onComplete }) {
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative overflow-hidden">
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg border border-[#E8DDD0]">
           <div className="flex justify-center gap-2 mb-7">
-            {[0, 1, 2].map(i => (
+            {[0, 1, 2, 3].map(i => (
               <div key={i} className={`h-1.5 rounded-full transition-all duration-400 ${i <= step ? "w-10 bg-[#1E5C36]" : "w-5 bg-[#E8DDD0]"}`} />
             ))}
           </div>
+
           {step === 0 && <>
+            <h2 className="font-lora text-2xl font-bold text-center text-[#1A2F22] mb-2">Twoje imię</h2>
+            <p className="text-center text-[#5A7368] mb-8 text-sm">Jak mamy się do Ciebie zwracać w aplikacji?</p>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Wpisz swoje imię lub pseudonim"
+                className="w-full px-4 py-3.5 rounded-2xl border border-[#E8DDD0] text-sm focus:outline-none focus:border-[#2D9E6B] transition-all bg-white text-gray-800 text-center font-bold text-lg"
+                required
+              />
+            </div>
+          </>}
+
+          {step === 1 && <>
             <h2 className="font-lora text-2xl font-bold text-center text-[#1A2F22] mb-2">Pytanie 1 z 3</h2>
             <p className="text-center text-[#5A7368] mb-8 text-sm">Ile godzin dziennie chcesz poświęcić na realizacje swoich zadań?</p>
             <div className="flex items-center justify-center gap-6">
@@ -65,7 +82,8 @@ export default function Onboarding({ onComplete }) {
               <button onClick={() => setHours(h => Math.min(24, h + 1))} className="w-12 h-12 rounded-2xl border-2 border-[#E8DDD0] flex items-center justify-center text-xl font-bold text-[#5A7368] transition-all">+</button>
             </div>
           </>}
-          {step === 1 && <>
+
+          {step === 2 && <>
             <h2 className="font-lora text-2xl font-bold text-center text-[#1A2F22] mb-2">Pytanie 2 z 3</h2>
             <p className="text-center text-[#5A7368] mb-4 text-sm">Od której godziny chcesz rozpoczynać swoje zadania?</p>
 
@@ -98,7 +116,8 @@ export default function Onboarding({ onComplete }) {
             </div>
             <p className="text-center text-[11px] font-bold text-[#9FB5AD] uppercase tracking-widest mt-2">Możesz też wpisać godzinę z klawiatury</p>
           </>}
-          {step === 2 && <>
+
+          {step === 3 && <>
             <h2 className="font-lora text-2xl font-bold text-center text-[#1A2F22] mb-1">Pytanie 3 z 3</h2>
             <p className="text-center text-[#5A7368] text-sm mb-1">Co najszybciej poprawia Ci nastrój kiedy masz kryzys w ciągu dnia?</p>
             <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1 mt-4">
@@ -110,7 +129,15 @@ export default function Onboarding({ onComplete }) {
               ))}
             </div>
           </>}
-          <button onClick={() => { if (step < 2) setStep(s => s + 1); else onComplete({ hours, startTime: `${startHour}:${startMinute}`, picks }); }} className="w-full py-3.5 mt-6 bg-[#1E5C36] text-white rounded-2xl font-semibold hover:bg-[#164a2c] transition-all shadow-lg">
+
+          <button
+            onClick={() => {
+              if (step < 3) setStep(s => s + 1);
+              else onComplete({ name: name.trim(), hours, startTime: `${startHour}:${startMinute}`, picks });
+            }}
+            disabled={step === 0 && !name.trim()}
+            className="w-full py-3.5 mt-6 bg-[#1E5C36] text-white rounded-2xl font-semibold hover:bg-[#164a2c] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Kontynuuj
           </button>
         </div>

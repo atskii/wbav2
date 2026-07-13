@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase";
 export default function SettingsView({ user, setUser, add }) {
 
   const OPTS = ["Wyjście na słońce", "Kilka minut przerwy", "Dobra kawa", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Przerwa od pracy", "Muzyka", "Zmiana otoczenia"];
+  const [name, setName] = useState(user?.name || "");
   const [hours, setHours] = useState(user?.prefs?.hours || 8);
   const [startHour, setStartHour] = useState(user?.prefs?.startTime ? user.prefs.startTime.split(':')[0] : "08");
   const [startMinute, setStartMinute] = useState(user?.prefs?.startTime ? user.prefs.startTime.split(':')[1] : "00");
@@ -21,10 +22,10 @@ export default function SettingsView({ user, setUser, add }) {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const prefs = { hours, startTime: `${startHour}:${startMinute}`, picks };
+      const prefs = { name: name.trim(), hours, startTime: `${startHour}:${startMinute}`, picks };
       const { error } = await supabase.from('profiles').update({ prefs }).eq('email', user.email);
       if (error) throw error;
-      setUser({ ...user, prefs });
+      setUser({ ...user, name: name.trim(), prefs });
       add("Ustawienia zostały zaktualizowane!");
     } catch (err) {
       console.error(err);
@@ -41,6 +42,22 @@ export default function SettingsView({ user, setUser, add }) {
         <div><h1 className="font-lora text-3xl font-bold text-[#1A2F22]">Ustawienia</h1><p className="text-[#5A7368]">Dostosuj aplikację do swojego rytmu dnia</p></div>
       </div>
       <div className="bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
+        <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-[#1A2F22] mb-1">Nazwa użytkownika</h3>
+            <p className="text-sm text-[#5A7368]">Jak mamy się do Ciebie zwracać w aplikacji?</p>
+          </div>
+          <div className="w-full md:w-64">
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Twoje imię lub pseudonim"
+              className="w-full px-4 py-2.5 border border-[#E8DDD0] rounded-xl focus:outline-none focus:border-[#0E6630] text-sm font-semibold bg-white text-gray-800"
+              required
+            />
+          </div>
+        </div>
         <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
           <div><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Czas pracy</h3><p className="text-sm text-[#5A7368]">Ile godzin dziennie chcesz poświęcić na realizacje swoich zadań?</p></div>
           <div className="flex items-center gap-4 bg-[#F5EFE6] p-2 rounded-2xl w-fit">

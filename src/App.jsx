@@ -31,7 +31,7 @@ import SettingsView from "./components/SettingsView";
 import DebugModal from "./components/DebugModal";
 import AdminPanel from "./components/AdminPanel";
 
-const ADMIN_EMAILS = ["admin"];
+const ADMIN_EMAILS = ["admin@wellbeing.app"];
 
 export default function App() {
   const [view, setView] = useState("landing");
@@ -47,6 +47,50 @@ export default function App() {
   const [editingTask, setEditingTask] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Helper for logging out
+  const handleLogout = async () => {
+    setIsLoading(true);
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("SignOut error:", e);
+    }
+    localStorage.removeItem("wba_user");
+    setUser(null);
+    setView("landing");
+    setIsLoading(false);
+  };
+
+  // Sync Supabase Auth session & handle redirects
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const uEmail = session.user.email;
+        setUser(prev => {
+          if (prev && prev.email === uEmail) return prev;
+          return { email: uEmail, name: uEmail.split('@')[0], prefs: null };
+        });
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        const uEmail = session.user.email;
+        setUser(prev => {
+          if (prev && prev.email === uEmail) return prev;
+          return { email: uEmail, name: uEmail.split('@')[0], prefs: null };
+        });
+      } else {
+        setUser(null);
+        setView("landing");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const [tasks, setTasks] = useState([]);
   const [moods, setMoods] = useState([]);
@@ -89,7 +133,11 @@ export default function App() {
 
           if (!profileError && profileData) {
             // Użytkownik ma już profil - pomiń onboarding i wejdź do apki
-            setUser(prev => ({ ...prev, prefs: profileData.prefs }));
+            setUser(prev => ({ 
+              ...prev, 
+              name: profileData.prefs?.name || prev?.name || user.email.split('@')[0],
+              prefs: profileData.prefs 
+            }));
             setView("app");
           } else {
             // Brak profilu w bazie - wymuś onboarding
@@ -854,7 +902,7 @@ export default function App() {
   if (view === "onboarding") return (
     <>
       <Font />
-      <Onboarding onComplete={async (prefs) => {
+      <Onboarding initialName={user?.name} onComplete={async (prefs) => {
         try {
           // Zapisz preferencje w Supabase przed wejściem do aplikacji
           const { error } = await supabase
@@ -863,7 +911,7 @@ export default function App() {
 
           if (error) throw error;
 
-          setUser({ ...user, prefs });
+          setUser({ ...user, name: prefs.name || user.name, prefs });
           setView("app");
           add("Ustawienia zostały zapisane!");
         } catch (err) {
@@ -882,7 +930,7 @@ export default function App() {
         <Toasts ts={ts} rm={rm} />
         <AdminPanel
           user={user}
-          onLogout={() => { setUser(null); setView("landing"); }}
+          onLogout={handleLogout}
           addToast={add}
           supabase={supabase}
         />
@@ -907,7 +955,7 @@ export default function App() {
             active={activeTab}
             onNav={handleNav}
             user={user}
-            onLogout={() => { setUser(null); setView("landing"); }}
+            onLogout={handleLogout}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
             todayDate={getNow()}
@@ -946,10 +994,7 @@ export default function App() {
 
                   <div className={`absolute top-full right-0 mt-3 w-40 bg-white rounded-2xl shadow-xl border border-[#E8DDD0] py-2 z-[100] origin-top-right transition-all duration-200 ease-out ${profileMenuOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
                     <button
-                      onClick={() => {
-                        localStorage.clear();
-                        window.location.reload();
-                      }}
+                      onClick={handleLogout}
                       className="w-full px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 flex items-center justify-center gap-2 transition-all"
                     >
                       <LogOut size={16} /> Wyloguj mnie

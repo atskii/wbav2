@@ -214,7 +214,7 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
           )}
 
           {/* PRZYCISKI GŁÓWNE Z OSOBNYMI DYMKAMI */}
-          
+
           <div className="relative shrink-0">
             {showRecurrenceTutorial && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300 border-2 border-[#2D9E6B]">
@@ -235,7 +235,7 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
             >
               <img src="/ikonka_cykliczności.png" alt="Cykliczność" className={`w-[29px] h-[29px] transition-all ${isSingleLockActive ? 'opacity-40 grayscale' : ''}`} />
               <span className={`font-['Inter'] font-bold text-[14px] leading-[16px] text-left transition-all ${isSingleLockActive ? 'text-gray-400 line-through' : 'text-black'}`}>
-                Ustaw<br/>cykliczność
+                Ustaw<br />cykliczność
               </span>
             </button>
           </div>
@@ -260,13 +260,13 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
             >
               <img src="/ikonka_klodki.png" alt="Kłódka" className={`w-[24px] h-[29px] object-contain transition-all ${isRecurrenceActive ? 'opacity-40 grayscale' : ''}`} />
               <span className={`font-['Inter'] font-bold text-[14px] leading-[16px] text-left transition-all ${isRecurrenceActive ? 'text-gray-400 line-through' : 'text-black'}`}>
-                Zablokuj<br/>termin
+                Zablokuj<br />termin
               </span>
             </button>
           </div>
 
-          <button 
-            onClick={submit} 
+          <button
+            onClick={submit}
             className="flex flex-row justify-center items-center flex-1 h-[56px] bg-[#1E5C36] shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] rounded-[16px] hover:bg-[#164a2c] transition-all min-w-[120px]"
           >
             <span className="font-['Inter'] font-bold text-[16px] leading-[24px] text-center text-white whitespace-nowrap">

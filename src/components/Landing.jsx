@@ -36,7 +36,7 @@ export default function Landing({ onCTA }) {
           </div>
           <div className="hidden md:flex items-center gap-4">
             <button onClick={() => onCTA("login")} className="px-5 py-2.5 bg-[#D0EBDA] text-[#0E6630] font-medium rounded-lg hover:bg-[#bce0ca] transition-colors">Zaloguj się</button>
-            <button disabled className="px-5 py-2.5 bg-[#0E6630] text-white font-medium rounded-lg opacity-50 cursor-not-allowed line-through">Zarejestruj się</button>
+            <button onClick={() => onCTA("register")} className="px-5 py-2.5 bg-[#0E6630] text-white font-medium rounded-lg hover:bg-[#0b5025] transition-colors">Zarejestruj się</button>
           </div>
           <button 
             className="md:hidden p-2 text-[#03421C] ml-auto"
@@ -58,7 +58,7 @@ export default function Landing({ onCTA }) {
             </div>
             <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
               <button onClick={() => onCTA("login")} className="w-full py-3 bg-[#D0EBDA] text-[#0E6630] font-medium rounded-lg text-center">Zaloguj się</button>
-              <button disabled className="w-full py-3 bg-[#0E6630] text-white font-medium rounded-lg opacity-50 text-center">Zarejestruj się</button>
+              <button onClick={() => onCTA("register")} className="w-full py-3 bg-[#0E6630] text-white font-medium rounded-lg text-center hover:bg-[#0b5025] transition-all">Zarejestruj się</button>
             </div>
           </div>
         )}
