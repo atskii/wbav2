@@ -1,17 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#1E5C36" />
     <meta
       name="description"
-      content="Web site created using Vite"
+      content="Wellbeing App — inteligentny planer zadań z systemem ostrzegania o samopoczuciu"
     />
+    <!-- CSP: Content Security Policy — A02:2025 Security Misconfiguration -->
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" />
+    <!-- Prevent MIME sniffing -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <!-- Referrer Policy — minimize data leakage -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="apple-touch-icon" href="/logo192.png" />
     <link rel="manifest" href="/manifest.json" />
-    <title>React App</title>
+    <title>Wellbeing App</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

@@ -13,7 +13,7 @@ export default function AdminPanel({ user, onLogout, addToast, supabase }) {
                 const { data, error } = await supabase.from('profiles').select('email');
                 if (error) {
                     console.error('Błąd pobierania profili:', error);
-                    addToast("Błąd pobierania listy użytkowników: " + error.message, "warn");
+                    addToast("Błąd pobierania listy użytkowników.", "warn");
                 } else if (data) {
                     // Filtruj konta admina z listy
                     setAccounts(data.map(p => p.email).filter(e => e && e !== user.email));
@@ -36,7 +36,7 @@ export default function AdminPanel({ user, onLogout, addToast, supabase }) {
         });
 
         if (error) {
-            addToast("Błąd wysyłania komendy: " + error.message, "warn");
+            addToast("Błąd wysyłania komendy.", "warn");
         } else {
             addToast(`Wysłano: ${commandName} do ${targetAccount}`);
         }

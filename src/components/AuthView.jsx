@@ -34,7 +34,7 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
       setMessage("Link logowania oraz jednorazowy kod weryfikacyjny zostały wysłane na Twój adres e-mail. Sprawdź skrzynkę.");
     } catch (err) {
       console.error(err);
-      setErr(err.message || "Wystąpił błąd podczas wysyłania kodu.");
+      setErr("Wystąpił błąd podczas wysyłania kodu. Spróbuj ponownie za chwilę.");
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
       }
     } catch (err) {
       console.error(err);
-      setErr(err.message || "Błędny lub wygasły kod weryfikacyjny.");
+      setErr("Błędny lub wygasły kod weryfikacyjny. Spróbuj ponownie.");
     } finally {
       setLoading(false);
     }
