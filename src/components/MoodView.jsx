@@ -1,13 +1,27 @@
 import { useState } from "react";
-import { Calendar, Search, Smile, X } from "lucide-react";
+import { Calendar, Search, Smile, X, Sparkles, Loader2 } from "lucide-react";
 import { EMOJIS, MOOD_L } from "../lib/constants";
+import { analyzeMoodWithAI } from "../lib/gemini";
 
-export default function MoodView({ moods, onOpenModal, onEditMood, todayDate }) {
+export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, userEmail }) {
   const [filter, setFilter] = useState("Tydzień");
   const [hovered, setHovered] = useState(null);
   const [showAvg, setShowAvg] = useState(true);
   const [editingMood, setEditingMood] = useState(null);
   const [editingNote, setEditingNote] = useState("");
+  const [aiState, setAiState] = useState({ isOpen: false, loading: false, result: "", error: "" });
+
+  const handleAIAnalysis = async () => {
+    setAiState({ isOpen: true, loading: true, result: "", error: "" });
+    try {
+      const validMoods = data.filter(d => d.v !== null);
+      if (validMoods.length === 0) throw new Error("Brak danych nastrojowych do analizy w wybranym okresie.");
+      const result = await analyzeMoodWithAI(validMoods, "Użytkownik", userEmail);
+      setAiState({ isOpen: true, loading: false, result, error: "" });
+    } catch (err) {
+      setAiState({ isOpen: true, loading: false, result: "", error: err.message });
+    }
+  };
 
   const daysToShow = filter === "Tydzień" ? 7 : filter === "Miesiąc" ? 30 : filter === "Kwartał" ? 90 : 7;
   const targetDate = new Date(todayDate);
@@ -51,7 +65,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate }) 
   const hitRadius = Math.min(25, Math.max(6, (width / daysToShow) / 2));
 
   return (
-    <div className="w-full h-full p-4 lg:p-6 flex flex-col items-center bg-[#FCFCFD] overflow-hidden min-h-0 relative">
+    <div className="w-full h-full p-4 lg:p-6 flex flex-col items-center bg-[#FCFCFD] overflow-y-auto relative">
       <div className="w-full max-w-6xl flex flex-col mb-4 shrink-0">
         <h1 className="text-[24px] font-bold text-[#303030] leading-[130%] mb-1">Monitor nastroju</h1>
         <p className="text-sm text-[#1D1B20] max-w-3xl">Poświęć chwilę, aby zaznaczyć, jak się czujesz. To pomoże Ci lepiej zrozumieć siebie i śledzić swoje samopoczucie.</p>
@@ -64,11 +78,11 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate }) 
         </div>
         <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
           <button className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Calendar size={14} /><span className="text-xs font-semibold">Wybierz datę</span></button>
-          <button className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Search size={14} /><span className="text-xs font-semibold">Analiza AI</span></button>
+          <button onClick={handleAIAnalysis} disabled={aiState.loading} className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all disabled:opacity-50"><Sparkles size={14} /><span className="text-xs font-semibold">Analiza AI</span></button>
           <button onClick={onOpenModal} className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Smile size={14} /><span className="text-xs font-semibold">Zarejestruj swój nastrój</span></button>
         </div>
       </div>
-      <div className="w-full max-w-6xl bg-white rounded-[10px] p-4 lg:p-6 shadow-sm border border-[#E8E8E8] flex-1 min-h-0 flex flex-col">
+      <div className="w-full max-w-6xl bg-white rounded-[10px] p-4 lg:p-6 shadow-sm border border-[#E8E8E8] shrink-0 flex flex-col">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4 shrink-0">
           <h2 className="text-xl font-bold text-[#151515]">Wykres Twojego nastroju w czasie</h2>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 w-full md:w-auto">
@@ -86,7 +100,38 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate }) 
             </div>
           </div>
         </div>
-        <div className="relative w-full flex-1 min-h-0 mt-2 mb-6">
+
+        {/* AI Analysis Modal */}
+        {aiState.isOpen && (
+          <div className="w-full mb-6 bg-[#FAFAFA] border border-[#E8E8E8] shadow-sm rounded-2xl p-6 relative animate-in slide-in-from-top-4 fade-in duration-300">
+            <button onClick={() => setAiState({ ...aiState, isOpen: false })} className="absolute top-4 right-4 text-[#8B8692] hover:text-[#151515] transition-colors"><X size={18} /></button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#E5F2F3] flex items-center justify-center text-[#02848C]">
+                <Sparkles size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-[#151515]">Analiza AI Twojego nastroju</h3>
+            </div>
+            
+            {aiState.loading ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
+                <Loader2 size={28} className="animate-spin text-[#02848C]" />
+                <p className="text-sm font-medium text-[#5A5A5A]">Gemini analizuje Twoje dane...</p>
+              </div>
+            ) : aiState.error ? (
+              <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100">
+                {aiState.error}
+              </div>
+            ) : (
+              <div className="text-[#303030] text-sm leading-relaxed space-y-3">
+                {aiState.result.split('\n').map((paragraph, idx) => (
+                  <p key={idx}>{paragraph}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="relative w-full h-[300px] shrink-0 mt-2 mb-10">
           {[0,1,2,3,4,5,6].map(level => {
             const yPos = 20 + (1 - level / 6) * (height - 40);
             return (<div key={`html-emoji-${level}`} className="absolute text-xl flex items-center justify-center bg-transparent text-[#5A5A5A] w-6 h-6 rounded-full" style={{ left: 0, top: `${(yPos / height) * 100}%`, transform: 'translateY(-50%)' }}><span className="opacity-90">{EMOJIS[level]}</span></div>);

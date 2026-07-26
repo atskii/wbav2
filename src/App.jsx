@@ -32,6 +32,7 @@ import DebugModal from "./components/DebugModal";
 import AdminPanel from "./components/AdminPanel";
 
 const ADMIN_EMAILS = ["admin@wellbeing.app"];
+const TEST_EMAIL = "testuser@testuser";
 
 export default function App() {
   const [view, setView] = useState("landing");
@@ -52,11 +53,16 @@ export default function App() {
   const handleLogout = async () => {
     setIsLoading(true);
     try {
-      await supabase.auth.signOut();
+      if (user?.email !== TEST_EMAIL) {
+        await supabase.auth.signOut();
+      }
     } catch (e) {
       console.error("SignOut error:", e);
     }
     localStorage.removeItem("wba_user");
+    localStorage.removeItem("wba_test_tasks");
+    localStorage.removeItem("wba_test_moods");
+    localStorage.removeItem("wba_test_profile");
     setUser(null);
     setView("landing");
     setIsLoading(false);
@@ -153,6 +159,8 @@ export default function App() {
       fetchData();
     }
   }, [user?.email]);
+
+
 
   const [offsetDays, setOffsetDays] = useState(0);
   const getNow = useCallback(() => {
@@ -310,19 +318,19 @@ export default function App() {
         const d = getNow();
         d.setDate(d.getDate() - i);
         const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        fakeMoods.push({ d: ds, v: Math.floor(Math.random() * 5) + 1, note: "Testowa notatka", user_email: user.email });
+        // Wykorzystujemy skalę 0-6 dla 7-stopniowego nastroju
+        fakeMoods.push({ d: ds, v: Math.floor(Math.random() * 7), note: "Testowa notatka", user_email: user.email });
         datesToReplace.push(ds);
       }
 
-      try {
-        // Usuwamy tylko te kilkanaście dni w tył, nie tykając reszty danych
-        await supabase
-          .from('moods')
-          .delete()
-          .eq('user_email', user.email)
-          .in('d', datesToReplace);
 
-        const { data, error } = await supabase.from('moods').insert(fakeMoods).select();
+      try {
+        // Zastępujemy delete+insert jednym upsert, co eliminuje błędy 409 (Conflict)
+        const { data, error } = await supabase
+          .from('moods')
+          .upsert(fakeMoods, { onConflict: 'user_email,d' })
+          .select();
+        
         if (error) throw error;
 
         setMoods(prev => {
@@ -353,6 +361,7 @@ export default function App() {
 
   useEffect(() => {
     if (view === "landing" && user) setView("app");
+    if (!user && view !== "landing" && view !== "auth") setView("landing");
   }, [user, view]);
 
   // --- REALTIME: Nasłuchiwanie zdalnych komend dla zwykłych użytkowników ---
@@ -912,7 +921,7 @@ export default function App() {
           // Zapisz preferencje w Supabase przed wejściem do aplikacji
           const { error } = await supabase
             .from('profiles')
-            .upsert({ email: user.email, prefs });
+            .upsert({ email: user.email, prefs }, { onConflict: 'email' });
 
           if (error) throw error;
 
@@ -1050,6 +1059,7 @@ export default function App() {
                   onOpenModal={() => setShowMoodModal(true)}
                   onEditMood={handleEditMood}
                   todayDate={getNow()}
+                  userEmail={user?.email}
                 />
               )}
               {activeTab === "warning" && <WarningView loading={isLoading} user={user} />}

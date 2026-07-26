@@ -18,12 +18,17 @@
    - [Warianty zagrożeń (CWE)](#warianty-zagrożeń-cwe-a02)
    - [Scenariusze ataków specyficzne dla tego projektu](#scenariusze-ataków-a02)
    - [Wymagania ochrony — checklist](#wymagania-ochrony--checklist-a02)
-3. [Audyt projektu Wellbeing App](#audyt-projektu-wellbeing-app)
+3. [A03:2025 — Software Supply Chain Failures](#a032025--software-supply-chain-failures)
+   - [Opis zagrożenia](#opis-zagrożenia-a03)
+   - [Warianty zagrożeń (CWE)](#warianty-zagrożeń-cwe-a03)
+   - [Scenariusze ataków specyficzne dla tego projektu](#scenariusze-ataków-a03)
+   - [Wymagania ochrony — checklist](#wymagania-ochrony--checklist-a03)
+4. [Audyt projektu Wellbeing App](#audyt-projektu-wellbeing-app)
    - [Znalezione podatności A01](#znalezione-podatności)
    - [Znalezione podatności A02](#znalezione-podatności-a02)
    - [Zastosowane poprawki](#zastosowane-poprawki)
    - [Rekomendacje do wdrożenia w Supabase Dashboard](#rekomendacje-do-wdrożenia-w-supabase-dashboard)
-4. [Instrukcja audytu dla agentów AI](#instrukcja-audytu-dla-agentów-ai)
+5. [Instrukcja audytu dla agentów AI](#instrukcja-audytu-dla-agentów-ai)
 
 ---
 
@@ -603,6 +608,43 @@ PO FIX-ie (.env w .gitignore):
 | `vite.config.js` | Dodano `build.sourcemap: false` — wyłączenie source maps w produkcji |
 | `AuthView.jsx` | Zastąpiono `err.message` generycznymi komunikatami błędów |
 | `AdminPanel.jsx` | Zastąpiono `error.message` generycznymi komunikatami błędów |
+
+---
+
+## A03:2025 — Software Supply Chain Failures
+
+### Opis zagrożenia {#opis-zagrożenia-a03}
+
+Software Supply Chain Failures (Błędy w Łańcuchu Dostaw Oprogramowania) to załamania lub inne formy naruszenia w procesie budowania, dystrybucji lub aktualizacji oprogramowania. Często są one spowodowane przez luki w zabezpieczeniach lub złośliwe zmiany w kodzie pochodzącym od stron trzecich (np. zewnętrznych bibliotekach NPM), narzędziach czy innych zależnościach. Zagrożenie to zajmuje najwyższe, 1. miejsce według ekspertów (ankieta 2025) i ma najwyższy wskaźnik występowania incydentów.
+
+Aplikacja jest podatna na to zagrożenie, jeśli m.in.:
+- Nie śledzi się precyzyjnie wersji wszystkich komponentów i ukrytych zależności (transitive dependencies).
+- Oprogramowanie i jego komponenty (np. pakiety npm) są nieaktualne lub ich twórcy zaprzestali wsparcia.
+- Nie ma regularnych skanowań zależności pod kątem podatności.
+- Brak jest odpowiednio wdrożonego procesu "change management" dla pipeline'u CI/CD.
+
+### Warianty zagrożeń (CWE) {#warianty-zagrożeń-cwe-a03}
+
+- **CWE-477: Use of Obsolete Function** — Używanie przestarzałych funkcji/API.
+- **CWE-1104: Use of Unmaintained Third Party Components** — Zależność od nieutrzymywanych już pakietów (np. paczek NPM).
+- **CWE-1329: Reliance on Component That is Not Updateable** — Zależność od komponentu bez możliwości jego aktualizacji.
+- **CWE-1395: Dependency on Vulnerable Third-Party Component** — ⚠️ Zależność od znanej, podatnej wersji biblioteki stron trzecich (najczęstszy problem w ekosystemie JS).
+
+### Scenariusze ataków specyficzne dla tego projektu {#scenariusze-ataków-a03}
+
+#### Scenariusz 1: Zarażenie przez zewnętrzną paczkę (npm worm)
+Aplikacja Wellbeing używa Reacta i TailwindCSS, co wymusza posiadanie ogromnego drzewa zależności (`node_modules`). Atakujący przejmuje konto dewelopera popularnej paczki npm i publikuje aktualizację z backdoorem. Przy kolejnym użyciu `npm install` złośliwy kod trafia na maszynę dewelopera (kradzież tokenów dostępu) lub bezpośrednio do kodu bundle'a (kradzież danych użytkowników po stronie przeglądarki).
+
+#### Scenariusz 2: Podatność Log4Shell / Struts (Odpowiednik w ekosystemie JS)
+Jedna z wbudowanych bibliotek do budowania powiadomień lub renderowania Markdown posiada podatność RCE (Remote Code Execution) lub XSS. Z powodu braku regularnego skanowania podatności (`npm audit`), stary kod pozostaje na produkcji, umożliwiając atakującym wstrzyknięcie skryptów.
+
+### Wymagania ochrony — checklist {#wymagania-ochrony--checklist-a03}
+
+- [x] **Zarządzanie SBOM** — Aplikacja ma udokumentowaną i wyraźną listę zależności bezpośrednich (w tym `LIBRARIES.md`). Skonfigurowano narzędzie do generowania Software Bill of Materials.
+- [x] **Regularne skanowanie (npm audit)** — Skonfigurowano skrypt `npm run audit:check` do manualnej lub automatycznej weryfikacji. 
+- [ ] **Automatyzacja monitoringu** — Opcjonalnie: integracja z Dependabot lub Snyk w repozytorium GitHub.
+- [ ] **Weryfikacja środowiska CI/CD** — Upewnienie się, że budowanie aplikacji (np. na platformie Vercel) korzysta z bezpiecznych obrazów.
+- [ ] **Weryfikacja zaufanych źródeł** — Pobieranie pakietów jedynie za pośrednictwem oficjalnego rejestru npm i z odpowiednimi blokadami (lockfiles, np. `package-lock.json`).
 
 ---
 

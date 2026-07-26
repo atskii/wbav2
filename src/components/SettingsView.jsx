@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronUp, ChevronDown, Check, RotateCcw, Settings } from "lucide-react";
+import { ChevronUp, ChevronDown, Check, RotateCcw, Settings, Trash2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 // ═══════════════════════════════════════════════════
@@ -19,6 +19,7 @@ export default function SettingsView({ user, setUser, add }) {
   const handleMinuteChange = (delta) => { let newM = parseInt(startMinute, 10) + delta; if (isNaN(newM)) newM = delta; if (newM < 0) newM = 59; if (newM > 59) newM = 0; setStartMinute(String(newM).padStart(2, "0")); };
   const handleHourInputBlur = () => { let val = parseInt(startHour, 10); if (isNaN(val)) val = 8; if (val < 0) val = 0; if (val > 23) val = 23; setStartHour(String(val).padStart(2, "0")); };
   const handleMinuteInputBlur = () => { let val = parseInt(startMinute, 10); if (isNaN(val)) val = 0; if (val < 0) val = 0; if (val > 59) val = 59; setStartMinute(String(val).padStart(2, "0")); };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -32,6 +33,27 @@ export default function SettingsView({ user, setUser, add }) {
       add("Błąd podczas zapisywania ustawień.", "warn");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Czy na pewno chcesz trwale usunąć swoje konto i wszystkie dane? Tej operacji NIE można cofnąć!")) {
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      await supabase.from('tasks').delete().eq('user_email', user.email);
+      await supabase.from('moods').delete().eq('user_email', user.email);
+      await supabase.from('profiles').delete().eq('email', user.email);
+      await supabase.auth.signOut();
+      localStorage.removeItem("wba_user");
+      setUser(null);
+      // App.jsx will handle redirect to landing view when user is null
+    } catch (err) {
+      console.error(err);
+      add("Błąd podczas usuwania konta.", "warn");
+      setIsDeleting(false);
     }
   };
   return (
@@ -94,13 +116,58 @@ export default function SettingsView({ user, setUser, add }) {
             ))}
           </div>
         </div>
+
+        {/* Panel Analityki Tokenów AI */}
+        <div className="p-6 md:p-8 border-t border-[#E8DDD0] bg-[#F8FAFC] flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse" />
+              Monitor Zużycia Tokenów i Kosztów AI
+            </h3>
+            <p className="text-sm text-slate-600">
+              Przeglądaj statystyki tokenów Gemini i koszty w czasie rzeczywistym w osobnym panelu
+            </p>
+          </div>
+          <a
+            href="/analytics.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 font-bold rounded-xl text-xs border border-slate-700 shadow-md flex items-center gap-2 transition-all shrink-0"
+          >
+            Otwórz Panel Analityczny ↗
+          </a>
+        </div>
       </div>
+
       <div className="mt-8 flex justify-end">
-        <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 px-8 py-3 bg-[#1E5C36] text-white rounded-2xl font-bold hover:bg-[#164a2c] transition-all shadow-lg hover:shadow-xl disabled:opacity-70">
+        <button onClick={handleSave} disabled={isSaving || isDeleting} className="flex items-center gap-2 px-8 py-3 bg-[#1E5C36] text-white rounded-2xl font-bold hover:bg-[#164a2c] transition-all shadow-lg hover:shadow-xl disabled:opacity-70">
           {isSaving ? <RotateCcw size={18} className="animate-spin" /> : <Check size={18} />}
           Zapisz ustawienia
         </button>
       </div>
+
+      {/* Danger Zone */}
+      <div className="mt-16 bg-red-50/50 rounded-3xl border border-red-100 overflow-hidden">
+        <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h3 className="text-lg font-bold text-red-700 mb-1 flex items-center gap-2">
+              <Trash2 size={20} />
+              Strefa niebezpieczna
+            </h3>
+            <p className="text-sm text-red-600/80">
+              Trwałe usunięcie konta kasuje wszystkie zapisane zadania, nastroje i preferencje.
+            </p>
+          </div>
+          <button 
+            onClick={handleDeleteAccount} 
+            disabled={isDeleting}
+            className="whitespace-nowrap px-6 py-3 bg-white text-red-600 border border-red-200 rounded-2xl font-semibold text-sm hover:bg-red-50 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+          >
+            {isDeleting ? "Usuwanie..." : "Usuń konto bezpowrotnie"}
+          </button>
+        </div>
+      </div>
+
       </div>
     </div>
   );

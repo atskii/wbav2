@@ -18,8 +18,11 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
+    "dev:analytics": "vite --config vite.analytics.config.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "audit:check": "npm audit",
+    "sbom:generate": "npx @cyclonedx/cyclonedx-npm --output-format JSON --output-file bom.json"
   },
   "eslintConfig": {
     "extends": [
