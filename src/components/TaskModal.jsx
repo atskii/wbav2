@@ -217,7 +217,7 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
 
           <div className="relative shrink-0">
             {showRecurrenceTutorial && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300 border-2 border-[#2D9E6B]">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-300 border-2 border-[#2D9E6B]">
                 <button onClick={(e) => { e.stopPropagation(); setShowRecurrenceTutorial(false); }} className="absolute top-1 right-2 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer">
                   <X size={12} className="text-[#2D9E6B]" />
                 </button>
@@ -225,7 +225,7 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
                   <strong className="text-[#2D9E6B] block mb-0.5">Cykliczność:</strong>
                   Powtarzalność, np. co tydzień.
                 </p>
-                <div className="absolute top-[calc(100%-1px)] left-1/2 -translate-x-1/2 w-0 h-0 border-x-[8px] border-x-transparent border-t-[10px] border-t-[#1A2F22]"></div>
+                <div className="absolute bottom-[calc(100%-1px)] left-1/2 -translate-x-1/2 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-[#1A2F22]"></div>
               </div>
             )}
             <button
@@ -242,7 +242,7 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
 
           <div className="relative shrink-0">
             {showLockTutorial && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-300 delay-100 border-2 border-amber-400">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-300 delay-100 border-2 border-amber-400">
                 <button onClick={(e) => { e.stopPropagation(); setShowLockTutorial(false); }} className="absolute top-1 right-2 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer">
                   <X size={12} className="text-amber-400" />
                 </button>
@@ -250,7 +250,7 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
                   <strong className="text-amber-400 block mb-0.5">Kłódka:</strong>
                   Sztywno rezerwuje godziny.
                 </p>
-                <div className="absolute top-[calc(100%-1px)] left-1/2 -translate-x-1/2 w-0 h-0 border-x-[8px] border-x-transparent border-t-[10px] border-t-[#1A2F22]"></div>
+                <div className="absolute bottom-[calc(100%-1px)] left-1/2 -translate-x-1/2 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-[#1A2F22]"></div>
               </div>
             )}
             <button

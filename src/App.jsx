@@ -32,7 +32,7 @@ import SettingsView from "./components/SettingsView";
 import DebugModal from "./components/DebugModal";
 import AdminPanel from "./components/AdminPanel";
 
-const ADMIN_EMAILS = ["admin@wellbeing.app"];
+const ADMIN_EMAILS = ["admin@wellbeing.app", "admin@wba.com"];
 const TEST_EMAIL = "testuser@testuser";
 
 export default function App() {

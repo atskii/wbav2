@@ -128,51 +128,169 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     return days;
   };
 
-  const renderDailyView = () => (
-    <div className="flex-1 overflow-y-auto relative pb-10" ref={calendarScrollRef}>
-      {isToday && nowMinute >= 6*60 && nowMinute <= 23*60 && (
-        <div className="absolute left-[64px] right-0 z-40 pointer-events-none flex items-center transition-all duration-1000" style={{ top: `${(nowMinute - 6*60) * (86.4/60) + 16}px` }}>
-          <div className="w-2.5 h-2.5 rounded-full bg-[#E40D0D] -ml-[5px] relative z-10" />
-          <div className="flex-1 h-[2px] bg-[#E40D0D]" />
-        </div>
-      )}
-      <div className="relative pt-4">
-        {hours.map(h => {
-          const tasksInThisHour = timelineTasks.filter(t => {
-            let taskHour = -1;
-            // Wyciągnij godzinę z pola `t` (czas blokady) lub `deadline` — do pozycjonowania na osi Y
-            if (t.t) { const match = t.t.match(/(\d{1,2}):\d{2}/); taskHour = match ? parseInt(match[1]) : (t.hour || -1); }
-            if (taskHour === -1 && t.deadline) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
-            return taskHour === h;
-          });
-          return (
+  const computeOverlapLayout = (taskList, targetDate, minCardHeightRem = 2.5) => {
+    if (!taskList || taskList.length === 0) return [];
+
+    const items = taskList.map(t => {
+      let taskHour = 8;
+      let taskMinute = 0;
+      let mins = 60;
+
+      if (t.sMins !== undefined && t.sMins !== null) {
+        taskHour = Math.floor(t.sMins / 60);
+        taskMinute = t.sMins % 60;
+        if (t.eMins !== undefined && t.eMins !== null) {
+          mins = Math.max(15, t.eMins - t.sMins);
+        }
+      } else if (t.t) {
+        const match = t.t.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          taskHour = parseInt(match[1], 10);
+          taskMinute = parseInt(match[2], 10);
+        } else if (t.hour !== undefined && t.hour !== null) {
+          taskHour = parseInt(t.hour, 10);
+        }
+      } else if (t.deadline) {
+        const match = t.deadline.match(/o (\d{1,2}):(\d{2})/);
+        if (match) {
+          taskHour = parseInt(match[1], 10);
+          taskMinute = parseInt(match[2], 10);
+        }
+      }
+
+      if ((t.sMins === undefined || t.sMins === null) || (t.eMins === undefined || t.eMins === null)) {
+        const matchDuration = t.duration ? t.duration.match(/(\d+)/) : null;
+        if (matchDuration) mins = parseInt(matchDuration[1], 10);
+      }
+
+      const startMins = taskHour * 60 + taskMinute;
+      const startOffsetMins = Math.max(0, startMins - 6 * 60);
+      const topRem = (startOffsetMins / 60) * 5.4;
+      const heightRem = (mins / 60) * 5.4;
+      const actualHeight = Math.max(heightRem, minCardHeightRem);
+
+      const isDeadlineBlock = !t.isLocked && t.deadline && isSameDate(t.deadline, targetDate) && !(t.t && t.t.includes('🔒'));
+
+      const startStr = `${taskHour.toString().padStart(2, "0")}:${taskMinute.toString().padStart(2, "0")}`;
+      const endTotalMins = startMins + mins;
+      const endHour = Math.floor(endTotalMins / 60) % 24;
+      const endMin = endTotalMins % 60;
+      const endStr = `${endHour.toString().padStart(2, "0")}:${endMin.toString().padStart(2, "0")}`;
+
+      return {
+        ...t,
+        startMins,
+        mins,
+        topRem,
+        heightRem,
+        actualHeight,
+        isDeadlineBlock,
+        startStr,
+        endStr
+      };
+    });
+
+    items.sort((a, b) => a.topRem - b.topRem || b.actualHeight - a.actualHeight);
+
+    const groups = [];
+    let currentGroup = [];
+    let maxGroupEnd = 0;
+
+    items.forEach(item => {
+      if (currentGroup.length === 0) {
+        currentGroup.push(item);
+        maxGroupEnd = item.topRem + item.actualHeight;
+      } else {
+        if (item.topRem < maxGroupEnd - 0.05) {
+          currentGroup.push(item);
+          maxGroupEnd = Math.max(maxGroupEnd, item.topRem + item.actualHeight);
+        } else {
+          groups.push(currentGroup);
+          currentGroup = [item];
+          maxGroupEnd = item.topRem + item.actualHeight;
+        }
+      }
+    });
+    if (currentGroup.length > 0) groups.push(currentGroup);
+
+    groups.forEach(group => {
+      const cols = [];
+      group.forEach(t => {
+        let placed = false;
+        for (let i = 0; i < cols.length; i++) {
+          const lastInCol = cols[i][cols[i].length - 1];
+          if (t.topRem >= lastInCol.topRem + lastInCol.actualHeight - 0.05) {
+            cols[i].push(t);
+            t.colIndex = i;
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          t.colIndex = cols.length;
+          cols.push([t]);
+        }
+      });
+      const colCount = cols.length;
+      group.forEach(t => {
+        t.colCount = colCount;
+        t.widthPct = 100 / colCount;
+        t.leftOffsetPct = t.colIndex * t.widthPct;
+      });
+    });
+
+    return items;
+  };
+
+  const renderDailyView = () => {
+    const positionedTasks = computeOverlapLayout(timelineTasks, selectedDate, 3.5);
+
+    return (
+      <div className="flex-1 overflow-y-auto relative pb-10" ref={calendarScrollRef}>
+        {isToday && nowMinute >= 6*60 && nowMinute <= 23*60 && (
+          <div className="absolute left-[64px] right-0 z-40 pointer-events-none flex items-center transition-all duration-1000" style={{ top: `${(nowMinute - 6*60) * (86.4/60) + 16}px` }}>
+            <div className="w-2.5 h-2.5 rounded-full bg-[#E40D0D] -ml-[5px] relative z-10" />
+            <div className="flex-1 h-[2px] bg-[#E40D0D]" />
+          </div>
+        )}
+        <div className="relative pt-4">
+          {hours.map(h => (
             <div key={h} className="flex border-t border-[#F0F0F0] h-[5.4rem] relative group">
               <div className="w-16 -mt-2.5 text-[11px] font-medium text-[#909090] text-center bg-white z-10">{h.toString().padStart(2,"0")}:00</div>
               {h === 6 && <div className="absolute left-16 top-0 bottom-[-100rem] w-[1px] bg-[#F0F0F0] pointer-events-none" />}
-              <div className="flex-1 relative ml-2 pr-4">
-                {tasksInThisHour.map((t, index) => {
-                  const isDeadlineBlock = !t.isLocked && t.deadline && isSameDate(t.deadline, selectedDate) && !(t.t && t.t.includes('🔒'));
-                  const match = t.duration ? t.duration.match(/(\d+)/) : null;
-                  const mins = match ? parseInt(match[1]) : 60;
-                  const heightRem = (mins / 60) * 5.4;
-                  return (
-                    <div key={t.id} onClick={() => onEditTask(t)} style={{ height: `${heightRem}rem`, minHeight: "3.5rem", zIndex: 10+index, width: `calc(${100/tasksInThisHour.length}% - 8px)`, left: `calc(${(100/tasksInThisHour.length)*index}% + 4px)` }}
-                      className={`absolute top-0 rounded-[16px] p-3 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer border-2 ${isDeadlineBlock ? "bg-[#FFDBDB]/40 border-red-200 hover:border-red-300" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}>
-                      <div className="flex justify-between items-start mb-1">
-                        <p className={`text-[12px] font-bold truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#303030]"}`}>{t.title}</p>
-                        {isDeadlineBlock ? (<span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full hidden sm:block">deadline</span>) : (<span className="text-[10px] text-[#DC8A25] bg-[#FFE5C5] px-2 py-0.5 rounded-full hidden sm:block">zaplanowane</span>)}
-                      </div>
-                      <p className="text-[11px] text-[#BDBDBD] mt-0.5 font-medium">{h.toString().padStart(2,"0")}:00 - {((h+Math.floor(mins/60))%24).toString().padStart(2,"0")}:{(mins%60).toString().padStart(2,"0")}</p>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          );
-        })}
+          ))}
+
+          <div className="absolute top-4 left-16 right-4 bottom-0 pointer-events-none">
+            {positionedTasks.map((t) => {
+              const { isDeadlineBlock, topRem, heightRem, widthPct, leftOffsetPct, startStr, endStr, colIndex } = t;
+              return (
+                <div 
+                  key={t.id} 
+                  onClick={() => onEditTask(t)} 
+                  style={{ 
+                    top: `${topRem}rem`, 
+                    height: `${heightRem}rem`, 
+                    minHeight: "3.5rem", 
+                    width: `calc(${widthPct}% - 6px)`, 
+                    left: `calc(${leftOffsetPct}% + 3px)`,
+                    zIndex: 10 + (colIndex || 0)
+                  }}
+                  className={`absolute rounded-[16px] p-3 shadow-sm hover:shadow-md hover:z-50 transition-all overflow-hidden cursor-pointer pointer-events-auto border-2 ${isDeadlineBlock ? "bg-[#FFDBDB]/60 border-red-300 hover:border-red-400" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}
+                >
+                  <div className="flex justify-between items-start mb-1 gap-1">
+                    <p className={`text-[12px] font-bold truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#303030]"}`}>{t.title}</p>
+                    {isDeadlineBlock ? (<span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full shrink-0 hidden sm:block">deadline</span>) : (<span className="text-[10px] text-[#DC8A25] bg-[#FFE5C5] px-2 py-0.5 rounded-full shrink-0 hidden sm:block">zaplanowane</span>)}
+                  </div>
+                  <p className="text-[11px] text-[#BDBDBD] mt-0.5 font-medium">{startStr} - {endStr}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderWeeklyView = () => (
     <div className="flex-1 flex flex-col min-h-0 bg-white">
@@ -203,6 +321,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
           ))}
           {weekDays.map((date, i) => {
             const dayTasks = tasks.filter(t => isTaskForDate(t, date));
+            const positionedTasks = computeOverlapLayout(dayTasks, date, 2.2);
             const isTodayWeek = new Date().toDateString() === date.toDateString();
             
             return (
@@ -213,22 +332,23 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                     <div className="w-full h-[2px] bg-[#E40D0D]" />
                   </div>
                 )}
-                {dayTasks.map((t, index) => {
-                  let taskHour = 6;
-                  if (t.t) { const match = t.t.match(/(\d{1,2}):\d{2}/); taskHour = match ? parseInt(match[1]) : t.hour || 8; }
-                  else if (t.deadline) { const match = t.deadline.match(/o (\d{1,2}):\d{2}/); if (match) taskHour = parseInt(match[1]); }
-                  if(taskHour < 6 || taskHour > 22) return null;
-                  
-                  const isDeadlineBlock = !t.isLocked && t.deadline && isSameDate(t.deadline, date) && !(t.t && t.t.includes('🔒'));
-                  const matchDuration = t.duration ? t.duration.match(/(\d+)/) : null;
-                  const mins = matchDuration ? parseInt(matchDuration[1]) : 60;
-                  const heightRem = (mins / 60) * 5.4;
-                  const topRem = (taskHour - 6) * 5.4 + 1;
-                  
+                {positionedTasks.map((t) => {
+                  const { isDeadlineBlock, topRem, heightRem, widthPct, leftOffsetPct, colIndex } = t;
                   return (
-                    <div key={t.id} onClick={() => onEditTask(t)} style={{ top: `${topRem}rem`, height: `${heightRem}rem`, minHeight: "2.5rem", zIndex: 10+index }}
-                      className={`absolute left-0.5 right-0.5 md:left-1 md:right-1 rounded-md p-1 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer border-l-4 ${isDeadlineBlock ? "bg-[#FFDBDB]/80 border-l-[#D04F4F]" : "bg-[#E8F0FE] border-l-[#0A0291]"}`}>
-                      <p className={`text-[9px] md:text-[10px] font-bold leading-tight ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#0A0291]"}`}>{t.title}</p>
+                    <div 
+                      key={t.id} 
+                      onClick={() => onEditTask(t)} 
+                      style={{ 
+                        top: `${topRem + 1}rem`, 
+                        height: `${heightRem}rem`, 
+                        minHeight: "2.2rem", 
+                        width: `calc(${widthPct}% - 4px)`, 
+                        left: `calc(${leftOffsetPct}% + 2px)`,
+                        zIndex: 10 + (colIndex || 0)
+                      }}
+                      className={`absolute rounded-md p-1 shadow-sm hover:shadow-md hover:z-50 transition-all overflow-hidden cursor-pointer border-l-4 ${isDeadlineBlock ? "bg-[#FFDBDB]/90 border-l-[#D04F4F]" : "bg-[#E8F0FE] border-l-[#0A0291]"}`}
+                    >
+                      <p className={`text-[9px] md:text-[10px] font-bold leading-tight truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#0A0291]"}`}>{t.title}</p>
                     </div>
                   );
                 })}
@@ -351,7 +471,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
           <p className="text-[#1D1B20] text-base">Twój czas, twoje zasady! Zaplanuj dzień, tydzień lub cały miesiąc.<br />Pamiętaj, że każdy mały krok ma znaczenie.</p>
         </header>
         <div className="flex-1 bg-white border border-[#E8E8E8] rounded-[13px] flex flex-col overflow-hidden shadow-sm min-h-0 relative">
-          <div className="h-[70px] border-b border-[#E8E8E8] flex items-center justify-between px-6 shrink-0 bg-white z-20">
+          <div className="h-[70px] border-b border-[#E8E8E8] flex items-center justify-between px-6 shrink-0 bg-white z-[60]">
             <div className="flex items-center gap-6">
               <span className="text-lg font-bold text-[#202021] capitalize w-48 truncate">
                 {viewType === "Dzień" && selectedDate.toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
@@ -360,7 +480,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
               </span>
               <div className="relative group z-[100]">
                 <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[#202021] font-medium text-sm transition-colors border border-transparent hover:border-gray-200">{viewType} <ChevronDown size={16} className="text-gray-500" /></button>
-                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[110]">
                   {["Dzień", "Tydzień", "Miesiąc"].map(v => (<button key={v} onClick={() => setViewType(v)} className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${viewType === v ? "font-bold text-[#057E85]" : "text-gray-700"}`}>{v}</button>))}
                 </div>
               </div>
