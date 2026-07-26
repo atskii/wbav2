@@ -1,4 +1,84 @@
+import { useState, useEffect } from "react";
 import { CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+function fireCustomConfetti() {
+  const canvas = document.createElement("canvas");
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.width = "100vw";
+  canvas.style.height = "100vh";
+  canvas.style.pointerEvents = "none";
+  canvas.style.zIndex = "99999";
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
+  const width = (canvas.width = window.innerWidth);
+  const height = (canvas.height = window.innerHeight);
+
+  const colors = ['#2D9E6B', '#1E5C36', '#FFB7B2', '#FF9CEE', '#057E85', '#F59E0B', '#3B82F6'];
+  const particles = [];
+
+  // Left corner cannon
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: width * 0.1,
+      y: height,
+      vx: Math.random() * 14 + 5,
+      vy: -(Math.random() * 16 + 12),
+      size: Math.random() * 10 + 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rSpeed: Math.random() * 12 - 6,
+    });
+  }
+
+  // Right corner cannon
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: width * 0.9,
+      y: height,
+      vx: -(Math.random() * 14 + 5),
+      vy: -(Math.random() * 16 + 12),
+      size: Math.random() * 10 + 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rSpeed: Math.random() * 12 - 6,
+    });
+  }
+
+  const gravity = 0.4;
+  let startTime = Date.now();
+
+  function render() {
+    ctx.clearRect(0, 0, width, height);
+    let active = false;
+
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += gravity;
+      p.rotation += p.rSpeed;
+
+      if (p.y < height + 30) active = true;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rotation * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+      ctx.restore();
+    });
+
+    if (active && Date.now() - startTime < 4000) {
+      requestAnimationFrame(render);
+    } else {
+      canvas.remove();
+    }
+  }
+
+  render();
+}
 
 // ═══════════════════════════════════════════════════
 //  STREAK PLANT (OBLICZENIA NA ŻYWO - NAPRAWIONE)
@@ -8,12 +88,22 @@ export default function StreakPlant({ tasks }) {
   const done = tasks.filter(t => t.done).length;
   const progress = total === 0 ? 0 : Math.round((done / total) * 100);
 
-
   const plantHeight = Math.max(15, progress);
+  
+  const [hasFlowered, setHasFlowered] = useState(false);
+
+  useEffect(() => {
+    if (progress === 100 && !hasFlowered && total > 0) {
+      setHasFlowered(true);
+      fireCustomConfetti();
+    } else if (progress < 100) {
+      setHasFlowered(false);
+    }
+  }, [progress, hasFlowered, total]);
 
   return (
-    <div className="pt-4 xl:pt-[52px]">
-      <h3 className="font-lora text-xl font-bold text-[#1A2F22] mb-2">Twoja roślinka streaku</h3>
+    <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-[#E8DDD0] shadow-sm hover:shadow-md transition-all">
+      <h3 className="font-lora text-xl font-bold text-[#1A2F22] mb-1">Twoja roślinka streaku</h3>
       <p className="text-xs text-[#5A7368] mb-6 leading-relaxed">
         Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie zasila roślinę.
       </p>
@@ -31,9 +121,20 @@ export default function StreakPlant({ tasks }) {
           <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[3rem]" />
         </div>
         {/* Kwiatek - pojawia się przy 100% */}
-        <div className={`absolute left-1/2 -translate-x-1/2 text-5xl transition-all duration-700 z-30 ${progress === 100 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`} style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 20}px` }}>
-          🌸
-        </div>
+        <AnimatePresence>
+          {progress === 100 && (
+            <motion.div 
+              initial={{ scale: 0, opacity: 0, rotate: -45 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 10, bounce: 0.5 }}
+              className="absolute left-1/2 -translate-x-1/2 text-5xl z-30" 
+              style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 20}px` }}
+            >
+              🌸
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div>
@@ -42,16 +143,28 @@ export default function StreakPlant({ tasks }) {
           <span translate="no" className="text-xs font-bold text-[#1E5C36]">{progress}% ({done}/{total})</span>
         </div>
         <div className="h-2.5 bg-[#F5EFE6] rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-[#2D9E6B] to-[#1E5C36] rounded-full transition-all duration-1000 ease-out" style={{ width: `${progress}%` }} />
+          <motion.div 
+            className="h-full bg-gradient-to-r from-[#2D9E6B] to-[#1E5C36] rounded-full" 
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ type: "spring", stiffness: 50, damping: 15 }}
+          />
         </div>
-        {progress === 100 && (
-          <div className="bg-[#E8F4ED] rounded-2xl px-3 py-2 mt-4 flex items-start gap-2 animate-fade-in-up">
-            <CheckCircle size={14} className="text-[#2D9E6B] flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-[#1E5C36] font-medium leading-relaxed">
-              Świetna robota! Roślinka zakwitła. Odpocznij!
-            </p>
-          </div>
-        )}
+        <AnimatePresence>
+          {progress === 100 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="bg-[#E8F4ED] rounded-2xl px-3 py-2 mt-4 flex items-start gap-2"
+            >
+              <CheckCircle size={14} className="text-[#2D9E6B] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-[#1E5C36] font-medium leading-relaxed">
+                Świetna robota! Roślinka zakwitła. Odpocznij!
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

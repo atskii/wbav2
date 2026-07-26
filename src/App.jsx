@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, ChevronDown, Settings } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Lib
 import { supabase } from "./lib/supabase";
@@ -995,25 +996,83 @@ export default function App() {
               </div>
 
               <div className="flex items-center space-x-3 md:space-x-5 flex-shrink-0">
-                {/* Profil - ikona widoczna zawsze, imię chowane na mobile */}
-                <div className="flex items-center relative">
-                  <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center space-x-3 focus:outline-none bg-transparent p-1 md:p-0 rounded-full hover:bg-slate-50 transition-all px-2">
-                    <svg className="w-9 h-9 rounded-full bg-[#E8DDD0] flex-shrink-0" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="20" cy="20" fill="#E8DDD0" r="20" />
-                      <path d="M20 20C22.2091 20 24 18.2091 24 16C24 13.7909 22.2091 12 20 12C17.7909 12 16 13.7909 16 16C16 18.2091 17.7909 20 20 20Z" fill="#9FB5AD" />
-                      <path d="M20 22C15.5817 22 12 25.5817 12 30H28C28 25.5817 24.4183 22 20 22Z" fill="#9FB5AD" />
-                    </svg>
-                    <span className="hidden md:block text-sm font-bold text-[#1A2F22]">{user?.name || "Natalia"}</span>
-                  </button>
+                {/* Profil - Jednolity panel z ultra-płynną dwuetapową animacją */}
+                <div className="relative h-10 w-36 sm:w-40 z-[100]">
+                  {/* Backdrop do zamykania po kliknięciu poza panelem */}
+                  {profileMenuOpen && (
+                    <div 
+                      className="fixed inset-0 z-[90]" 
+                      onClick={() => setProfileMenuOpen(false)} 
+                    />
+                  )}
 
-                  <div className={`absolute top-full right-0 mt-3 w-40 bg-white rounded-2xl shadow-xl border border-[#E8DDD0] py-2 z-[100] origin-top-right transition-all duration-200 ease-out ${profileMenuOpen ? 'opacity-100 scale-100 translate-y-0 visible' : 'opacity-0 scale-95 -translate-y-2 invisible'}`}>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 flex items-center justify-center gap-2 transition-all"
+                  <motion.div 
+                    initial={false}
+                    animate={{ 
+                      width: profileMenuOpen ? 250 : 144,
+                    }}
+                    transition={{ 
+                      duration: 0.2, 
+                      ease: [0.22, 1, 0.36, 1],
+                      delay: profileMenuOpen ? 0 : 0.2
+                    }}
+                    className={`absolute top-0 right-0 z-[100] bg-white border shadow-sm rounded-2xl md:rounded-3xl overflow-hidden transition-colors duration-200 ${
+                      profileMenuOpen ? 'shadow-xl border-[#2D9E6B]/50' : 'border-[#E8DDD0] hover:shadow-md hover:border-[#2D9E6B]'
+                    }`}
+                  >
+                    {/* Nagłówek panelu - Przycisk o stałej wysokości h-10 zapobiegający jakimkolwiek skokom */}
+                    <button 
+                      onClick={() => setProfileMenuOpen(!profileMenuOpen)} 
+                      className="w-full h-10 flex items-center justify-between gap-2.5 px-3 hover:bg-[#F9FAFB] transition-colors text-left overflow-hidden select-none"
                     >
-                      <LogOut size={16} /> Wyloguj mnie
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#2D9E6B] to-[#1E5C36] text-white flex items-center justify-center font-bold text-xs shadow-inner flex-shrink-0">
+                          {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                        </div>
+                        <span className="text-xs font-bold text-[#1A2F22] truncate whitespace-nowrap">
+                          {user?.name || "Użytkownik"}
+                        </span>
+                      </div>
+                      <ChevronDown size={14} className={`text-[#5A7368] transition-transform duration-200 flex-shrink-0 ml-1 ${profileMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
-                  </div>
+
+                    {/* Treść rozwijana: Otwieranie (w lewo -> w dół), Zamykanie (w górę -> w prawo) */}
+                    <AnimatePresence>
+                      {profileMenuOpen && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ 
+                            height: {
+                              duration: 0.2, 
+                              delay: profileMenuOpen ? 0.18 : 0,
+                              ease: [0.22, 1, 0.36, 1] 
+                            },
+                            opacity: {
+                              duration: 0.15,
+                              delay: profileMenuOpen ? 0.2 : 0
+                            }
+                          }}
+                          className="overflow-hidden border-t border-[#E8DDD0]/60 bg-[#FAFAFA]/90 p-2 flex flex-col gap-1"
+                        >
+                          <button
+                            onClick={() => { setProfileMenuOpen(false); handleNav("settings"); }}
+                            className="w-full px-3 py-2 text-xs font-semibold text-[#1A2F22] hover:bg-[#F5EFE6] rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap"
+                          >
+                            <Settings size={15} className="text-[#057E85]" /> Ustawienia konta
+                          </button>
+
+                          <button
+                            onClick={() => { setProfileMenuOpen(false); handleLogout(); }}
+                            className="w-full px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap"
+                          >
+                            <LogOut size={15} className="text-red-500" /> Wyloguj się
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 </div>
               </div>
             </header>
