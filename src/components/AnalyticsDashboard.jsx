@@ -33,6 +33,11 @@ export default function AnalyticsDashboard() {
   // Stan budżetu początkowego w PLN (domyślnie 40 zł)
   const [initialBudgetPln, setInitialBudgetPln] = useState(40.0);
   const [isEditingBudget, setIsEditingBudget] = useState(false);
+  
+  // Tryb obliczania średniego kosztu
+  const [costMode, setCostMode] = useState("auto"); // "auto" lub "manual"
+  const [manualAvgCost, setManualAvgCost] = useState(0.00021);
+  const [manualCurrency, setManualCurrency] = useState("PLN");
 
   const fetchTokenLogs = async () => {
     setLoading(true);
@@ -80,14 +85,20 @@ export default function AnalyticsDashboard() {
     ? Math.min(100, (totalCostPln / initialBudgetPln) * 100) 
     : 0;
 
-  // Średni koszt 1 analizy na bazie historii (jeśli brak zapytań, wzorcowy koszt Gemini Flash Lite to ~0.00021 PLN)
-  const avgCostPerRequestPln = totalRequests > 0 
-    ? (totalCostPln / totalRequests) 
-    : 0.00021;
+  // Średni koszt 1 analizy 
+  let autoAvgCostPln = 0.00021;
+  let autoAvgCostUsd = 0.0000525;
+  if (logs.length > 0) {
+    const last10Logs = logs.slice(0, 10); // logs are ordered descending
+    const last10CostUsd = last10Logs.reduce((acc, curr) => acc + Number(curr.estimated_cost_usd || 0), 0);
+    autoAvgCostUsd = last10CostUsd / last10Logs.length;
+    autoAvgCostPln = autoAvgCostUsd * USD_TO_PLN;
+  }
 
-  const avgCostPerRequestUsd = totalRequests > 0 
-    ? (totalCostUsd / totalRequests) 
-    : 0.0000525;
+  const avgCostPerRequestPln = costMode === "auto" 
+    ? autoAvgCostPln 
+    : (manualCurrency === "PLN" ? manualAvgCost : manualAvgCost * USD_TO_PLN);
+  const avgCostPerRequestUsd = avgCostPerRequestPln / USD_TO_PLN;
 
   // Prognozowana liczba pozostałych analiz
   const remainingAnalyses = avgCostPerRequestPln > 0 
@@ -271,18 +282,57 @@ export default function AnalyticsDashboard() {
               </div>
 
               {/* Karta pomocnicza: Średni koszt per zapytanie */}
-              <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl flex-1 flex flex-col justify-center">
-                <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1 flex items-center justify-between">
+              <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl flex-1 flex flex-col justify-center relative">
+                <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center justify-between">
                   <span>Średni Koszt / Analiza</span>
-                  <Calculator size={16} className="text-indigo-400" />
+                  <div className="flex bg-slate-900 rounded-lg p-0.5 border border-slate-800">
+                    <button 
+                      onClick={() => setCostMode("auto")}
+                      className={`px-2 py-1 rounded-md text-[10px] transition-colors ${costMode === "auto" ? "bg-cyan-600 text-white" : "text-slate-400 hover:text-slate-200"}`}
+                    >
+                      Auto (ost. 10)
+                    </button>
+                    <button 
+                      onClick={() => setCostMode("manual")}
+                      className={`px-2 py-1 rounded-md text-[10px] transition-colors ${costMode === "manual" ? "bg-cyan-600 text-white" : "text-slate-400 hover:text-slate-200"}`}
+                    >
+                      Ręczny
+                    </button>
+                  </div>
                 </div>
-                <div className="text-xl font-bold text-white font-mono">
-                  {avgCostPerRequestPln < 0.0001 
-                    ? `< 0.0001 PLN` 
-                    : `${avgCostPerRequestPln.toFixed(5)} PLN`}
-                </div>
-                <div className="text-[11px] text-slate-400 mt-1">
-                  ≈ ${avgCostPerRequestUsd.toFixed(6)} USD ({totalRequests > 0 ? `na bazie ${totalRequests} wywołań` : "szacunek estymowany"})
+                
+                {costMode === "manual" ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="number"
+                      step="0.00001"
+                      min="0.00001"
+                      value={manualAvgCost}
+                      onChange={(e) => setManualAvgCost(Number(e.target.value))}
+                      className="w-full bg-slate-900 border border-cyan-500/50 rounded-lg px-2.5 py-1.5 text-lg text-white font-mono focus:outline-none"
+                    />
+                    <select
+                      value={manualCurrency}
+                      onChange={(e) => setManualCurrency(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm font-bold text-slate-300 focus:outline-none focus:border-cyan-500/50 appearance-none cursor-pointer"
+                    >
+                      <option value="PLN">PLN</option>
+                      <option value="USD">USD</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div className="text-xl font-bold text-white font-mono mt-1">
+                    {avgCostPerRequestPln < 0.00001 
+                      ? `< 0.00001 PLN` 
+                      : `${avgCostPerRequestPln.toFixed(5)} PLN`}
+                  </div>
+                )}
+                
+                <div className="text-[11px] text-slate-400 mt-2 flex justify-between items-center">
+                  <span>≈ ${avgCostPerRequestUsd.toFixed(6)} USD</span>
+                  {costMode === "auto" && logs.length > 0 && (
+                    <span className="text-cyan-500/70">Baza: {Math.min(10, logs.length)} wpisów</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -526,6 +576,7 @@ export default function AnalyticsDashboard() {
                   <th className="py-3 px-4 text-right">Out (Output)</th>
                   <th className="py-3 px-4 text-right">Suma Tokenów</th>
                   <th className="py-3 px-4 text-right">Koszt USD</th>
+                  <th className="py-3 px-4 text-right">Koszt PLN</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/40">
@@ -567,6 +618,9 @@ export default function AnalyticsDashboard() {
                         </td>
                         <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400">
                           ${Number(log.estimated_cost_usd || 0).toFixed(6)}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-300">
+                          {(Number(log.estimated_cost_usd || 0) * USD_TO_PLN).toFixed(6)} zł
                         </td>
                       </tr>
                     );
