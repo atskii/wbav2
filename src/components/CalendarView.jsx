@@ -6,7 +6,7 @@ import {
 import SkeletonScreen from "./ui/Skeleton";
 import { checkIsDate } from "../lib/dateHelpers";
 
-export default function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, onFocusTask, onEditTask, loading }) {
+export default function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, onFocusTask, onEditTask, onMoveTask, onReturnToBacklog, loading }) {
   const [searchRight, setSearchRight] = useState("");
   const [searchCal, setSearchCal] = useState("");
   const [viewType, setViewType] = useState("Dzień");
@@ -255,8 +255,17 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
         )}
         <div className="relative pt-4">
           {hours.map(h => (
-            <div key={h} className="flex border-t border-[#F0F0F0] h-[5.4rem] relative group">
-              <div className="w-16 -mt-2.5 text-[11px] font-medium text-[#909090] text-center bg-white z-10">{h.toString().padStart(2,"0")}:00</div>
+            <div 
+              key={h} 
+              className="flex border-t border-[#F0F0F0] h-[5.4rem] relative group transition-colors hover:bg-[#F5F9F7]"
+              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const taskId = e.dataTransfer.getData("text/plain");
+                if(taskId && onMoveTask) onMoveTask(parseInt(taskId), selectedYMD, h * 60);
+              }}
+            >
+              <div className="w-16 -mt-2.5 text-[11px] font-medium text-[#909090] text-center bg-white z-10 pointer-events-none">{h.toString().padStart(2,"0")}:00</div>
               {h === 6 && <div className="absolute left-16 top-0 bottom-[-100rem] w-[1px] bg-[#F0F0F0] pointer-events-none" />}
             </div>
           ))}
@@ -267,6 +276,8 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
               return (
                 <div 
                   key={t.id} 
+                  draggable={!t.isLocked}
+                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); }}
                   onClick={() => onEditTask(t)} 
                   style={{ 
                     top: `${topRem}rem`, 
@@ -276,13 +287,13 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                     left: `calc(${leftOffsetPct}% + 3px)`,
                     zIndex: 10 + (colIndex || 0)
                   }}
-                  className={`absolute rounded-[16px] p-3 shadow-sm hover:shadow-md hover:z-50 transition-all overflow-hidden cursor-pointer pointer-events-auto border-2 ${isDeadlineBlock ? "bg-[#FFDBDB]/60 border-red-300 hover:border-red-400" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}
+                  className={`absolute rounded-[16px] p-3 shadow-sm hover:shadow-md hover:z-50 transition-all overflow-hidden cursor-pointer pointer-events-auto border-2 ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${isDeadlineBlock ? "bg-[#FFDBDB]/60 border-red-300 hover:border-red-400" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}
                 >
-                  <div className="flex justify-between items-start mb-1 gap-1">
+                  <div className="flex justify-between items-start mb-1 gap-1 pointer-events-none">
                     <p className={`text-[12px] font-bold truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#303030]"}`}>{t.title}</p>
                     {isDeadlineBlock ? (<span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full shrink-0 hidden sm:block">deadline</span>) : (<span className="text-[10px] text-[#DC8A25] bg-[#FFE5C5] px-2 py-0.5 rounded-full shrink-0 hidden sm:block">zaplanowane</span>)}
                   </div>
-                  <p className="text-[11px] text-[#BDBDBD] mt-0.5 font-medium">{startStr} - {endStr}</p>
+                  <p className="text-[11px] text-[#BDBDBD] mt-0.5 font-medium pointer-events-none">{startStr} - {endStr}</p>
                 </div>
               );
             })}
@@ -323,9 +334,31 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
             const dayTasks = tasks.filter(t => isTaskForDate(t, date));
             const positionedTasks = computeOverlapLayout(dayTasks, date, 2.2);
             const isTodayWeek = new Date().toDateString() === date.toDateString();
+            const dateStr = formatYMD(date);
             
             return (
-              <div key={i} className="flex-1 border-l border-[#F0F0F0] relative min-w-[60px] md:min-w-[100px]">
+              <div 
+                key={i} 
+                className="flex-1 border-l border-[#F0F0F0] relative min-w-[60px] md:min-w-[100px] hover:bg-[#F5F9F7]/50 transition-colors"
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const taskId = e.dataTransfer.getData("text/plain");
+                  
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const offsetY = e.clientY - rect.top;
+                  
+                  // Przeliczanie offsetY (px) na minuty od startu siatki (6:00, top: 1rem)
+                  const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                  const offsetYRem = offsetY / remSize;
+                  
+                  // top = (h-6)*5.4 + 1 -> h = ((top - 1) / 5.4) + 6
+                  let newHour = Math.floor(((offsetYRem - 1) / 5.4) + 6);
+                  newHour = Math.max(6, Math.min(22, newHour)); // Zabezpieczenie przed wyjściem poza kalendarz
+
+                  if(taskId && onMoveTask) onMoveTask(parseInt(taskId), dateStr, newHour * 60);
+                }}
+              >
                 {isTodayWeek && nowMinute >= 6*60 && nowMinute <= 23*60 && (
                   <div className="absolute left-0 right-0 z-40 pointer-events-none flex items-center" style={{ top: `${(nowMinute - 6*60) * (5.4/60) + 1}rem` }}>
                     <div className="w-1.5 h-1.5 rounded-full bg-[#E40D0D] -ml-[3px]" />
@@ -337,6 +370,8 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                   return (
                     <div 
                       key={t.id} 
+                      draggable={!t.isLocked}
+                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); e.stopPropagation(); }}
                       onClick={() => onEditTask(t)} 
                       style={{ 
                         top: `${topRem + 1}rem`, 
@@ -346,9 +381,9 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                         left: `calc(${leftOffsetPct}% + 2px)`,
                         zIndex: 10 + (colIndex || 0)
                       }}
-                      className={`absolute rounded-md p-1 shadow-sm hover:shadow-md hover:z-50 transition-all overflow-hidden cursor-pointer border-l-4 ${isDeadlineBlock ? "bg-[#FFDBDB]/90 border-l-[#D04F4F]" : "bg-[#E8F0FE] border-l-[#0A0291]"}`}
+                      className={`absolute rounded-md p-1 shadow-sm hover:shadow-md hover:z-50 transition-all overflow-hidden cursor-pointer border-l-4 ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${isDeadlineBlock ? "bg-[#FFDBDB]/90 border-l-[#D04F4F]" : "bg-[#E8F0FE] border-l-[#0A0291]"}`}
                     >
-                      <p className={`text-[9px] md:text-[10px] font-bold leading-tight truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#0A0291]"}`}>{t.title}</p>
+                      <p className={`text-[9px] md:text-[10px] font-bold leading-tight truncate pointer-events-none ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#0A0291]"}`}>{t.title}</p>
                     </div>
                   );
                 })}
@@ -383,7 +418,18 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
               const dayTasks = tasks.filter(t => isTaskForDate(t, item.date));
               
               return (
-                <div key={idx} className={`border-r border-b border-[#F0F0F0] p-1 flex flex-col transition-colors ${item.isCurrentMonth ? "bg-white" : "bg-gray-50/50"}`}>
+                <div 
+                  key={idx} 
+                  className={`border-r border-b border-[#F0F0F0] p-1 flex flex-col transition-colors hover:bg-gray-100 ${item.isCurrentMonth ? "bg-white" : "bg-gray-50/50"}`}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const taskId = e.dataTransfer.getData("text/plain");
+                    const dateStr = formatYMD(item.date);
+                    // Ustalamy godzinę 8:00 domyślnie przy zrzucaniu na cały dzień z miesiąca, lub pozostawiamy null. Dla kompatybilności dodajemy 8*60.
+                    if(taskId && onMoveTask) onMoveTask(parseInt(taskId), dateStr, 8 * 60);
+                  }}
+                >
                   <div className="flex justify-center mb-0.5 md:mb-1">
                     <div 
                       onClick={() => { onChangeDate(Math.round((item.date - selectedDate) / (1000 * 3600 * 24))); setViewType("Dzień"); }} 
@@ -404,10 +450,16 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                         else if (t.hour) timeStr = `${t.hour}:00`;
                       }
                       return (
-                        <div key={t.id} onClick={(e) => { e.stopPropagation(); onEditTask(t); }} className="flex items-center gap-1.5 px-1 py-0.5 rounded text-[10px] hover:bg-gray-100 truncate cursor-pointer transition-colors">
-                          <div className={`w-2 h-2 rounded-full shrink-0 ${isDeadlineBlock ? "bg-[#D04F4F]" : "bg-[#057E85]"}`} />
-                          {timeStr && <span className="font-medium text-[#5A7368] text-[9px]">{timeStr}</span>}
-                          <span className={`font-bold truncate ${isDeadlineBlock ? "text-[#303030]" : "text-[#303030]"}`}>{t.title}</span>
+                        <div 
+                          key={t.id} 
+                          draggable={!t.isLocked}
+                          onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); e.stopPropagation(); }}
+                          onClick={(e) => { e.stopPropagation(); onEditTask(t); }} 
+                          className={`flex items-center gap-1.5 px-1 py-0.5 rounded text-[10px] hover:bg-gray-200 truncate cursor-pointer transition-colors ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""}`}
+                        >
+                          <div className={`w-2 h-2 rounded-full shrink-0 pointer-events-none ${isDeadlineBlock ? "bg-[#D04F4F]" : "bg-[#057E85]"}`} />
+                          {timeStr && <span className="font-medium text-[#5A7368] text-[9px] pointer-events-none">{timeStr}</span>}
+                          <span className={`font-bold truncate pointer-events-none ${isDeadlineBlock ? "text-[#303030]" : "text-[#303030]"}`}>{t.title}</span>
                         </div>
                       )
                     })}
@@ -527,7 +579,15 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
             <input type="text" placeholder="Szukaj..." value={searchRight} onChange={(e) => setSearchRight(e.target.value)} className="w-full pl-11 pr-4 py-2.5 rounded-[6px] border border-[#E8E8E8] text-[13px] focus:outline-none focus:border-[#057E85] bg-white transition-all shadow-sm placeholder:text-[#9FB5AD]" />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 pb-8 relative">
+        <div 
+          className="flex-1 overflow-y-auto px-6 pb-8 relative"
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData("text/plain");
+            if(taskId && onReturnToBacklog) onReturnToBacklog(parseInt(taskId));
+          }}
+        >
           <div className="absolute left-[33px] top-0 bottom-0 w-px bg-[#BBBBBB] z-0 hidden"></div>
           <div className="space-y-4">
             {queueTasks.map((t, idx) => {
@@ -536,15 +596,20 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                 <div key={t.id} className="relative z-10 pl-6">
                   <div className="absolute left-[3px] top-[26px] w-2 h-2 rounded-full bg-[#0A0291] border border-white shadow-sm z-20"></div>
                   {idx !== queueTasks.length-1 && (<div className="absolute left-[6px] top-[34px] bottom-[-24px] w-px bg-[#BBBBBB] z-0"></div>)}
-                  <div onClick={() => onEditTask(t)} className={`bg-white p-4 rounded-[16px] border border-[#0A0291]/60 transition-all duration-300 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${t.done ? "opacity-60 grayscale border-gray-200" : ""}`}>
-                    <div className="flex justify-between items-start mb-2">
+                  <div 
+                    onClick={() => onEditTask(t)} 
+                    draggable={!t.isLocked}
+                    onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); }}
+                    className={`bg-white p-4 rounded-[16px] border border-[#0A0291]/60 transition-all duration-300 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${t.done ? "opacity-60 grayscale border-gray-200" : ""}`}
+                  >
+                    <div className="flex justify-between items-start mb-2 pointer-events-none">
                       <div className="flex items-center gap-1.5"><Star size={14} className={t.p === "wysoki" ? "text-red-400 fill-red-400" : (t.p === "sredni" ? "text-yellow-400 fill-yellow-400" : "text-green-400")} /></div>
                       {deadlineToday && !t.done && <span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full font-medium">dzisiaj</span>}
                       {t.done && <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">zrobione</span>}
                     </div>
-                    <h4 className={`text-[13px] font-bold mb-1 transition-colors leading-snug ${t.done ? "line-through text-gray-500" : "text-[#303030]"}`}>{t.title}</h4>
+                    <h4 className={`text-[13px] font-bold mb-1 transition-colors leading-snug pointer-events-none ${t.done ? "line-through text-gray-500" : "text-[#303030]"}`}>{t.title}</h4>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[11px] text-[#BDBDBD] font-medium">{t.duration || "60 min"}</span>
+                      <span className="text-[11px] text-[#BDBDBD] font-medium pointer-events-none">{t.duration || "60 min"}</span>
                       <div className="ml-auto flex gap-1">
                         <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
                       </div>

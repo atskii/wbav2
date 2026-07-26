@@ -11,7 +11,7 @@ import StreakPlant from "./StreakPlant";
 // ═══════════════════════════════════════════════════
 //  DASHBOARD VIEW (ZAMROŻONY PLAN Z GUZIKIEM GENERUJ)
 // ═══════════════════════════════════════════════════
-export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onAlert, onFocusTask, loading, onGeneratePlan, userPrefs }) {
+export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onMoveTask, onAlert, onFocusTask, loading, onGeneratePlan, userPrefs }) {
 
   const [showBacklog, setShowBacklog] = useState(false);
 
@@ -129,7 +129,31 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
               ))}
 
               {/* KONTENER ZADAŃ - MNIEJSZY MARGINES NA MOBILE */}
-              <div className="absolute top-0 bottom-0 left-12 md:left-20 right-0 flex justify-center pointer-events-none">
+              <div 
+                className="absolute top-0 bottom-0 left-12 md:left-20 right-0 flex justify-center pointer-events-auto"
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const taskId = e.dataTransfer.getData("text/plain");
+                  if (!taskId) return;
+                  
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const offsetY = e.clientY - rect.top;
+                  
+                  // offsetY to odległość w pikselach od początku osi czasu (czyli od timelineStart)
+                  // wiemy, że 60 minut to 7.2rem. Obliczamy mins względem początku.
+                  const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                  const offsetYRem = offsetY / remSize;
+                  const minsFromStart = (offsetYRem / 7.2) * 60;
+                  
+                  // Dodajemy timelineStart (w minutach) do minsFromStart i zaokrąglamy do 15 minut
+                  let totalMins = (timelineStart * 60) + minsFromStart;
+                  totalMins = Math.round(totalMins / 15) * 15;
+                  totalMins = Math.max(timelineStart * 60, Math.min((timelineEndHour - 1) * 60, totalMins));
+
+                  if (onMoveTask) onMoveTask(parseInt(taskId), dateStr, totalMins);
+                }}
+              >
                 <div className="w-full max-w-3xl relative h-full pointer-events-auto">
                   {(() => {
                     const renderItems = timelineWithGaps.map(t => {
@@ -233,8 +257,10 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                               transition={{ type: "spring", stiffness: 300, damping: 20 }}
                               whileHover={{ y: -4, scale: 1.03 }}
                               key={t.id} 
+                              draggable={!t.isLocked}
+                              onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); }}
                               onClick={() => onEditTask(t)} 
-                              className={`absolute rounded-[14px] ${pClass} shadow-sm border z-20 hover:z-50 transition-colors cursor-pointer group flex flex-col justify-center ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-md hover:border-[#D4C9BC]'}`} 
+                              className={`absolute rounded-[14px] ${pClass} shadow-sm border z-20 hover:z-50 transition-colors cursor-pointer group flex flex-col justify-center ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-md hover:border-[#D4C9BC]'}`} 
                               style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}
                             >
                               <div className={`flex flex-col h-full relative`}>
@@ -273,7 +299,15 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
             </div>
             {backlog.length > 0 && (
               <div className="sticky bottom-0 z-[100] mt-10 pl-12 md:pl-20 pointer-events-none flex justify-center">
-                <div className="w-full max-w-3xl pointer-events-auto">
+                <div 
+                  className="w-full max-w-3xl pointer-events-auto"
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const taskId = e.dataTransfer.getData("text/plain");
+                    if (taskId && onReturnToBacklog) onReturnToBacklog(parseInt(taskId));
+                  }}
+                >
                   <div className="bg-white border-2 border-b-0 border-[#E8DDD0] shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] rounded-t-[2.5rem] w-full p-5 pb-3 transition-all">
                     <button onClick={() => setShowBacklog(!showBacklog)} className="w-full flex items-center justify-between mb-4 group">
                       <div className="flex items-center gap-3">
@@ -304,8 +338,10 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                   exit={{ opacity: 0, scale: 0.9 }}
                                   transition={{ type: "spring", stiffness: 400, damping: 25, delay: i * 0.05 }}
                                   key={t.id} 
+                                  draggable={!t.isLocked}
+                                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); }}
                                   whileHover={{ scale: 1.02 }}
-                                  className="p-4 rounded-2xl border bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B] transition-colors cursor-pointer group relative flex flex-col justify-between" 
+                                  className={`p-4 rounded-2xl border bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B] transition-colors cursor-pointer group relative flex flex-col justify-between ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""}`} 
                                   onClick={() => onEditTask(t)} 
                                   style={{ minHeight: '4.8rem' }}
                                 >

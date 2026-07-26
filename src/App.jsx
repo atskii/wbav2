@@ -653,6 +653,33 @@ export default function App() {
     }
   };
 
+  const handleMoveTask = async (id, newPDate, newStartMins) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    let eMins = null;
+    if (newStartMins !== null) {
+      const durMatch = task.duration ? task.duration.match(/(\d+)/) : null;
+      const duration = durMatch ? parseInt(durMatch[1]) : 45;
+      eMins = newStartMins + duration;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ pDate: newPDate, sMins: newStartMins, eMins })
+        .eq('id', id)
+        .eq('user_email', user.email);
+
+      if (error) throw error;
+
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, pDate: newPDate, sMins: newStartMins, eMins } : t));
+    } catch (err) {
+      console.error(err);
+      add("Błąd podczas przenoszenia zadania.", "warn");
+    }
+  };
+
   const handleEditMood = async (dateStr, newV, newNote) => {
     const moodData = { d: dateStr, v: newV, note: newNote || "", user_email: user.email };
     const exists = moods.find(m => m.d === dateStr);
@@ -1089,6 +1116,7 @@ export default function App() {
                   onEditTask={handleEditTask}
                   onDelete={deleteTask}
                   onReturnToBacklog={returnToBacklog}
+                  onMoveTask={handleMoveTask}
                   onFocusTask={setFocusedTask}
                   onAlert={() => {
                     add("Wykryto sygnał ostrzegawczy. Przejdź do Systemu Ostrzegania.", "warn");
@@ -1108,6 +1136,8 @@ export default function App() {
                   onDelete={deleteTask}
                   onFocusTask={setFocusedTask}
                   onEditTask={handleEditTask}
+                  onMoveTask={handleMoveTask}
+                  onReturnToBacklog={returnToBacklog}
                   loading={isLoading}
                 />
               )}
