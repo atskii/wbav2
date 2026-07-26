@@ -16,6 +16,16 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
   const [nowMinute, setNowMinute] = useState(new Date().getHours() * 60 + new Date().getMinutes());
   const [popoverStyle, setPopoverStyle] = useState({});
 
+  // Stan wspierający czytelny podgląd Drag and Drop (Google Calendar Style)
+  const [draggedTaskId, setDraggedTaskId] = useState(null);
+  const [dragTarget, setDragTarget] = useState(null); // { type: 'grid'|'weekly'|'month'|'backlog', dateStr, startMins, durationMins, title }
+
+  const formatMinsToTime = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       const d = new Date();
@@ -253,31 +263,92 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
             <div className="flex-1 h-[2px] bg-[#E40D0D]" />
           </div>
         )}
-        <div className="relative pt-4">
+        <div 
+          className="relative pt-4 min-h-[55rem] cursor-pointer"
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            const rect = e.currentTarget.getBoundingClientRect();
+            const offsetY = e.clientY - rect.top;
+            const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+            const hourPx = 5.4 * remSize;
+            const minsFrom6 = ((offsetY - 1 * remSize) / hourPx) * 60;
+            let startMins = Math.round((6 * 60 + minsFrom6) / 15) * 15;
+            startMins = Math.max(6 * 60, Math.min(22 * 60, startMins));
+
+            const taskObj = tasks.find(t => t.id === Number(draggedTaskId));
+            const durMatch = taskObj?.duration ? taskObj.duration.match(/(\d+)/) : null;
+            const durationMins = durMatch ? parseInt(durMatch[1]) : 45;
+
+            setDragTarget({
+              type: 'grid',
+              dateStr: selectedYMD,
+              startMins,
+              durationMins: Math.max(30, durationMins),
+              title: taskObj ? taskObj.title : "Przenoszone zadanie"
+            });
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+              setDragTarget(null);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData("text/plain");
+            if (taskId && dragTarget && onMoveTask) {
+              onMoveTask(parseInt(taskId), dragTarget.dateStr, dragTarget.startMins);
+            }
+            setDragTarget(null);
+            setDraggedTaskId(null);
+          }}
+        >
           {hours.map(h => (
             <div 
               key={h} 
-              className="flex border-t border-[#F0F0F0] h-[5.4rem] relative group transition-colors hover:bg-[#F5F9F7]"
-              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
-              onDrop={(e) => {
-                e.preventDefault();
-                const taskId = e.dataTransfer.getData("text/plain");
-                if(taskId && onMoveTask) onMoveTask(parseInt(taskId), selectedYMD, h * 60);
-              }}
+              className="flex border-t border-[#F0F0F0] h-[5.4rem] relative group"
             >
               <div className="w-16 -mt-2.5 text-[11px] font-medium text-[#909090] text-center bg-white z-10 pointer-events-none">{h.toString().padStart(2,"0")}:00</div>
               {h === 6 && <div className="absolute left-16 top-0 bottom-[-100rem] w-[1px] bg-[#F0F0F0] pointer-events-none" />}
             </div>
           ))}
 
+          {/* DYNAMICZNA RAMKA PODGLĄDU DRAG & DROP (GHOST BOX) */}
+          {dragTarget && dragTarget.type === 'grid' && dragTarget.dateStr === selectedYMD && (
+            <div 
+              style={{ 
+                top: `${((dragTarget.startMins - 6*60) / 60) * 5.4 + 1}rem`,
+                height: `${(dragTarget.durationMins / 60) * 5.4}rem`,
+                minHeight: '3rem'
+              }}
+              className="absolute left-16 right-4 rounded-[16px] border-2 border-dashed border-[#057E85] bg-[#057E85]/20 backdrop-blur-[2px] z-50 pointer-events-none transition-all duration-75 flex flex-col justify-between p-3 shadow-lg animate-pulse"
+            >
+              <div className="flex justify-between items-center">
+                <span className="text-[12px] font-bold text-[#057E85] truncate">{dragTarget.title}</span>
+                <span className="text-[10px] font-extrabold bg-[#057E85] text-white px-2.5 py-0.5 rounded-full shadow-sm">
+                  {formatMinsToTime(dragTarget.startMins)} - {formatMinsToTime(dragTarget.startMins + dragTarget.durationMins)}
+                </span>
+              </div>
+              <div className="text-[10px] font-semibold text-[#057E85]">📍 Upuść tutaj, aby zaplanować</div>
+            </div>
+          )}
+
           <div className="absolute top-4 left-16 right-4 bottom-0 pointer-events-none">
             {positionedTasks.map((t) => {
               const { isDeadlineBlock, topRem, heightRem, widthPct, leftOffsetPct, startStr, endStr, colIndex } = t;
+              const isBeingDragged = draggedTaskId === t.id.toString() || draggedTaskId === t.id;
               return (
                 <div 
                   key={t.id} 
                   draggable={!t.isLocked}
-                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); }}
+                  onDragStart={(e) => { 
+                    e.dataTransfer.setData("text/plain", t.id.toString()); 
+                    setDraggedTaskId(t.id.toString());
+                  }}
+                  onDragEnd={() => {
+                    setDraggedTaskId(null);
+                    setDragTarget(null);
+                  }}
                   onClick={() => onEditTask(t)} 
                   style={{ 
                     top: `${topRem}rem`, 
@@ -287,7 +358,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                     left: `calc(${leftOffsetPct}% + 3px)`,
                     zIndex: 10 + (colIndex || 0)
                   }}
-                  className={`absolute rounded-[16px] p-3 shadow-sm hover:shadow-md hover:z-50 transition-all overflow-hidden cursor-pointer pointer-events-auto border-2 ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${isDeadlineBlock ? "bg-[#FFDBDB]/60 border-red-300 hover:border-red-400" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}
+                  className={`absolute rounded-[16px] p-3 shadow-sm hover:shadow-md hover:z-50 transition-all overflow-hidden cursor-pointer pointer-events-auto border-2 ${isBeingDragged ? "opacity-30 border-dashed border-gray-400 scale-95" : ""} ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${isDeadlineBlock ? "bg-[#FFDBDB]/60 border-red-300 hover:border-red-400" : "bg-white border-[#0A0291]/60 hover:border-[#0A0291]"}`}
                 >
                   <div className="flex justify-between items-start mb-1 gap-1 pointer-events-none">
                     <p className={`text-[12px] font-bold truncate ${isDeadlineBlock ? "text-[#D04F4F]" : "text-[#303030]"}`}>{t.title}</p>
@@ -340,25 +411,60 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
               <div 
                 key={i} 
                 className="flex-1 border-l border-[#F0F0F0] relative min-w-[60px] md:min-w-[100px] hover:bg-[#F5F9F7]/50 transition-colors"
-                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const offsetY = e.clientY - rect.top;
+                  const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+                  const hourPx = 5.4 * remSize;
+                  const minsFrom6 = ((offsetY - 1 * remSize) / hourPx) * 60;
+                  let startMins = Math.round((6 * 60 + minsFrom6) / 15) * 15;
+                  startMins = Math.max(6 * 60, Math.min(22 * 60, startMins));
+
+                  const taskObj = tasks.find(t => t.id === Number(draggedTaskId));
+                  const durMatch = taskObj?.duration ? taskObj.duration.match(/(\d+)/) : null;
+                  const durationMins = durMatch ? parseInt(durMatch[1]) : 45;
+
+                  setDragTarget({
+                    type: 'weekly',
+                    dateStr,
+                    startMins,
+                    durationMins: Math.max(30, durationMins),
+                    title: taskObj ? taskObj.title : "Przenoszone zadanie"
+                  });
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setDragTarget(null);
+                  }
+                }}
                 onDrop={(e) => {
                   e.preventDefault();
                   const taskId = e.dataTransfer.getData("text/plain");
-                  
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const offsetY = e.clientY - rect.top;
-                  
-                  // Przeliczanie offsetY (px) na minuty od startu siatki (6:00, top: 1rem)
-                  const remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-                  const offsetYRem = offsetY / remSize;
-                  
-                  // top = (h-6)*5.4 + 1 -> h = ((top - 1) / 5.4) + 6
-                  let newHour = Math.floor(((offsetYRem - 1) / 5.4) + 6);
-                  newHour = Math.max(6, Math.min(22, newHour)); // Zabezpieczenie przed wyjściem poza kalendarz
-
-                  if(taskId && onMoveTask) onMoveTask(parseInt(taskId), dateStr, newHour * 60);
+                  if (taskId && dragTarget && onMoveTask) {
+                    onMoveTask(parseInt(taskId), dragTarget.dateStr, dragTarget.startMins);
+                  }
+                  setDragTarget(null);
+                  setDraggedTaskId(null);
                 }}
               >
+                {/* GHOST BOX DLA WIDOKU TYGODNIOWEGO */}
+                {dragTarget && dragTarget.type === 'weekly' && dragTarget.dateStr === dateStr && (
+                  <div 
+                    style={{ 
+                      top: `${((dragTarget.startMins - 6*60) / 60) * 5.4 + 1}rem`,
+                      height: `${(dragTarget.durationMins / 60) * 5.4}rem`,
+                      minHeight: '2.2rem'
+                    }}
+                    className="absolute left-1 right-1 rounded-md border-2 border-dashed border-[#057E85] bg-[#057E85]/20 backdrop-blur-[2px] z-50 pointer-events-none transition-all duration-75 flex flex-col justify-center p-1 shadow-md animate-pulse"
+                  >
+                    <span className="text-[9px] font-extrabold text-[#057E85] truncate leading-none">{dragTarget.title}</span>
+                    <span className="text-[8px] font-bold text-[#057E85] mt-0.5">
+                      {formatMinsToTime(dragTarget.startMins)} - {formatMinsToTime(dragTarget.startMins + dragTarget.durationMins)}
+                    </span>
+                  </div>
+                )}
                 {isTodayWeek && nowMinute >= 6*60 && nowMinute <= 23*60 && (
                   <div className="absolute left-0 right-0 z-40 pointer-events-none flex items-center" style={{ top: `${(nowMinute - 6*60) * (5.4/60) + 1}rem` }}>
                     <div className="w-1.5 h-1.5 rounded-full bg-[#E40D0D] -ml-[3px]" />
@@ -580,14 +686,30 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
           </div>
         </div>
         <div 
-          className="flex-1 overflow-y-auto px-6 pb-8 relative"
-          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+          className={`flex-1 overflow-y-auto px-6 pb-8 relative transition-all duration-200 ${dragTarget && dragTarget.type === 'backlog' ? "bg-emerald-50/70 border-2 border-dashed border-[#057E85] rounded-2xl shadow-inner" : ""}`}
+          onDragOver={(e) => { 
+            e.preventDefault(); 
+            e.dataTransfer.dropEffect = "move";
+            setDragTarget({ type: 'backlog' });
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+              setDragTarget(null);
+            }
+          }}
           onDrop={(e) => {
             e.preventDefault();
             const taskId = e.dataTransfer.getData("text/plain");
             if(taskId && onReturnToBacklog) onReturnToBacklog(parseInt(taskId));
+            setDragTarget(null);
+            setDraggedTaskId(null);
           }}
         >
+          {dragTarget && dragTarget.type === 'backlog' && (
+            <div className="my-4 p-3 rounded-xl border-2 border-dashed border-[#057E85] bg-[#057E85]/10 text-center animate-bounce">
+              <span className="text-[12px] font-bold text-[#057E85]">📥 Upuść tutaj, aby cofnąć zadanie do Backlogu</span>
+            </div>
+          )}
           <div className="absolute left-[33px] top-0 bottom-0 w-px bg-[#BBBBBB] z-0 hidden"></div>
           <div className="space-y-4">
             {queueTasks.map((t, idx) => {

@@ -634,49 +634,55 @@ export default function App() {
   };
 
   const returnToBacklog = async (id) => {
-    try {
-      // Resetowanie położenia zadania w Supabase
-      const { error } = await supabase
-        .from('tasks')
-        .update({ sMins: null, eMins: null, pDate: null })
-        .eq('id', id)
-        .eq('user_email', user.email);
+    const numId = Number(id);
+    // 1. Optymistyczna zmiana stanu UI
+    setTasks(prev => prev.map(t => (t.id === numId || t.id === id) ? { ...t, sMins: null, eMins: null, pDate: null } : t));
+    add("Zadanie cofnięto do backlogu.");
 
-      if (error) throw error;
+    // 2. Synchronizacja z Supabase jeśli użytkownik jest zalogowany
+    if (user && user.email) {
+      try {
+        const { error } = await supabase
+          .from('tasks')
+          .update({ sMins: null, eMins: null, pDate: null })
+          .eq('id', numId)
+          .eq('user_email', user.email);
 
-      // Po udanym zapisu w bazie - aktualizacja frontendu
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, sMins: null, eMins: null, pDate: null } : t));
-      add("Zadanie cofnięto do backlogu.");
-    } catch (err) {
-      console.error(err);
-      add("Błąd podczas cofania zadania.", "warn");
+        if (error) console.error("Błąd bazy danych przy cofaniu do backlogu:", error);
+      } catch (err) {
+        console.error("Błąd połączenia z bazą:", err);
+      }
     }
   };
 
   const handleMoveTask = async (id, newPDate, newStartMins) => {
-    const task = tasks.find(t => t.id === id);
+    const numId = Number(id);
+    const task = tasks.find(t => t.id === numId || t.id === id);
     if (!task) return;
 
     let eMins = null;
-    if (newStartMins !== null) {
+    if (newStartMins !== null && newStartMins !== undefined) {
       const durMatch = task.duration ? task.duration.match(/(\d+)/) : null;
       const duration = durMatch ? parseInt(durMatch[1]) : 45;
       eMins = newStartMins + duration;
     }
 
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ pDate: newPDate, sMins: newStartMins, eMins })
-        .eq('id', id)
-        .eq('user_email', user.email);
+    // 1. Optymistyczna zmiana stanu UI dla natychmiastowej reakcji w interfejsie
+    setTasks(prev => prev.map(t => (t.id === numId || t.id === id) ? { ...t, pDate: newPDate, sMins: newStartMins, eMins } : t));
 
-      if (error) throw error;
+    // 2. Tłumaczenie i zapis w Supabase
+    if (user && user.email) {
+      try {
+        const { error } = await supabase
+          .from('tasks')
+          .update({ pDate: newPDate, sMins: newStartMins, eMins })
+          .eq('id', task.id)
+          .eq('user_email', user.email);
 
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, pDate: newPDate, sMins: newStartMins, eMins } : t));
-    } catch (err) {
-      console.error(err);
-      add("Błąd podczas przenoszenia zadania.", "warn");
+        if (error) console.error("Błąd bazy danych przy przenoszeniu zadania:", error);
+      } catch (err) {
+        console.error("Błąd połączenia przy przenoszeniu zadania:", err);
+      }
     }
   };
 

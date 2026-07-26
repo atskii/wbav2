@@ -19,7 +19,7 @@
   },
   "scripts": {
     "start": "vite",
-    "dev": "concurrently -n \"APP,TOKENS,USERS\" -c \"cyan,magenta,green\" \"vite --clearScreen false\" \"vite --config vite.analytics.config.js --clearScreen false\" \"vite --config vite.users.config.js --clearScreen false\"",
+    "dev": "concurrently -n \"APP,TOKENS,USERS\" -c \"cyan,magenta,green\" \"vite --force --clearScreen false\" \"vite --config vite.analytics.config.js --force --clearScreen false\" \"vite --config vite.users.config.js --force --clearScreen false\"",
     "dev:app": "vite",
     "dev:analytics": "vite --config vite.analytics.config.js",
     "dev:users": "vite --config vite.users.config.js",
