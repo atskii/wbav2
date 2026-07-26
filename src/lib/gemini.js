@@ -19,27 +19,43 @@ export async function analyzeMoodWithAI(moods, userName = "Użytkownik", userEma
     throw new Error("Brak danych nastrojowych do analizy.");
   }
 
-  // Prepare compact mood data (last 30 entries max to keep costs low)
-  const recentMoods = moods.slice(-30).map(m => ({
+  // Pobierz bazę wiedzy (artykuły) z Supabase
+  const { data: articles, error: articlesError } = await supabase
+    .from('articles')
+    .select('title, source_title, author, summary');
+    
+  if (articlesError) {
+    console.error("Błąd podczas pobierania bazy wiedzy:", articlesError);
+  }
+
+  // Ogranicz do ostatnich 14 dni (zgodnie z logiką projektu)
+  const recentMoods = moods.slice(-14).map(m => ({
     data: m.d,
     nastroj: m.v, // 0=Tragedia, 1=Źle, 2=Neutralnie, 3=Dobrze, 4=Bardzo dobrze, 5=Świetnie, 6=Fantastycznie
     notatka: m.note || ""
   }));
 
-  const prompt = `Jesteś empatycznym psychologiem-coachem w aplikacji wellbeing. Przeanalizuj dane nastrojów użytkownika "${userName}" i napisz krótką (max 4-5 zdań), ciepłą analizę po polsku.
+  const articlesContext = articles && articles.length > 0 
+    ? articles.map((a, i) => `--- Baza Wiedzy ${i+1} ---\nTytuł: ${a.title}\nŹródło: ${a.source_title}\nAutor: ${a.author}\nStreszczenie: ${a.summary}`).join('\n\n')
+    : "Brak dostępnej bazy wiedzy.";
 
-Skala nastroju: 0=Tragedia, 1=Źle, 2=Neutralnie, 3=Dobrze, 4=Bardzo dobrze, 5=Świetnie, 6=Fantastycznie.
+  const prompt = `Jesteś empatycznym analitykiem wellbeing. Przeanalizuj dwutygodniowy trend nastroju użytkownika "${userName}".
 
-Dane nastrojów (od najstarszego do najnowszego):
-${JSON.stringify(recentMoods)}
+Historia wpisów (ostatnie 14 dni, od najstarszego):
+${JSON.stringify(recentMoods, null, 2)}
 
-Wytyczne:
-- Zwróć uwagę na trendy (poprawa/pogorszenie/stałość)
-- Jeśli są notatki, odnieś się do nich
-- Zasugeruj 1-2 konkretne działania
-- Bądź wspierający, nie oceniający
-- Nie używaj markdown, pisz czysty tekst
-- Odpowiedź ma być zwięzła i osobista`;
+[BAZA WIEDZY NAUKOWEJ]
+${articlesContext}
+
+Twoje zadanie:
+1. Wskaż główny powtarzający się wzorzec w ostatnich 14 dniach (np. czy stres nawraca w konkretne dni, odnieś się do notatek jeśli są).
+2. Udziel empatycznego wsparcia wyjaśniając mechanizm problemu opierając się TYLKO na jednym z artykułów z załączonej bazy wiedzy.
+3. Zasugeruj jedną konkretną technikę ratunkową z wybranego artykułu.
+4. Na samym dole dopisz PUSTĄ LINIĘ, a następnie DOKŁADNIE podaj źródło, którego użyłeś w formacie:
+📚 Polecane źródło: [Tytuł źródła z bazy] - [Autor z bazy]
+
+Wymogi formatowania:
+Pisz przyjaznym, zwięzłym tekstem. Nie używaj pogrubień (**). Pisz jak człowiek.`;
 
   const response = await fetch(GEMINI_URL, {
     method: "POST",
@@ -48,7 +64,7 @@ Wytyczne:
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
-        maxOutputTokens: 256,
+        maxOutputTokens: 512,
         temperature: 0.7
       }
     })
