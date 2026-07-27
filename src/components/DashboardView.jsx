@@ -294,7 +294,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.9 }}
                               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                              whileHover={{ y: -4, scale: 1.03 }}
+                              whileHover={{ scale: 1.02, y: -3, zIndex: 50, transition: { type: "spring", stiffness: 400, damping: 25 } }}
                               key={t.id} 
                               draggable={!t.isLocked}
                               onDragStart={(e) => { 
@@ -306,7 +306,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                 setDashDragTarget(null);
                               }}
                               onClick={() => onEditTask(t)} 
-                              className={`absolute rounded-[14px] ${pClass} shadow-sm border z-20 hover:z-50 transition-colors cursor-pointer group flex flex-col justify-center ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : ""} ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-md hover:border-[#D4C9BC]'}`} 
+                              className={`absolute rounded-[14px] ${pClass} shadow-sm border z-20 hover:z-50 transition-colors cursor-pointer group flex flex-col justify-center ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : ""} ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-md hover:border-[#D4C9BC]'}`} 
                               style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}
                             >
                               <div className={`flex flex-col h-full relative`}>
@@ -324,14 +324,14 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                 </div>
 
                                 <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-40 opacity-0 group-hover:opacity-100 bg-white/90 p-1 rounded-xl backdrop-blur-sm`}>
-                                  {!t.done && <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm transition-all`}><Play size={btnIconSize} className="ml-0.5" /></motion.button>}
+                                  {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
                                   {!t.isLocked && !t.done && (
-                                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}>
+                                    <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}>
                                       <RotateCcw size={btnIconSize} />
-                                    </motion.button>
+                                    </button>
                                   )}
-                                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}><Trash2 size={btnIconSize} /></motion.button>
-                                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} className={`${btnClass} rounded-full flex items-center justify-center shadow-sm transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></motion.button>
+                                  <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}><Trash2 size={btnIconSize} /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} className={`${btnClass} rounded-full flex items-center justify-center shadow-sm transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
                                 </div>
                               </div>
                             </motion.div>
@@ -404,8 +404,8 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                     setDraggedTaskId(null);
                                     setDashDragTarget(null);
                                   }}
-                                  whileHover={{ scale: 1.02 }}
-                                  className={`p-4 rounded-2xl border transition-all cursor-pointer group relative flex flex-col justify-between ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : "bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B]"} ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""}`} 
+                                  whileHover={{ scale: 1.02, x: 2, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+                                  className={`p-4 rounded-2xl border transition-all cursor-pointer group relative flex flex-col justify-between ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : "bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B] hover:shadow-md"}`} 
                                   onClick={() => onEditTask(t)} 
                                   style={{ minHeight: '4.8rem' }}
                                 >
@@ -417,7 +417,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                     <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
                                   </div>
                                   <div className="flex transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 opacity-0 group-hover:opacity-100">
-                                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm"><Trash2 size={16} /></motion.button>
+                                    <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all"><Trash2 size={16} /></button>
                                   </div>
                                   {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
                                 </motion.div>
