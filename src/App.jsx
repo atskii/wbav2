@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut, Menu, ChevronDown, Settings } from "lucide-react";
+import { LogOut, Menu, ChevronDown, Settings, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Lib
@@ -7,6 +7,7 @@ import { supabase } from "./lib/supabase";
 import { INIT_TASKS } from "./lib/constants";
 import { checkIsDate } from "./lib/dateHelpers";
 import { analyzeMoodAlerts } from "./lib/analyzeMoodAlerts";
+import { calculateStreak, calculateTaskXP } from "./lib/xpHelpers";
 
 // Hooks
 import usePersist from "./hooks/usePersist";
@@ -15,6 +16,7 @@ import useToasts from "./hooks/useToasts";
 // UI
 import Font from "./components/ui/Font";
 import Toasts from "./components/ui/Toasts";
+import XpFloat from "./components/ui/XpFloat";
 
 // Components
 import Landing from "./components/Landing";
@@ -716,21 +718,44 @@ export default function App() {
     }
   };
 
-  const toggleTask = async (id) => {
+  const [xpItems, setXpItems] = useState([]);
+  const streakCount = useMemo(() => calculateStreak(tasks, getNow()), [tasks, getNow]);
+
+  const toggleTask = async (id, e) => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
+
+    const isNowDone = !task.done;
+
+    if (isNowDone) {
+      const earnedXP = calculateTaskXP(task);
+      const xPos = e && e.clientX ? e.clientX : (typeof window !== 'undefined' ? window.innerWidth / 2 : 500);
+      const yPos = e && e.clientY ? e.clientY : (typeof window !== 'undefined' ? window.innerHeight / 2 : 400);
+
+      const newItem = {
+        id: Date.now() + Math.random(),
+        xp: earnedXP,
+        x: xPos,
+        y: yPos,
+      };
+
+      setXpItems(prev => [...prev, newItem]);
+      setTimeout(() => {
+        setXpItems(prev => prev.filter(item => item.id !== newItem.id));
+      }, 1800);
+    }
 
     try {
       const { error } = await supabase
         .from('tasks')
-        .update({ done: !task.done })
+        .update({ done: isNowDone })
         .eq('id', id)
         .eq('user_email', user.email);
 
       if (error) throw error;
 
       setTasks(prevTasks => {
-        let updated = prevTasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+        let updated = prevTasks.map(t => t.id === id ? { ...t, done: isNowDone } : t);
         return sortSmartQueue(updated);
       });
     } catch (err) {
@@ -990,6 +1015,7 @@ export default function App() {
     <div className="flex h-screen bg-[#F5EFE6] font-sans selection:bg-[#2D9E6B] selection:text-white overflow-hidden">
       <Font />
       <Toasts ts={ts} rm={rm} />
+      <XpFloat xpItems={xpItems} />
 
       {focusedTask ? (
         <FocusModeView
@@ -1028,9 +1054,9 @@ export default function App() {
                 </span>
               </div>
 
-              <div className="flex items-center space-x-3 md:space-x-5 flex-shrink-0">
-                {/* Profil - Jednolity panel z ultra-płynną dwuetapową animacją */}
-                <div className="relative h-10 w-36 sm:w-40 z-[100]">
+              <div className="flex items-center space-x-3 md:space-x-4 flex-shrink-0">
+                {/* Profil z wbudowanym wskaźnikiem streaku 🔥 */}
+                <div className="relative h-10 w-48 sm:w-52 z-[100]">
                   {/* Backdrop do zamykania po kliknięciu poza panelem */}
                   {profileMenuOpen && (
                     <div 
@@ -1042,7 +1068,7 @@ export default function App() {
                   <motion.div 
                     initial={false}
                     animate={{ 
-                      width: profileMenuOpen ? 250 : 144,
+                      width: profileMenuOpen ? 250 : 200,
                     }}
                     transition={{ 
                       duration: 0.2, 
@@ -1053,18 +1079,24 @@ export default function App() {
                       profileMenuOpen ? 'shadow-xl border-[#2D9E6B]/50' : 'border-[#E8DDD0] hover:shadow-md hover:border-[#2D9E6B]'
                     }`}
                   >
-                    {/* Nagłówek panelu - Przycisk o stałej wysokości h-10 zapobiegający jakimkolwiek skokom */}
+                    {/* Nagłówek panelu - Przycisk o stałej wysokości h-10 */}
                     <button 
                       onClick={() => setProfileMenuOpen(!profileMenuOpen)} 
-                      className="w-full h-10 flex items-center justify-between gap-2.5 px-3 hover:bg-[#F9FAFB] transition-colors text-left overflow-hidden select-none"
+                      className="w-full h-10 flex items-center justify-between gap-2 px-3 hover:bg-[#F9FAFB] transition-colors text-left overflow-hidden select-none"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
                         <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#2D9E6B] to-[#1E5C36] text-white flex items-center justify-center font-bold text-xs shadow-inner flex-shrink-0">
                           {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                         </div>
                         <span className="text-xs font-bold text-[#1A2F22] truncate whitespace-nowrap">
                           {user?.name || "Użytkownik"}
                         </span>
+                        
+                        {/* Flame Streak badge z własną grafiką po prawo od nazwy użytkownika */}
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-[11px] flex-shrink-0 ml-0.5" title={`${streakCount} dni serii`}>
+                          <img src="/icons/fire.svg" alt="Flame Streak" className="w-4.5 h-4.5 object-contain drop-shadow-sm" />
+                          <span>{streakCount}</span>
+                        </div>
                       </div>
                       <ChevronDown size={14} className={`text-[#5A7368] transition-transform duration-200 flex-shrink-0 ml-1 ${profileMenuOpen ? 'rotate-180' : ''}`} />
                     </button>

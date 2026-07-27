@@ -91,13 +91,13 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
               </div>
             </div>
             <div>
-              <label className={`text-xs font-black uppercase mb-2 block tracking-widest transition-all ${isLocked ? 'text-gray-400 line-through' : 'text-red-500'}`}>Deadline</label>
+              <label className={`text-xs font-black uppercase mb-2 block tracking-widest transition-all ${isLocked ? 'text-gray-400 line-through' : 'text-[#1A2F22]'}`}>Deadline</label>
               <input
                 type="datetime-local"
                 value={deadline}
                 onChange={e => setDeadline(e.target.value)}
                 disabled={isLocked}
-                className={`w-full px-4 py-3 rounded-xl border-2 text-sm outline-none transition-all ${isLocked ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed line-through opacity-70' : 'border-red-100 focus:border-red-400 bg-white'}`}
+                className={`w-full px-4 py-3 rounded-xl border-2 text-sm outline-none transition-all ${isLocked ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed line-through opacity-70' : 'border-[#E8DDD0] focus:border-[#2D9E6B] text-[#1A2F22] bg-white'}`}
               />
             </div>
           </div>

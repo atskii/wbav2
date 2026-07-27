@@ -112,8 +112,8 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
             </div>
 
             <div className="hidden lg:flex gap-2 w-full lg:w-auto mt-2">
-              <button onClick={onGeneratePlan} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">
-                <RefreshCw size={15} /> Generuj
+              <button onClick={onGeneratePlan} title="Generuj plan" className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">
+                <RefreshCw size={15} /> Generuj plan
               </button>
               <button onClick={onOpenTaskModal} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] transition-all shadow-sm active:scale-95">
                 Dodaj <Plus size={15} />
@@ -324,14 +324,14 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                 </div>
 
                                 <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-40 opacity-0 group-hover:opacity-100 bg-white/90 p-1 rounded-xl backdrop-blur-sm`}>
-                                  {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
+                                  {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} title="tryb skupienia" className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
                                   {!t.isLocked && !t.done && (
-                                    <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="Cofnij do backlogu" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}>
+                                    <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="cofnij zadanie do listy zadań poza planem" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}>
                                       <RotateCcw size={btnIconSize} />
                                     </button>
                                   )}
-                                  <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}><Trash2 size={btnIconSize} /></button>
-                                  <button onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} className={`${btnClass} rounded-full flex items-center justify-center shadow-sm transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}><Trash2 size={btnIconSize} /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); onToggle(t.id, e); }} title="zaznacz zadanie jako wykonane" className={`${btnClass} rounded-full flex items-center justify-center shadow-sm transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
                                 </div>
                               </div>
                             </motion.div>
@@ -417,7 +417,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                     <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
                                   </div>
                                   <div className="flex transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 opacity-0 group-hover:opacity-100">
-                                    <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all"><Trash2 size={16} /></button>
+                                    <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all"><Trash2 size={16} /></button>
                                   </div>
                                   {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
                                 </motion.div>
