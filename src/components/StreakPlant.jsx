@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
 function fireCustomConfetti() {
   const canvas = document.createElement("canvas");
   canvas.style.position = "fixed";
@@ -81,7 +82,7 @@ function fireCustomConfetti() {
 }
 
 // ═══════════════════════════════════════════════════
-//  STREAK PLANT (OBLICZENIA NA ŻYWO - NAPRAWIONE)
+//  STREAK PLANT (OBLICZENIA NA ŻYWO)
 // ═══════════════════════════════════════════════════
 export default function StreakPlant({ tasks }) {
   const total = tasks.length;
@@ -91,6 +92,15 @@ export default function StreakPlant({ tasks }) {
   const plantHeight = Math.max(15, progress);
   
   const [hasFlowered, setHasFlowered] = useState(false);
+  const [plantType, setPlantType] = useState('image'); // 'image' or 'cactus'
+
+  // Krok obrazkowej rośliny (1-10) na podstawie procentów (0-100%)
+  // 0% -> 1
+  // 1-10% -> 1
+  // 11-20% -> 2
+  // ...
+  // 91-100% -> 10
+  const currentStep = progress === 0 ? 1 : Math.ceil(progress / 10);
 
   useEffect(() => {
     if (progress === 100 && !hasFlowered && total > 0) {
@@ -108,33 +118,63 @@ export default function StreakPlant({ tasks }) {
         Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie zasila roślinę.
       </p>
 
-      <div className="relative h-72 mb-6">
-        {/* Doniczka - na samym dole */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 h-16 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
-          <div className="w-40 h-5 bg-[#3E5249] rounded-sm -mt-1.5 shadow-md" />
-        </div>
-        {/* Kaktus - rośnie z góry doniczki */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 w-20 bg-[#2D9E6B] rounded-t-[3rem] transition-all duration-1000 ease-out z-10 shadow-inner"
-          style={{ bottom: '64px', height: `${Math.round(30 + (plantHeight / 100) * 160)}px` }}
-        >
-          <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[3rem]" />
-        </div>
-        {/* Kwiatek - pojawia się przy 100% */}
-        <AnimatePresence>
-          {progress === 100 && (
-            <motion.div 
-              initial={{ scale: 0, opacity: 0, rotate: -45 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 10, bounce: 0.5 }}
-              className="absolute left-1/2 -translate-x-1/2 text-5xl z-30" 
-              style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 20}px` }}
+      <div className="relative h-72 mb-4">
+        {plantType === 'cactus' ? (
+          <>
+            {/* Doniczka - na samym dole */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 h-16 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
+              <div className="w-40 h-5 bg-[#3E5249] rounded-sm -mt-1.5 shadow-md" />
+            </div>
+            {/* Kaktus - rośnie z góry doniczki */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 w-20 bg-[#2D9E6B] rounded-t-[3rem] transition-all duration-1000 ease-out z-10 shadow-inner"
+              style={{ bottom: '64px', height: `${Math.round(30 + (plantHeight / 100) * 160)}px` }}
             >
-              🌸
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[3rem]" />
+            </div>
+            {/* Kwiatek - pojawia się przy 100% */}
+            <AnimatePresence>
+              {progress === 100 && (
+                <motion.div 
+                  initial={{ scale: 0, opacity: 0, rotate: -45 }}
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 10, bounce: 0.5 }}
+                  className="absolute left-1/2 -translate-x-1/2 text-5xl z-30" 
+                  style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 20}px` }}
+                >
+                  🌸
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-end justify-center overflow-hidden">
+            <div className="relative h-full aspect-[421/646]">
+              <AnimatePresence initial={false}>
+                <motion.img
+                  key={currentStep}
+                  src={`/plant/step ${currentStep}.png`}
+                  alt={`Roślinka etap ${currentStep}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="absolute bottom-0 w-full h-auto"
+                />
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={() => setPlantType(prev => prev === 'cactus' ? 'image' : 'cactus')}
+          className="flex items-center gap-1.5 bg-[#078B83] hover:bg-[#06736D] text-white px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors"
+        >
+          Zmień roślinkę <RefreshCw size={14} />
+        </button>
       </div>
 
       <div>
