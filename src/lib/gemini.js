@@ -23,7 +23,7 @@ export async function analyzeMoodWithAI(moods, userName = "Użytkownik", userEma
   const { data: articles, error: articlesError } = await supabase
     .from('articles')
     .select('title, source_title, author, summary');
-    
+
   if (articlesError) {
     console.error("Błąd podczas pobierania bazy wiedzy:", articlesError);
   }
@@ -35,8 +35,8 @@ export async function analyzeMoodWithAI(moods, userName = "Użytkownik", userEma
     notatka: m.note || ""
   }));
 
-  const articlesContext = articles && articles.length > 0 
-    ? articles.map((a, i) => `--- Baza Wiedzy ${i+1} ---\nTytuł: ${a.title}\nŹródło: ${a.source_title}\nAutor: ${a.author}\nStreszczenie: ${a.summary}`).join('\n\n')
+  const articlesContext = articles && articles.length > 0
+    ? articles.map((a, i) => `--- Baza Wiedzy ${i + 1} ---\nTytuł: ${a.title}\nŹródło: ${a.source_title}\nAutor: ${a.author}\nStreszczenie: ${a.summary}`).join('\n\n')
     : "Brak dostępnej bazy wiedzy.";
 
   const prompt = `Jesteś empatycznym analitykiem wellbeing. Przeanalizuj dwutygodniowy trend nastroju użytkownika "${userName}".
@@ -51,7 +51,8 @@ Twoje zadanie:
 1. Wskaż główny powtarzający się wzorzec w ostatnich 14 dniach (np. czy stres nawraca w konkretne dni, odnieś się do notatek jeśli są).
 2. Udziel empatycznego wsparcia wyjaśniając mechanizm problemu opierając się TYLKO na jednym z artykułów z załączonej bazy wiedzy.
 3. Zasugeruj jedną konkretną technikę ratunkową z wybranego artykułu.
-4. Na samym dole dopisz PUSTĄ LINIĘ, a następnie DOKŁADNIE podaj źródło, którego użyłeś w formacie:
+4. Zmieść się w jednym akapicie.
+5. Na samym dole dopisz PUSTĄ LINIĘ, a następnie DOKŁADNIE podaj źródło, którego użyłeś w formacie:
 📚 Polecane źródło: [Tytuł źródła z bazy] - [Autor z bazy]
 
 Wymogi formatowania:
@@ -64,7 +65,7 @@ Pisz przyjaznym, zwięzłym tekstem. Nie używaj pogrubień (**). Pisz jak czło
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
-        maxOutputTokens: 512,
+        maxOutputTokens: 1024,
         temperature: 0.7
       }
     })
