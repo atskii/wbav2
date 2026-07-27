@@ -1092,9 +1092,9 @@ export default function App() {
                           {user?.name || "Użytkownik"}
                         </span>
                         
-                        {/* Flame Streak badge po prawo od nazwy użytkownika */}
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-[11px] flex-shrink-0 ml-0.5" title={`${streakCount} dni serii 🔥`}>
-                          <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500 animate-pulse" />
+                        {/* Flame Streak badge z własną grafiką po prawo od nazwy użytkownika */}
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-[11px] flex-shrink-0 ml-0.5" title={`${streakCount} dni serii`}>
+                          <img src="/icons/fire.svg" alt="Flame Streak" className="w-4.5 h-4.5 object-contain drop-shadow-sm" />
                           <span>{streakCount}</span>
                         </div>
                       </div>

@@ -53,8 +53,8 @@ export default function TaskCard({ task, onToggle, onFocus, onDelete, onEdit }) 
             <span className="text-[10px] font-bold text-[#1E5C36] bg-[#E8F4ED] px-2 py-1 rounded-lg border border-[#2D9E6B]/20">
               Trudność: {task.difficulty || 1}/5
             </span>
-            <span className="flex items-center gap-0.5 text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200">
-              <Zap size={11} className="fill-amber-400 text-amber-500" />
+            <span className="flex items-center gap-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200">
+              <img src="/icons/star.svg" alt="XP Star" className="w-3.5 h-3.5 object-contain" />
               +{taskXP} XP
             </span>
             <PBadge p={task.p} />

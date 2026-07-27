@@ -20,10 +20,10 @@ export default function XpFloat({ xpItems }) {
             transition={{ duration: 1.6, ease: [0.175, 0.885, 0.32, 1.275] }}
             className="absolute flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-full shadow-[0_8px_25px_rgba(45,158,107,0.45)] border-2 border-white/40 backdrop-blur-md"
           >
+            <img src="/icons/star.svg" alt="XP Star" className="w-5 h-5 object-contain drop-shadow" />
             <span className="font-extrabold text-base tracking-wide drop-shadow-md">
               +{item.xp} XP
             </span>
-            <Sparkles className="w-4 h-4 text-yellow-200" />
           </motion.div>
         ))}
       </AnimatePresence>
