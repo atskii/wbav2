@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabase";
 // ═══════════════════════════════════════════════════
 export default function SettingsView({ user, setUser, add }) {
 
-  const OPTS = ["Wyjście na słońce", "Kilka minut przerwy", "Dobra kawa", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Przerwa od pracy", "Muzyka", "Zmiana otoczenia"];
+  const OPTS = ["Wyjście na słońce", "Dobra kawa", "Dobra herbata", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Muzyka", "Zmiana otoczenia", "Ćwiczenia oddechowe"];
   const [name, setName] = useState(user?.name || "");
   const [hours, setHours] = useState(user?.prefs?.hours || 8);
   const [startHour, setStartHour] = useState(user?.prefs?.startTime ? user.prefs.startTime.split(':')[0] : "08");

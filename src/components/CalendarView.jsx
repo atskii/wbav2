@@ -733,7 +733,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-[11px] text-[#BDBDBD] font-medium pointer-events-none">{t.duration || "60 min"}</span>
                       <div className="ml-auto flex gap-1">
-                        <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
+                        <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
                       </div>
                     </div>
                   </div>

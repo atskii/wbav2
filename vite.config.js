@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    open: true
+    open: false
   },
   build: {
     // A02:2025 — Disable source maps in production to prevent source code exposure

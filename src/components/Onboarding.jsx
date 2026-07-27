@@ -11,7 +11,7 @@ export default function Onboarding({ initialName = "", onComplete }) {
 
   const [picks, setPicks] = useState([]);
 
-  const OPTS = ["Wyjście na słońce", "Kilka minut przerwy", "Dobra kawa", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Przerwa od pracy", "Muzyka", "Zmiana otoczenia"];
+  const OPTS = ["Wyjście na słońce", "Dobra kawa", "Dobra herbata", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Muzyka", "Zmiana otoczenia", "Ćwiczenia oddechowe"];
 
   const toggle = b => setPicks(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b]);
 

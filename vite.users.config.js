@@ -20,7 +20,7 @@ export default defineConfig({
   server: {
     port: 5176,
     strictPort: true,
-    open: true
+    open: false
   },
   build: {
     sourcemap: false,

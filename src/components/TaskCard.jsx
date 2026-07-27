@@ -16,6 +16,7 @@ export default function TaskCard({ task, onToggle, onFocus, onDelete, onEdit }) 
         <motion.button 
           whileTap={{ scale: 0.8 }}
           onClick={() => onToggle(task.id)} 
+          title="zaznacz zadanie jako wykonane"
           className={`mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-150 ${task.done ? "bg-[#1E5C36] border-[#1E5C36]" : "border-[#C4BBAF] hover:border-[#1E5C36] group-hover:border-[#2D9E6B]"}`}
         >
           <AnimatePresence>
@@ -54,7 +55,7 @@ export default function TaskCard({ task, onToggle, onFocus, onDelete, onEdit }) 
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
           {!task.done && (
-            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => onFocus(task)} title="Rozpocznij Głębokie Skupienie" className="w-8 h-8 rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm">
+            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => onFocus(task)} title="tryb skupienia" className="w-8 h-8 rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm">
               <Play size={14} className="ml-0.5" />
             </motion.button>
           )}
@@ -62,7 +63,7 @@ export default function TaskCard({ task, onToggle, onFocus, onDelete, onEdit }) 
           <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => onEdit(task)} title="Edytuj zadanie" className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center shadow-sm">
             <Pencil size={14} />
           </motion.button>
-          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => onDelete(task.id)} title="Usuń zadanie" className="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm">
+          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => onDelete(task.id)} title="usuń zadanie" className="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm">
             <Trash2 size={14} />
           </motion.button>
         </div>
