@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, RefreshCw } from "lucide-react";
+import { CheckCircle, RefreshCw, Zap, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { calculateTaskXP } from "../lib/xpHelpers";
 
 function fireCustomConfetti() {
   const canvas = document.createElement("canvas");
@@ -84,38 +85,36 @@ function fireCustomConfetti() {
 // ═══════════════════════════════════════════════════
 //  STREAK PLANT (OBLICZENIA NA ŻYWO)
 // ═══════════════════════════════════════════════════
-export default function StreakPlant({ tasks }) {
+export default function StreakPlant({ tasks = [] }) {
   const total = tasks.length;
-  const done = tasks.filter(t => t.done).length;
-  const progress = total === 0 ? 0 : Math.round((done / total) * 100);
+  const doneTasks = tasks.filter(t => t.done);
+  const done = doneTasks.length;
 
-  const plantHeight = Math.max(15, progress);
+  const totalXP = tasks.reduce((acc, t) => acc + calculateTaskXP(t), 0);
+  const earnedXP = doneTasks.reduce((acc, t) => acc + calculateTaskXP(t), 0);
+
+  const xpProgress = totalXP === 0 ? 0 : Math.round((earnedXP / totalXP) * 100);
+  const plantHeight = Math.max(15, xpProgress);
   
   const [hasFlowered, setHasFlowered] = useState(false);
   const [plantType, setPlantType] = useState('image'); // 'image' or 'cactus'
 
-  // Krok obrazkowej rośliny (1-10) na podstawie procentów (0-100%)
-  // 0% -> 1
-  // 1-10% -> 1
-  // 11-20% -> 2
-  // ...
-  // 91-100% -> 10
-  const currentStep = progress === 0 ? 1 : Math.ceil(progress / 10);
+  const currentStep = xpProgress === 0 ? 1 : Math.ceil(xpProgress / 10);
 
   useEffect(() => {
-    if (progress === 100 && !hasFlowered && total > 0) {
+    if (xpProgress === 100 && !hasFlowered && total > 0) {
       setHasFlowered(true);
       fireCustomConfetti();
-    } else if (progress < 100) {
+    } else if (xpProgress < 100) {
       setHasFlowered(false);
     }
-  }, [progress, hasFlowered, total]);
+  }, [xpProgress, hasFlowered, total]);
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-[#E8DDD0] shadow-sm hover:shadow-md transition-all">
+    <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-[#E8DDD0] shadow-sm hover:shadow-md transition-all relative overflow-hidden">
       <h3 className="font-lora text-xl font-bold text-[#1A2F22] mb-1">Twoja roślinka streaku</h3>
-      <p className="text-xs text-[#5A7368] mb-6 leading-relaxed">
-        Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie zasila roślinę.
+      <p className="text-xs text-[#5A7368] mb-5 leading-relaxed">
+        Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie daje punkty XP i zasila roślinę.
       </p>
 
       <div className="relative h-72 mb-4">
@@ -134,7 +133,7 @@ export default function StreakPlant({ tasks }) {
             </div>
             {/* Kwiatek - pojawia się przy 100% */}
             <AnimatePresence>
-              {progress === 100 && (
+              {xpProgress === 100 && (
                 <motion.div 
                   initial={{ scale: 0, opacity: 0, rotate: -45 }}
                   animate={{ scale: 1, opacity: 1, rotate: 0 }}
@@ -180,18 +179,18 @@ export default function StreakPlant({ tasks }) {
       <div>
         <div className="flex justify-between mb-2">
           <span className="text-xs font-semibold text-[#5A7368]">Postęp dnia</span>
-          <span translate="no" className="text-xs font-bold text-[#1E5C36]">{progress}% ({done}/{total})</span>
+          <span translate="no" className="text-xs font-bold text-[#1E5C36]">{earnedXP} XP ({done}/{total})</span>
         </div>
         <div className="h-2.5 bg-[#F5EFE6] rounded-full overflow-hidden">
           <motion.div 
             className="h-full bg-gradient-to-r from-[#2D9E6B] to-[#1E5C36] rounded-full" 
             initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
+            animate={{ width: `${xpProgress}%` }}
             transition={{ type: "spring", stiffness: 50, damping: 15 }}
           />
         </div>
         <AnimatePresence>
-          {progress === 100 && (
+          {xpProgress === 100 && (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

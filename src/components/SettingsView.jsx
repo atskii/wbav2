@@ -117,26 +117,7 @@ export default function SettingsView({ user, setUser, add }) {
           </div>
         </div>
 
-        {/* Panel Analityki Tokenów AI */}
-        <div className="p-6 md:p-8 border-t border-[#E8DDD0] bg-[#F8FAFC] flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse" />
-              Monitor Zużycia Tokenów i Kosztów AI
-            </h3>
-            <p className="text-sm text-slate-600">
-              Przeglądaj statystyki tokenów Gemini i koszty w czasie rzeczywistym w osobnym panelu
-            </p>
-          </div>
-          <a
-            href="/analytics.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-cyan-400 font-bold rounded-xl text-xs border border-slate-700 shadow-md flex items-center gap-2 transition-all shrink-0"
-          >
-            Otwórz Panel Analityczny ↗
-          </a>
-        </div>
+
       </div>
 
       <div className="mt-8 flex justify-end">

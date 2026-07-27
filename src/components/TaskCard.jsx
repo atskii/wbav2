@@ -1,8 +1,11 @@
-import { Check, Clock, Play, Pencil, Trash2 } from "lucide-react";
+import { Check, Clock, Play, Pencil, Trash2, Zap } from "lucide-react";
 import PBadge from "./ui/PBadge";
 import { motion, AnimatePresence } from "framer-motion";
+import { calculateTaskXP } from "../lib/xpHelpers";
 
 export default function TaskCard({ task, onToggle, onFocus, onDelete, onEdit }) {
+  const taskXP = calculateTaskXP(task);
+
   return (
     <motion.div 
       layout
@@ -15,7 +18,7 @@ export default function TaskCard({ task, onToggle, onFocus, onDelete, onEdit }) 
       <div className="flex items-start gap-3">
         <motion.button 
           whileTap={{ scale: 0.8 }}
-          onClick={() => onToggle(task.id)} 
+          onClick={(e) => onToggle(task.id, e)} 
           title="zaznacz zadanie jako wykonane"
           className={`mt-0.5 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-150 ${task.done ? "bg-[#1E5C36] border-[#1E5C36]" : "border-[#C4BBAF] hover:border-[#1E5C36] group-hover:border-[#2D9E6B]"}`}
         >
@@ -38,7 +41,7 @@ export default function TaskCard({ task, onToggle, onFocus, onDelete, onEdit }) 
           </div>
           {task.t && <p className="text-[10px] text-[#9FB5AD] mt-0.5 font-medium">{task.t}</p>}
           {task.desc && <p className="text-xs text-[#5A7368] mt-1 leading-relaxed">{task.desc}</p>}
-          <div className="flex items-center gap-3 mt-3 flex-wrap">
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
             <span className="flex items-center gap-1 text-[10px] font-bold text-[#5A7368] bg-[#F5EFE6] px-2 py-1 rounded-lg border border-[#E8DDD0]">
               <Clock size={12} /> {task.duration || "Brak"}
             </span>
@@ -49,6 +52,10 @@ export default function TaskCard({ task, onToggle, onFocus, onDelete, onEdit }) 
             )}
             <span className="text-[10px] font-bold text-[#1E5C36] bg-[#E8F4ED] px-2 py-1 rounded-lg border border-[#2D9E6B]/20">
               Trudność: {task.difficulty || 1}/5
+            </span>
+            <span className="flex items-center gap-0.5 text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200">
+              <Zap size={11} className="fill-amber-400 text-amber-500" />
+              +{taskXP} XP
             </span>
             <PBadge p={task.p} />
           </div>

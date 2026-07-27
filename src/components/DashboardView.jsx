@@ -331,7 +331,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                     </button>
                                   )}
                                   <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}><Trash2 size={btnIconSize} /></button>
-                                  <button onClick={(e) => { e.stopPropagation(); onToggle(t.id); }} title="zaznacz zadanie jako wykonane" className={`${btnClass} rounded-full flex items-center justify-center shadow-sm transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
+                                  <button onClick={(e) => { e.stopPropagation(); onToggle(t.id, e); }} title="zaznacz zadanie jako wykonane" className={`${btnClass} rounded-full flex items-center justify-center shadow-sm transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
                                 </div>
                               </div>
                             </motion.div>
