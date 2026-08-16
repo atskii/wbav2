@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ChevronUp, ChevronDown, Check, RotateCcw, Settings, Trash2 } from "lucide-react";
+import { ChevronUp, ChevronDown, Check, RotateCcw, Settings, Trash2, Calendar, RefreshCw } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { fetchGoogleCalendarEvents, mapGoogleEventsToTasks } from "../lib/googleCalendar";
 
 // ═══════════════════════════════════════════════════
 //  SETTINGS VIEW
@@ -14,11 +15,63 @@ export default function SettingsView({ user, setUser, add }) {
   const [startMinute, setStartMinute] = useState(user?.prefs?.startTime ? user.prefs.startTime.split(':')[1] : "00");
   const [picks, setPicks] = useState(user?.prefs?.picks || []);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const toggle = b => setPicks(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b]);
   const handleHourChange = (delta) => { let newH = parseInt(startHour, 10) + delta; if (isNaN(newH)) newH = 8 + delta; if (newH < 0) newH = 23; if (newH > 23) newH = 0; setStartHour(String(newH).padStart(2, "0")); };
   const handleMinuteChange = (delta) => { let newM = parseInt(startMinute, 10) + delta; if (isNaN(newM)) newM = delta; if (newM < 0) newM = 59; if (newM > 59) newM = 0; setStartMinute(String(newM).padStart(2, "0")); };
   const handleHourInputBlur = () => { let val = parseInt(startHour, 10); if (isNaN(val)) val = 8; if (val < 0) val = 0; if (val > 23) val = 23; setStartHour(String(val).padStart(2, "0")); };
   const handleMinuteInputBlur = () => { let val = parseInt(startMinute, 10); if (isNaN(val)) val = 0; if (val < 0) val = 0; if (val > 59) val = 59; setStartMinute(String(val).padStart(2, "0")); };
+
+  const handleGoogleSync = () => {
+    if (typeof google === 'undefined' || !google.accounts) {
+      add("Biblioteka Google API nie jest jeszcze załadowana. Odśwież stronę.", "warn");
+      return;
+    }
+    
+    setIsSyncing(true);
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar.events.readonly',
+      callback: async (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          try {
+            const events = await fetchGoogleCalendarEvents(tokenResponse.access_token);
+            const mappedTasks = mapGoogleEventsToTasks(events);
+            
+            const { data: existing } = await supabase.from('tasks').select('desc').eq('user_email', user.email).like('desc', '%[GCal:%');
+            const existingIds = (existing || []).map(t => {
+                const m = t.desc ? t.desc.match(/\[GCal:(.+?)\]/) : null;
+                return m ? m[1] : null;
+            }).filter(Boolean);
+
+            const newTasks = mappedTasks.filter(t => {
+                const m = t.desc.match(/\[GCal:(.+?)\]/);
+                const gid = m ? m[1] : null;
+                return !existingIds.includes(gid);
+            }).map(t => ({...t, user_email: user.email}));
+
+            if (newTasks.length > 0) {
+                const { error } = await supabase.from('tasks').insert(newTasks);
+                if (error) throw error;
+                add(`Zsynchronizowano ${newTasks.length} nowych wydarzeń!`);
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                add(`Wszystkie wydarzenia są już zsynchronizowane. Brak nowych.`, "info");
+            }
+          } catch(e) {
+            console.error("GCal Sync Error:", e);
+            add("Błąd podczas synchronizacji Kalendarza Google.", "warn");
+          }
+        }
+        setIsSyncing(false);
+      },
+      error_callback: () => { 
+        setIsSyncing(false); 
+        add("Anulowano lub błąd logowania Google.", "warn"); 
+      }
+    });
+    client.requestAccessToken();
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -117,6 +170,27 @@ export default function SettingsView({ user, setUser, add }) {
           </div>
         </div>
 
+        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors border-t border-[#E8DDD0]">
+          <div className="mb-4 flex items-start gap-4 justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
+                <Calendar size={20} className="text-[#2D9E6B]" />
+                Integracja z Google
+              </h3>
+              <p className="text-sm text-[#5A7368]">
+                Połącz swój Kalendarz Google, aby automatycznie zaimportować nadchodzące spotkania jako zablokowane zadania.
+              </p>
+            </div>
+            <button 
+              onClick={handleGoogleSync} 
+              disabled={isSyncing}
+              className="whitespace-nowrap px-4 py-2.5 bg-white border border-[#2D9E6B] text-[#1E5C36] rounded-xl font-semibold text-sm hover:bg-[#E8F4ED] transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+            >
+              {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <Calendar size={16} />}
+              {isSyncing ? "Pobieranie..." : "Synchronizuj Kalendarz"}
+            </button>
+          </div>
+        </div>
 
       </div>
 

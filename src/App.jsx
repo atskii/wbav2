@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut, Menu, ChevronDown, Settings, Flame } from "lucide-react";
+import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Lib
@@ -8,6 +8,7 @@ import { INIT_TASKS } from "./lib/constants";
 import { checkIsDate } from "./lib/dateHelpers";
 import { analyzeMoodAlerts } from "./lib/analyzeMoodAlerts";
 import { calculateStreak, calculateTaskXP } from "./lib/xpHelpers";
+import { fetchGoogleCalendarEvents, mapGoogleEventsToTasks } from "./lib/googleCalendar";
 
 // Hooks
 import usePersist from "./hooks/usePersist";
@@ -51,6 +52,52 @@ export default function App() {
   const [editingTask, setEditingTask] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+
+  const handleGlobalGoogleSync = () => {
+    if (typeof google === 'undefined' || !google.accounts) {
+      add("Biblioteka Google API nie jest jeszcze załadowana. Odśwież stronę.", "warn");
+      return;
+    }
+    setIsSyncingCalendar(true);
+    setProfileMenuOpen(false);
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar.events.readonly',
+      callback: async (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          try {
+            const events = await fetchGoogleCalendarEvents(tokenResponse.access_token);
+            const mappedTasks = mapGoogleEventsToTasks(events);
+            const { data: existing } = await supabase.from('tasks').select('desc').eq('user_email', user.email).like('desc', '%[GCal:%');
+            const existingIds = (existing || []).map(t => {
+                const m = t.desc ? t.desc.match(/\[GCal:(.+?)\]/) : null;
+                return m ? m[1] : null;
+            }).filter(Boolean);
+            const newTasks = mappedTasks.filter(t => {
+                const m = t.desc.match(/\[GCal:(.+?)\]/);
+                return !existingIds.includes(m ? m[1] : null);
+            }).map(t => ({...t, user_email: user.email}));
+
+            if (newTasks.length > 0) {
+                const { error } = await supabase.from('tasks').insert(newTasks);
+                if (error) throw error;
+                add(`Zsynchronizowano ${newTasks.length} nowych wydarzeń!`);
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                add(`Brak nowych wydarzeń do synchronizacji.`, "info");
+            }
+          } catch(e) {
+            console.error(e);
+            add("Błąd podczas synchronizacji Kalendarza Google.", "warn");
+          }
+        }
+        setIsSyncingCalendar(false);
+      },
+      error_callback: () => { setIsSyncingCalendar(false); add("Błąd logowania Google.", "warn"); }
+    });
+    client.requestAccessToken();
+  };
 
   // Helper for logging out
   const handleLogout = async () => {
@@ -1126,6 +1173,15 @@ export default function App() {
                             className="w-full px-3 py-2 text-xs font-semibold text-[#1A2F22] hover:bg-[#F5EFE6] rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap"
                           >
                             <Settings size={15} className="text-[#057E85]" /> Ustawienia konta
+                          </button>
+
+                          <button
+                            onClick={handleGlobalGoogleSync}
+                            disabled={isSyncingCalendar}
+                            className="w-full px-3 py-2 text-xs font-semibold text-[#1E5C36] hover:bg-[#E8F4ED] rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap disabled:opacity-50"
+                          >
+                            {isSyncingCalendar ? <RefreshCw size={15} className="animate-spin text-[#2D9E6B]" /> : <Calendar size={15} className="text-[#2D9E6B]" />}
+                            {isSyncingCalendar ? "Synchronizuję..." : "Połącz z kalendarzem"}
                           </button>
 
                           <button
