@@ -18,54 +18,142 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
 
   const [isLocked, setIsLocked] = useState(taskToEdit?.isLocked || false);
   const [activePanel, setActivePanel] = useState(null);
-  const [lockDateTime, setLockDateTime] = useState(taskToEdit?.lockDateTime || "");
+
+  // Inicjalizacja lockDateTime: z taskToEdit.lockDateTime lub z parsowania pola `t` (np. 🔒 10:48 (16.08.2026))
+  const getInitialLockDateTime = () => {
+    if (taskToEdit?.lockDateTime) return taskToEdit.lockDateTime;
+    if (taskToEdit?.t) {
+      const matchTime = taskToEdit.t.match(/(\d{1,2}):(\d{2})/);
+      const matchDate = taskToEdit.t.match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+      if (matchTime && matchDate) {
+        const hh = matchTime[1].padStart(2, '0');
+        const mm = matchTime[2].padStart(2, '0');
+        const d = matchDate[1].padStart(2, '0');
+        const m = matchDate[2].padStart(2, '0');
+        const y = matchDate[3];
+        return `${y}-${m}-${d}T${hh}:${mm}`;
+      }
+    }
+    return "";
+  };
+
+  const [lockDateTime, setLockDateTime] = useState(getInitialLockDateTime());
   const [recurrence, setRecurrence] = useState(taskToEdit?.recurrence || "jednorazowo");
   const [recurrenceEnd, setRecurrenceEnd] = useState(taskToEdit?.recurrenceEnd || "");
 
   const isRecurrenceActive = isLocked && recurrence !== "jednorazowo";
   const isSingleLockActive = isLocked && recurrence === "jednorazowo";
 
-  const submit = () => {
-    if (!title) return;
+  const buildTaskPayload = (overrides = {}) => {
+    const currentTitle = overrides.title !== undefined ? overrides.title : title;
+    const currentDuration = overrides.duration !== undefined ? overrides.duration : duration;
+    const currentDifficulty = overrides.difficulty !== undefined ? overrides.difficulty : difficulty;
+    const currentP = overrides.p !== undefined ? overrides.p : p;
+    const currentDeadline = overrides.deadline !== undefined ? overrides.deadline : deadline;
+    const currentDesc = overrides.desc !== undefined ? overrides.desc : desc;
+    const currentIsLocked = overrides.isLocked !== undefined ? overrides.isLocked : isLocked;
+    const currentLockDateTime = overrides.lockDateTime !== undefined ? overrides.lockDateTime : lockDateTime;
+    const currentRecurrence = overrides.recurrence !== undefined ? overrides.recurrence : recurrence;
+    const currentRecurrenceEnd = overrides.recurrenceEnd !== undefined ? overrides.recurrenceEnd : recurrenceEnd;
 
-    const weight = Math.min(10, Math.round((difficulty * 1.5) + (parseInt(duration || 0) / 60)));
+    const weight = Math.min(10, Math.round((currentDifficulty * 1.5) + (parseInt(currentDuration || 0) / 60)));
 
     let timeString = "";
-    if (isLocked && lockDateTime) {
-      const d = new Date(lockDateTime);
-      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const dateStr = d.toLocaleDateString();
+    let sMins = overrides.sMins !== undefined ? overrides.sMins : (taskToEdit?.sMins ?? null);
+    let eMins = overrides.eMins !== undefined ? overrides.eMins : (taskToEdit?.eMins ?? null);
+    let pDate = overrides.pDate !== undefined ? overrides.pDate : (taskToEdit?.pDate ?? null);
+
+    const durInt = parseInt(currentDuration || 0) || 45;
+
+    if (currentIsLocked && currentLockDateTime) {
+      const d = new Date(currentLockDateTime);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const timeStr = `${hh}:${mm}`;
+      const dateStr = d.toLocaleDateString('pl-PL');
       timeString = `🔒 ${timeStr} (${dateStr})`;
 
-      if (recurrence !== "jednorazowo") {
-        if (recurrence === "co tydzień") {
+      const startM = d.getHours() * 60 + d.getMinutes();
+      sMins = startM;
+      eMins = startM + durInt;
+      pDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+      if (currentRecurrence !== "jednorazowo") {
+        if (currentRecurrence === "co tydzień") {
           const dayOfWeek = d.getDay() === 0 ? 6 : d.getDay() - 1;
           const daysArr = ["pon", "wt", "śr", "czw", "pt", "sob", "ndz"];
           timeString += ` 🔁 co tydzień ${daysArr[dayOfWeek]}`;
         } else {
-          timeString += ` 🔁 ${recurrence}`;
+          timeString += ` 🔁 ${currentRecurrence}`;
         }
 
-        if (recurrenceEnd) {
-          timeString += ` 🛑 do ${recurrenceEnd}`;
+        if (currentRecurrenceEnd) {
+          timeString += ` 🛑 do ${currentRecurrenceEnd}`;
+        }
+      }
+    } else if (!currentIsLocked) {
+      timeString = "";
+      // Jeśli zadanie miało datę i godzinę z kłódki (np. w lockDateTime), zachowaj ją jako elastyczny termin (sMins, pDate)
+      const sourceDateTime = currentLockDateTime || getInitialLockDateTime();
+      if (sourceDateTime) {
+        const d = new Date(sourceDateTime);
+        if (!isNaN(d.getTime())) {
+          const startM = d.getHours() * 60 + d.getMinutes();
+          sMins = startM;
+          eMins = startM + durInt;
+          pDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
       }
     }
 
-    onSave({
+    return {
       id: taskToEdit?.id,
-      title,
-      p,
+      title: currentTitle,
+      p: currentP,
       cat: "praca",
       w: weight,
       t: timeString,
-      duration: duration ? `${duration} min` : "",
-      deadline: deadline ? deadline.replace("T", " o ") : "",
-      difficulty,
-      desc,
-      isLocked,
-      lockDateTime, recurrence, recurrenceEnd
-    });
+      duration: currentDuration ? `${currentDuration} min` : "",
+      deadline: currentDeadline ? currentDeadline.replace("T", " o ") : "",
+      difficulty: currentDifficulty,
+      desc: currentDesc,
+      isLocked: currentIsLocked,
+      lockDateTime: currentIsLocked ? currentLockDateTime : "",
+      recurrence: currentRecurrence,
+      recurrenceEnd: currentRecurrenceEnd,
+      sMins,
+      eMins,
+      pDate
+    };
+  };
+
+  const handleApplyLock = () => {
+    setIsLocked(true);
+    setActivePanel(null);
+  };
+
+  const handleRemoveLock = () => {
+    setIsLocked(false);
+    setLockDateTime("");
+    setActivePanel(null);
+  };
+
+  const handleApplyRecurrence = () => {
+    setIsLocked(true);
+    setActivePanel(null);
+  };
+
+  const handleRemoveRecurrence = () => {
+    setRecurrence("jednorazowo");
+    setRecurrenceEnd("");
+    setLockDateTime("");
+    setIsLocked(false);
+    setActivePanel(null);
+  };
+
+  const submit = () => {
+    if (!title) return;
+    onSave(buildTaskPayload());
   };
 
   return (
@@ -171,13 +259,13 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
                   </div>
                 )}
                 <button
-                  onClick={() => { setIsLocked(true); setActivePanel(null); }}
+                  onClick={handleApplyRecurrence}
                   className="w-full py-2 bg-[#2D9E6B] text-white rounded-xl font-bold text-xs hover:bg-[#1E5C36] transition-all"
                 >
                   Zastosuj cykliczność
                 </button>
                 {isRecurrenceActive && (
-                  <button onClick={() => { setRecurrence("jednorazowo"); setRecurrenceEnd(""); setLockDateTime(""); setIsLocked(false); setActivePanel(null); }} className="w-full py-2 text-red-500 rounded-xl font-bold text-xs hover:bg-red-50 transition-all mt-1">
+                  <button onClick={handleRemoveRecurrence} className="w-full py-2 text-red-500 rounded-xl font-bold text-xs hover:bg-red-50 transition-all mt-1">
                     Usuń cykliczność
                   </button>
                 )}
@@ -199,13 +287,13 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
                   <input type="datetime-local" value={lockDateTime} onChange={e => setLockDateTime(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#E8DDD0] text-sm outline-none focus:border-[#2D9E6B]" />
                 </div>
                 <button
-                  onClick={() => { setIsLocked(true); setActivePanel(null); }}
+                  onClick={handleApplyLock}
                   className="w-full py-2 bg-[#2D9E6B] text-white rounded-xl font-bold text-xs hover:bg-[#1E5C36] transition-all"
                 >
                   Zastosuj kłódkę
                 </button>
-                {isSingleLockActive && (
-                  <button onClick={() => { setIsLocked(false); setLockDateTime(""); setActivePanel(null); }} className="w-full py-2 text-red-500 rounded-xl font-bold text-xs hover:bg-red-50 transition-all mt-1">
+                {isLocked && (
+                  <button onClick={handleRemoveLock} className="w-full py-2 text-red-500 rounded-xl font-bold text-xs hover:bg-red-50 transition-all mt-1">
                     Usuń blokadę
                   </button>
                 )}
