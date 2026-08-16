@@ -16,6 +16,7 @@ const serveAnalyticsHtml = () => {
 };
 
 export default defineConfig({
+  cacheDir: 'node_modules/.vite-analytics',
   plugins: [react(), serveAnalyticsHtml()],
   server: {
     port: 5175,

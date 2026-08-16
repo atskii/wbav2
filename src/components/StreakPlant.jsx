@@ -95,7 +95,7 @@ export default function StreakPlant({ tasks = [] }) {
 
   const xpProgress = totalXP === 0 ? 0 : Math.round((earnedXP / totalXP) * 100);
   const plantHeight = Math.max(15, xpProgress);
-  
+
   const [hasFlowered, setHasFlowered] = useState(false);
   const [plantType, setPlantType] = useState('image'); // 'image' or 'cactus'
 
@@ -134,12 +134,12 @@ export default function StreakPlant({ tasks = [] }) {
             {/* Kwiatek - pojawia się przy 100% */}
             <AnimatePresence>
               {xpProgress === 100 && (
-                <motion.div 
+                <motion.div
                   initial={{ scale: 0, opacity: 0, rotate: -45 }}
                   animate={{ scale: 1, opacity: 1, rotate: 0 }}
                   exit={{ scale: 0, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 200, damping: 10, bounce: 0.5 }}
-                  className="absolute left-1/2 -translate-x-1/2 text-5xl z-30" 
+                  className="absolute left-1/2 -translate-x-1/2 text-5xl z-30"
                   style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 20}px` }}
                 >
                   🌸
@@ -158,7 +158,7 @@ export default function StreakPlant({ tasks = [] }) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  transition={{ duration: 0.1, ease: "easeInOut" }}
                   className="absolute bottom-0 w-full h-auto"
                 />
               </AnimatePresence>
@@ -182,8 +182,8 @@ export default function StreakPlant({ tasks = [] }) {
           <span translate="no" className="text-xs font-bold text-[#1E5C36]">{earnedXP} XP ({done}/{total})</span>
         </div>
         <div className="h-2.5 bg-[#F5EFE6] rounded-full overflow-hidden">
-          <motion.div 
-            className="h-full bg-gradient-to-r from-[#2D9E6B] to-[#1E5C36] rounded-full" 
+          <motion.div
+            className="h-full bg-gradient-to-r from-[#2D9E6B] to-[#1E5C36] rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${xpProgress}%` }}
             transition={{ type: "spring", stiffness: 50, damping: 15 }}
@@ -191,7 +191,7 @@ export default function StreakPlant({ tasks = [] }) {
         </div>
         <AnimatePresence>
           {xpProgress === 100 && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}

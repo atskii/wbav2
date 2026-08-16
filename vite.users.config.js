@@ -16,6 +16,7 @@ const serveUsersHtml = () => {
 };
 
 export default defineConfig({
+  cacheDir: 'node_modules/.vite-users',
   plugins: [react(), serveUsersHtml()],
   server: {
     port: 5176,
