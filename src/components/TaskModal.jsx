@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { PRIOS } from "../lib/constants";
+import { useTutorials } from "../hooks/useTutorials";
 
 // ═══════════════════════════════════════════════════
 //  MODALS
 // ═══════════════════════════════════════════════════
-export default function TaskModal({ onClose, onSave, taskToEdit }) {
+export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
   const [title, setTitle] = useState(taskToEdit?.title || "");
-  const [showRecurrenceTutorial, setShowRecurrenceTutorial] = useState(true);
-  const [showLockTutorial, setShowLockTutorial] = useState(true);
+  const { isTooltipSeen, markTooltipSeen } = useTutorials(userEmail);
+  const [showRecurrenceTutorial, setShowRecurrenceTutorial] = useState(() => !isTooltipSeen('task_recurrence'));
+  const [showLockTutorial, setShowLockTutorial] = useState(() => !isTooltipSeen('task_lock'));
 
   const [duration, setDuration] = useState(taskToEdit?.duration ? taskToEdit.duration.replace(" min", "") : "60");
   const [deadline, setDeadline] = useState(taskToEdit?.deadline ? taskToEdit.deadline.replace(" o ", "T") : "");
@@ -218,7 +220,15 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
           <div className="relative shrink-0">
             {showRecurrenceTutorial && (
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-300 border-2 border-[#2D9E6B]">
-                <button onClick={(e) => { e.stopPropagation(); setShowRecurrenceTutorial(false); }} className="absolute top-1 right-2 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowRecurrenceTutorial(false);
+                    markTooltipSeen("task_recurrence");
+                  }}
+                  className="absolute top-1 right-2 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer"
+                  title="Zamknij podpowiedź"
+                >
                   <X size={12} className="text-[#2D9E6B]" />
                 </button>
                 <p className="text-[10px] leading-relaxed pr-2">
@@ -243,7 +253,15 @@ export default function TaskModal({ onClose, onSave, taskToEdit }) {
           <div className="relative shrink-0">
             {showLockTutorial && (
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-40 p-3 bg-[#1A2F22] text-white rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-300 delay-100 border-2 border-amber-400">
-                <button onClick={(e) => { e.stopPropagation(); setShowLockTutorial(false); }} className="absolute top-1 right-2 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowLockTutorial(false);
+                    markTooltipSeen("task_lock");
+                  }}
+                  className="absolute top-1 right-2 p-1 hover:bg-white/10 rounded-full transition-all cursor-pointer"
+                  title="Zamknij podpowiedź"
+                >
                   <X size={12} className="text-amber-400" />
                 </button>
                 <p className="text-[10px] leading-relaxed pr-2">
