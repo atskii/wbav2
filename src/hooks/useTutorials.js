@@ -11,7 +11,11 @@ function loadTutorialState(userEmail) {
   try {
     const raw = localStorage.getItem(getStorageKey(userEmail));
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      return {
+        screens: (parsed && typeof parsed.screens === 'object' && parsed.screens !== null) ? parsed.screens : {},
+        tooltips: (parsed && typeof parsed.tooltips === 'object' && parsed.tooltips !== null) ? parsed.tooltips : {},
+      };
     }
   } catch (e) {
     console.error("Error reading tutorial state:", e);
@@ -24,7 +28,11 @@ function loadTutorialState(userEmail) {
 
 function saveTutorialState(userEmail, state) {
   try {
-    localStorage.setItem(getStorageKey(userEmail), JSON.stringify(state));
+    const safeState = {
+      screens: state?.screens || {},
+      tooltips: state?.tooltips || {},
+    };
+    localStorage.setItem(getStorageKey(userEmail), JSON.stringify(safeState));
     window.dispatchEvent(new CustomEvent(TUTORIAL_CHANGE_EVENT, { detail: { userEmail } }));
   } catch (e) {
     console.error("Error saving tutorial state:", e);
@@ -52,16 +60,16 @@ export function useTutorials(userEmail = null) {
 
   // Sprawdza czy dany dymek był już zobaczony/zamknięty
   const isTooltipSeen = useCallback((tooltipId) => {
-    return Boolean(state.tooltips?.[tooltipId]);
-  }, [state.tooltips]);
+    return Boolean(state?.tooltips?.[tooltipId]);
+  }, [state?.tooltips]);
 
   // Oznacza dymek jako zobaczony/zamknięty
   const markTooltipSeen = useCallback((tooltipId) => {
     setState((prevState) => {
       const newState = {
-        ...prevState,
+        screens: prevState?.screens || {},
         tooltips: {
-          ...prevState.tooltips,
+          ...(prevState?.tooltips || {}),
           [tooltipId]: true,
         },
       };
@@ -72,8 +80,8 @@ export function useTutorials(userEmail = null) {
 
   // Sprawdza, czy to pierwsza wizyta na danym ekranie
   const isFirstScreenVisit = useCallback((screenName) => {
-    return !state.screens?.[screenName];
-  }, [state.screens]);
+    return !state?.screens?.[screenName];
+  }, [state?.screens]);
 
   // Oznacza ekran jako odwiedzony
   const markScreenVisited = useCallback((screenName) => {

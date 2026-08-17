@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw } from "lucide-react";
+import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Lib
@@ -56,7 +56,16 @@ export default function App() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
 
-  const { isFirstScreenVisit, markScreenVisited, resetAllTutorials, resetScreen } = useTutorials(user?.email);
+  const { isTooltipSeen, markTooltipSeen, isFirstScreenVisit, markScreenVisited, resetAllTutorials, resetScreen } = useTutorials(user?.email);
+  const [showProfileTutorial, setShowProfileTutorial] = useState(false);
+  const [showHelpTutorial, setShowHelpTutorial] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setShowProfileTutorial(!isTooltipSeen("header_profile"));
+      setShowHelpTutorial(!isTooltipSeen("header_help"));
+    }
+  }, [user, isTooltipSeen]);
 
   useEffect(() => {
     if (user && activeTab) {
@@ -1136,6 +1145,29 @@ export default function App() {
                     ?
                   </button>
 
+                  {/* Dymek samouczka przycisku pomocy (?) - po lewej stronie bez wychodzenia poza ekran */}
+                  {showHelpTutorial && !helpMenuOpen && (
+                    <div className="absolute top-0 right-[calc(100%+14px)] w-60 p-3.5 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-right-2 duration-300 text-left">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowHelpTutorial(false);
+                          markTooltipSeen("header_help");
+                        }}
+                        className="absolute top-1.5 right-1.5 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
+                        title="Zamknij podpowiedź"
+                      >
+                        <X size={12} />
+                      </button>
+                      <strong className="text-[#1E5C36] font-bold text-xs block mb-0.5">Centrum pomocy (?):</strong>
+                      <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
+                        Jeśli chciałbyś sobie kiedyś przypomnieć działanie aplikacji, kliknij tutaj, aby ponownie odtworzyć samouczek na danym ekranie.
+                      </p>
+                      <div className="absolute top-3.5 -right-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-l-[10px] border-l-white"></div>
+                      <div className="absolute top-3.5 -right-3 w-0 h-0 border-y-[9px] border-y-transparent border-l-[11px] border-l-[#2D9E6B] -z-10"></div>
+                    </div>
+                  )}
+
                   <AnimatePresence>
                     {helpMenuOpen && (
                       <motion.div
@@ -1189,6 +1221,29 @@ export default function App() {
                       className="fixed inset-0 z-[90]" 
                       onClick={() => setProfileMenuOpen(false)} 
                     />
+                  )}
+
+                  {/* Dymek samouczka profilu */}
+                  {showProfileTutorial && !profileMenuOpen && (
+                    <div className="absolute top-[calc(100%+12px)] right-0 w-64 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowProfileTutorial(false);
+                          markTooltipSeen("header_profile");
+                        }}
+                        className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
+                        title="Zamknij podpowiedź"
+                      >
+                        <X size={13} />
+                      </button>
+                      <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Twój profil:</strong>
+                      <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
+                        Możesz się tu wylogować, połączyć z Kalendarzem Google oraz przejść do Ustawień konta.
+                      </p>
+                      <div className="absolute -top-2.5 right-6 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
+                      <div className="absolute -top-3 right-6 w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
+                    </div>
                   )}
 
                   <motion.div 
@@ -1298,6 +1353,7 @@ export default function App() {
                   loading={isLoading}
                   onGeneratePlan={generatePlan}
                   userPrefs={user?.prefs}
+                  userEmail={user?.email}
                 />
               )}
               {activeTab === "calendar" && (
