@@ -1115,7 +1115,11 @@ export default function App() {
 
               <div className="flex items-center space-x-3 md:space-x-4 flex-shrink-0">
                 {/* Przycisk pomocy i samouczków (?) */}
-                <div className="relative z-[100]">
+                <motion.div 
+                  layout
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative z-[100]"
+                >
                   {helpMenuOpen && (
                     <div 
                       className="fixed inset-0 z-[90]" 
@@ -1126,7 +1130,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setHelpMenuOpen(!helpMenuOpen)}
-                    className="h-10 w-10 rounded-full bg-[#1A2F22] hover:bg-[#2D9E6B] text-white flex items-center justify-center font-black text-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-[#1A2F22]/20 hover:scale-105 active:scale-95 flex-shrink-0"
+                    className="h-10 w-10 rounded-full bg-gradient-to-tr from-[#1E5C36] to-[#2D9E6B] hover:from-[#2D9E6B] hover:to-[#38B77D] text-white flex items-center justify-center font-black text-lg shadow-md shadow-green-900/15 hover:shadow-lg transition-all duration-200 cursor-pointer border border-[#1E5C36]/30 hover:scale-105 active:scale-95 flex-shrink-0"
                     title="Centrum pomocy i samouczki (?)"
                   >
                     ?
@@ -1139,38 +1143,46 @@ export default function App() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-12 w-64 bg-white border border-[#E8DDD0] shadow-xl rounded-2xl p-3 z-[100] text-left text-sm"
+                        className="absolute right-0 top-12 w-64 bg-white border border-[#E8DDD0] shadow-xl rounded-2xl p-2.5 z-[100] text-left text-sm"
                       >
-                        <div className="px-2 py-1.5 border-b border-gray-100 mb-2">
-                          <div className="font-bold text-[#1A2F22] text-xs flex items-center gap-1.5">
-                            <span className="w-4 h-4 rounded-full bg-[#1A2F22] text-white text-[10px] flex items-center justify-center font-black">?</span>
-                            Wskazówki i samouczki
-                          </div>
-                          <p className="text-[11px] text-[#5A7368] mt-0.5 leading-tight">
-                            Możesz w każdej chwili przywrócić dymki i sekwencje podpowiedzi.
-                          </p>
+                        <div className="px-2.5 py-1 border-b border-gray-100 mb-1.5">
+                          <span className="text-[10px] font-black text-[#5A7368] tracking-wider uppercase block">
+                            SAMOUCZEK
+                          </span>
                         </div>
 
                         <div className="space-y-1">
                           <button
                             onClick={() => {
                               resetAllTutorials();
+                              resetScreen(activeTab);
                               setHelpMenuOpen(false);
-                              add("Przywrócono wszystkie samouczki i dymki podpowiedzi!", "success");
+                              add("Przywrócono samouczek dla tego ekranu!", "success");
                             }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#1A2F22] hover:bg-[#E8F4ED] hover:text-[#1E5C36] transition-colors text-left cursor-pointer"
+                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-[#1A2F22] hover:bg-[#E8F4ED] hover:text-[#1E5C36] transition-colors text-left cursor-pointer"
                           >
                             <RefreshCw size={14} className="text-[#2D9E6B] flex-shrink-0" />
-                            <span>Przywróć wszystkie samouczki</span>
+                            <span>Odpal samouczek na tym ekranie ponownie</span>
                           </button>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
+                </motion.div>
 
                 {/* Profil z wbudowanym wskaźnikiem streaku 🔥 */}
-                <div className="relative h-10 w-48 sm:w-52 z-[100]">
+                <motion.div 
+                  initial={false}
+                  animate={{ 
+                    width: profileMenuOpen ? 250 : 200,
+                  }}
+                  transition={{ 
+                    duration: 0.2, 
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: profileMenuOpen ? 0 : 0.2
+                  }}
+                  className="relative h-10 z-[100]"
+                >
                   {/* Backdrop do zamykania po kliknięciu poza panelem */}
                   {profileMenuOpen && (
                     <div 
@@ -1261,7 +1273,7 @@ export default function App() {
                       )}
                     </AnimatePresence>
                   </motion.div>
-                </div>
+                </motion.div>
               </div>
             </header>
 

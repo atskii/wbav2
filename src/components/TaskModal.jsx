@@ -71,8 +71,8 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[700] flex items-center justify-center bg-[#1A2F22]/40 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-white rounded-[3rem] shadow-2xl p-10 w-full max-w-lg max-h-[90vh] overflow-y-auto border border-white/20" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[700] flex items-center justify-center bg-[#1A2F22]/40 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-[3rem] shadow-2xl p-8 sm:p-10 w-full max-w-lg border border-white/20 relative my-auto" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-8">
           <h3 className="text-3xl font-bold text-[#1A2F22]">{taskToEdit ? "Edytuj zadanie" : "Nowe zadanie"}</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full transition-all"><X size={28} className="text-[#1A2F22]" /></button>
