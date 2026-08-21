@@ -11,20 +11,22 @@
     />
     <!-- CSP: Content Security Policy — A02:2025 Security Misconfiguration -->
     <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' ws: http: https: https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com; base-uri 'self'; form-action 'self';" />
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' ws: http: https: https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://www.googleapis.com https://accounts.google.com; frame-src 'self' https://accounts.google.com; base-uri 'self'; form-action 'self';" />
     <!-- Prevent MIME sniffing -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <!-- Referrer Policy — minimize data leakage -->
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="apple-touch-icon" href="/logo192.png" />
     <link rel="manifest" href="/manifest.json" />
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <title>Wellbeing App</title>
-    <script type="module" crossorigin src="/assets/main-DN8hSOZ1.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/gemini-DJQMbYQm.js">
-    <link rel="stylesheet" crossorigin href="/assets/gemini-cDm9WENx.css">
+    <script type="module" crossorigin src="/assets/main-DfAMImHe.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/gemini-Buz10ax3.js">
+    <link rel="stylesheet" crossorigin href="/assets/gemini-Cw6uMBP1.css">
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
