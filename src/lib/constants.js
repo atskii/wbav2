@@ -179,7 +179,6 @@ export const INIT_TASKS = [
 
 export const APP_FAQS = [
   { q: "Jak działa system punktów i roślinka (Streak)?", a: "Za każde odhaczone zadanie zyskujesz XP. Konsekwentne realizowanie planu sprawia, że Twoja wirtualna roślinka rośnie. Gdy zamkniesz 100% dziennego planu - rozkwitnie w pełni!" },
-  { q: "Do czego służy Focus Mode (Tryb Skupienia)?", a: "To specjalny widok pozwalający zablokować rozpraszacze. Klikając w ikonę celownika przy zadaniu, otwierasz pełnoekranowy timer, który pozwala pracować głęboko nad jednym tematem." },
   { q: "Czy moje dane i wpisy nastrojów są prywatne?", a: "Absolutnie tak. Aplikacja dba o Twoje bezpieczeństwo, a wpisy o Twoim samopoczuciu nie są nigdzie udostępniane (np. do działów HR). Zostały stworzone wyłącznie do Twojego wglądu." },
   { q: "Jak zintegrować aplikację z Kalendarzem Google?", a: "W Ustawieniach kliknij przycisk 'Synchronizuj Kalendarz'. Zaloguj się na konto Google, a aplikacja automatycznie zablokuje w Twoim harmonogramie czas na Twoje spotkania i wykłady." },
   { q: "Co oznaczają kolory kropek przy zadaniach?", a: "Czerwony to priorytet wysoki (najważniejsze), żółty to priorytet średni, a zielony to priorytet niski. Aplikacja zawsze sortuje zadania od najważniejszych na górze." },
@@ -190,8 +189,7 @@ export const APP_FAQS = [
   { q: "Jak działają Poprawiacze Nastroju?", a: "Wybierasz je w Ustawieniach (np. spacer, kawa). Jeśli Twój nastrój drastycznie spadnie, aplikacja zaproponuje Ci krótką przerwę na wybraną przez Ciebie aktywność." },
   { q: "Gdzie sprawdzę moje statystyki?", a: "W zakładce 'Analityka' (ikona wykresu) znajdziesz wizualizację trendów Twojego nastroju oraz historii wykonywania zadań w czasie." },
   { q: "Co oznacza wskaźnik 'Trudność' zadania?", a: "Trudność (1-5) pomaga algorytmowi w rozłożeniu sił na cały dzień. Najtrudniejsze zadania proponowane są w godzinach Twojej najwyższej produktywności." },
-  { q: "Jak długo przechowywane są moje dane?", a: "W obecnej wersji MVP Twoje dane są przechowywane lokalnie na Twoim urządzeniu. Nigdzie nie znikną, dopóki nie wyczyścisz pamięci przeglądarki." },
-  { q: "Czy aplikacja działa w trybie offline?", a: "Ponieważ dane są zapisywane w pamięci przeglądarki, podstawowe funkcje (jak dodawanie zadań i odhaczanie) mogą działać bez aktywnego połączenia z siecią." },
+  { q: "Jak długo przechowywane są moje dane?", a: "Dane są bezpiecznie zapisywane w zabezpieczonej bazie Supabase. Zgodnie z naszą polityką, w przypadku nieużywania aplikacji, dane są trwale usuwane z serwera po 60 dniach." },
   { q: "Czy mogę używać aplikacji na telefonie?", a: "Tak! Interfejs aplikacji jest w 100% responsywny i automatycznie dostosowuje swój układ do ekranów smartfonów oraz tabletów." },
   { q: "Jak zaplanować zadanie na inny dzień?", a: "Podczas dodawania nowego zadania, w polu terminu lub kalendarza wybierz datę w przyszłości. Zadanie pojawi się na liście dopiero w wybranym dniu." },
   { q: "Co się stanie, jeśli nie wykonam całego planu?", a: "Niewykonane zadania nie przepadają. Zostają przeniesione do zakładki zaległych (Backlog), skąd możesz je ponownie zaplanować na kolejny dzień." },
