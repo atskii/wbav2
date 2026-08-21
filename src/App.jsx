@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw } from "lucide-react";
+import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Lib
@@ -13,6 +13,7 @@ import { fetchGoogleCalendarEvents, mapGoogleEventsToTasks } from "./lib/googleC
 // Hooks
 import usePersist from "./hooks/usePersist";
 import useToasts from "./hooks/useToasts";
+import { useTutorials } from "./hooks/useTutorials";
 
 // UI
 import Font from "./components/ui/Font";
@@ -51,8 +52,28 @@ export default function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [helpMenuOpen, setHelpMenuOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+
+  const { isTooltipSeen, markTooltipSeen, isFirstScreenVisit, markScreenVisited, resetAllTutorials, resetScreen } = useTutorials(user?.email);
+  const [showProfileTutorial, setShowProfileTutorial] = useState(false);
+  const [showHelpTutorial, setShowHelpTutorial] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setShowProfileTutorial(!isTooltipSeen("header_profile"));
+      setShowHelpTutorial(!isTooltipSeen("header_help"));
+    }
+  }, [user, isTooltipSeen]);
+
+  useEffect(() => {
+    if (user && activeTab) {
+      if (isFirstScreenVisit(activeTab)) {
+        markScreenVisited(activeTab);
+      }
+    }
+  }, [activeTab, user, isFirstScreenVisit, markScreenVisited]);
 
   const handleGlobalGoogleSync = () => {
     if (typeof google === 'undefined' || !google.accounts) {
@@ -1102,14 +1123,127 @@ export default function App() {
               </div>
 
               <div className="flex items-center space-x-3 md:space-x-4 flex-shrink-0">
+                {/* Przycisk pomocy i samouczków (?) */}
+                <motion.div 
+                  layout
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative z-[100]"
+                >
+                  {helpMenuOpen && (
+                    <div 
+                      className="fixed inset-0 z-[90]" 
+                      onClick={() => setHelpMenuOpen(false)} 
+                    />
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setHelpMenuOpen(!helpMenuOpen)}
+                    className="h-10 w-10 rounded-full bg-gradient-to-tr from-[#1E5C36] to-[#2D9E6B] hover:from-[#2D9E6B] hover:to-[#38B77D] text-white flex items-center justify-center font-black text-lg shadow-md shadow-green-900/15 hover:shadow-lg transition-all duration-200 cursor-pointer border border-[#1E5C36]/30 hover:scale-105 active:scale-95 flex-shrink-0"
+                    title="Centrum pomocy i samouczki (?)"
+                  >
+                    ?
+                  </button>
+
+                  {/* Dymek samouczka przycisku pomocy (?) - po lewej stronie bez wychodzenia poza ekran */}
+                  {showHelpTutorial && !helpMenuOpen && (
+                    <div className="absolute top-0 right-[calc(100%+14px)] w-60 p-3.5 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-right-2 duration-300 text-left">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowHelpTutorial(false);
+                          markTooltipSeen("header_help");
+                        }}
+                        className="absolute top-1.5 right-1.5 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
+                        title="Zamknij podpowiedź"
+                      >
+                        <X size={12} />
+                      </button>
+                      <strong className="text-[#1E5C36] font-bold text-xs block mb-0.5">Centrum pomocy (?):</strong>
+                      <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
+                        Jeśli chciałbyś sobie kiedyś przypomnieć działanie aplikacji, kliknij tutaj, aby ponownie odtworzyć samouczek na danym ekranie.
+                      </p>
+                      <div className="absolute top-3.5 -right-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-l-[10px] border-l-white"></div>
+                      <div className="absolute top-3.5 -right-3 w-0 h-0 border-y-[9px] border-y-transparent border-l-[11px] border-l-[#2D9E6B] -z-10"></div>
+                    </div>
+                  )}
+
+                  <AnimatePresence>
+                    {helpMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-12 w-64 bg-white border border-[#E8DDD0] shadow-xl rounded-2xl p-2.5 z-[100] text-left text-sm"
+                      >
+                        <div className="px-2.5 py-1 border-b border-gray-100 mb-1.5">
+                          <span className="text-[10px] font-black text-[#5A7368] tracking-wider uppercase block">
+                            SAMOUCZEK
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <button
+                            onClick={() => {
+                              resetAllTutorials();
+                              resetScreen(activeTab);
+                              setHelpMenuOpen(false);
+                              add("Przywrócono samouczek dla tego ekranu!", "success");
+                            }}
+                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-[#1A2F22] hover:bg-[#E8F4ED] hover:text-[#1E5C36] transition-colors text-left cursor-pointer"
+                          >
+                            <RefreshCw size={14} className="text-[#2D9E6B] flex-shrink-0" />
+                            <span>Odpal samouczek na tym ekranie ponownie</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+
                 {/* Profil z wbudowanym wskaźnikiem streaku 🔥 */}
-                <div className="relative h-10 w-48 sm:w-52 z-[100]">
+                <motion.div 
+                  initial={false}
+                  animate={{ 
+                    width: profileMenuOpen ? 250 : 200,
+                  }}
+                  transition={{ 
+                    duration: 0.2, 
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: profileMenuOpen ? 0 : 0.2
+                  }}
+                  className="relative h-10 z-[100]"
+                >
                   {/* Backdrop do zamykania po kliknięciu poza panelem */}
                   {profileMenuOpen && (
                     <div 
                       className="fixed inset-0 z-[90]" 
                       onClick={() => setProfileMenuOpen(false)} 
                     />
+                  )}
+
+                  {/* Dymek samouczka profilu */}
+                  {showProfileTutorial && !profileMenuOpen && (
+                    <div className="absolute top-[calc(100%+12px)] right-0 w-64 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowProfileTutorial(false);
+                          markTooltipSeen("header_profile");
+                        }}
+                        className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
+                        title="Zamknij podpowiedź"
+                      >
+                        <X size={13} />
+                      </button>
+                      <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Twój profil:</strong>
+                      <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
+                        Możesz się tu wylogować, połączyć z Kalendarzem Google oraz przejść do Ustawień konta.
+                      </p>
+                      <div className="absolute -top-2.5 right-6 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
+                      <div className="absolute -top-3 right-6 w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
+                    </div>
                   )}
 
                   <motion.div 
@@ -1194,7 +1328,7 @@ export default function App() {
                       )}
                     </AnimatePresence>
                   </motion.div>
-                </div>
+                </motion.div>
               </div>
             </header>
 
@@ -1219,6 +1353,7 @@ export default function App() {
                   loading={isLoading}
                   onGeneratePlan={generatePlan}
                   userPrefs={user?.prefs}
+                  userEmail={user?.email}
                 />
               )}
               {activeTab === "calendar" && (
@@ -1255,6 +1390,7 @@ export default function App() {
               onClose={() => { setIsTaskModalOpen(false); setEditingTask(null); }}
               onSave={saveTask}
               taskToEdit={editingTask}
+              userEmail={user?.email}
             />
           )}
 

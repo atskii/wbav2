@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, RefreshCw, Zap, Sparkles } from "lucide-react";
+import { CheckCircle, RefreshCw, Zap, Sparkles, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateTaskXP } from "../lib/xpHelpers";
+import { useTutorials } from "../hooks/useTutorials";
 
 function fireCustomConfetti() {
   const canvas = document.createElement("canvas");
@@ -85,7 +86,7 @@ function fireCustomConfetti() {
 // ═══════════════════════════════════════════════════
 //  STREAK PLANT (OBLICZENIA NA ŻYWO)
 // ═══════════════════════════════════════════════════
-export default function StreakPlant({ tasks = [] }) {
+export default function StreakPlant({ tasks = [], userEmail = null }) {
   const total = tasks.length;
   const doneTasks = tasks.filter(t => t.done);
   const done = doneTasks.length;
@@ -99,6 +100,13 @@ export default function StreakPlant({ tasks = [] }) {
   const [hasFlowered, setHasFlowered] = useState(false);
   const [plantType, setPlantType] = useState('image'); // 'image' or 'cactus'
 
+  const { isTooltipSeen, markTooltipSeen } = useTutorials(userEmail);
+  const [showStreakPlantTutorial, setShowStreakPlantTutorial] = useState(false);
+
+  useEffect(() => {
+    setShowStreakPlantTutorial(!isTooltipSeen("dashboard_streak_plant"));
+  }, [isTooltipSeen]);
+
   const currentStep = xpProgress === 0 ? 1 : Math.ceil(xpProgress / 10);
 
   useEffect(() => {
@@ -111,7 +119,7 @@ export default function StreakPlant({ tasks = [] }) {
   }, [xpProgress, hasFlowered, total]);
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-[#E8DDD0] shadow-sm hover:shadow-md transition-all relative overflow-hidden">
+    <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-[#E8DDD0] shadow-sm hover:shadow-md transition-all relative overflow-visible">
       <h3 className="font-lora text-xl font-bold text-[#1A2F22] mb-1">Twoja roślinka streaku</h3>
       <p className="text-xs text-[#5A7368] mb-5 leading-relaxed">
         Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie daje punkty XP i zasila roślinę.
@@ -138,25 +146,26 @@ export default function StreakPlant({ tasks = [] }) {
                   initial={{ scale: 0, opacity: 0, rotate: -45 }}
                   animate={{ scale: 1, opacity: 1, rotate: 0 }}
                   exit={{ scale: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 10, bounce: 0.5 }}
-                  className="absolute left-1/2 -translate-x-1/2 text-5xl z-30" 
-                  style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 20}px` }}
+                  transition={{ duration: 0.5, type: "spring" }}
+                  className="absolute left-1/2 -translate-x-1/2 z-30"
+                  style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 10}px` }}
                 >
-                  🌸
+                  <Sparkles className="w-8 h-8 text-[#FFB7B2] animate-pulse drop-shadow-md" />
                 </motion.div>
               )}
             </AnimatePresence>
           </>
         ) : (
-          <div className="absolute inset-0 flex items-end justify-center overflow-hidden">
-            <div className="relative h-full aspect-[421/646]">
-              <AnimatePresence initial={false}>
+          /* Realistyczna roślina ze zdjęć z płynnymi przejściami */
+          <div className="relative w-full h-full flex flex-col items-center justify-end pb-2">
+            <div className="relative w-48 h-64 flex items-end justify-center">
+              <AnimatePresence mode="wait">
                 <motion.img
                   key={currentStep}
                   src={`/plant/step ${currentStep}.png`}
-                  alt={`Roślinka etap ${currentStep}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  alt={`Etap wzrostu ${currentStep}`}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                   className="absolute bottom-0 w-full h-auto"
@@ -170,7 +179,7 @@ export default function StreakPlant({ tasks = [] }) {
       <div className="flex justify-center mb-6">
         <button
           onClick={() => setPlantType(prev => prev === 'cactus' ? 'image' : 'cactus')}
-          className="flex items-center gap-1.5 bg-[#078B83] hover:bg-[#06736D] text-white px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors"
+          className="flex items-center gap-1.5 bg-[#078B83] hover:bg-[#06736D] text-white px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors cursor-pointer"
         >
           Zmień roślinkę <RefreshCw size={14} />
         </button>
@@ -205,6 +214,29 @@ export default function StreakPlant({ tasks = [] }) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Dymek samouczka pod całym prostokątem karty roślinki */}
+      {showStreakPlantTutorial && (
+        <div className="absolute top-[calc(100%+14px)] left-2 right-2 sm:left-4 sm:right-4 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowStreakPlantTutorial(false);
+              markTooltipSeen("dashboard_streak_plant");
+            }}
+            className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
+            title="Zamknij podpowiedź"
+          >
+            <X size={13} />
+          </button>
+          <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Roślinka streaku 🌱:</strong>
+          <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
+            Rośnie wraz z wykonywaniem kolejnych zadań! Możesz kliknąć „Zmień roślinkę”, aby wybrać swoją ulubioną odmianę.
+          </p>
+          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
+        </div>
+      )}
     </div>
   );
 }
