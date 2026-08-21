@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronUp, ChevronDown, Check, RotateCcw, Settings, Trash2, Calendar, RefreshCw } from "lucide-react";
+import { ChevronUp, ChevronDown, Check, RotateCcw, Settings, Trash2, Calendar, RefreshCw, HelpCircle } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { fetchGoogleCalendarEvents, mapGoogleEventsToTasks } from "../lib/googleCalendar";
 
@@ -16,6 +16,7 @@ export default function SettingsView({ user, setUser, add }) {
   const [picks, setPicks] = useState(user?.prefs?.picks || []);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null);
   const toggle = b => setPicks(p => p.includes(b) ? p.filter(x => x !== b) : [...p, b]);
   const handleHourChange = (delta) => { let newH = parseInt(startHour, 10) + delta; if (isNaN(newH)) newH = 8 + delta; if (newH < 0) newH = 23; if (newH > 23) newH = 0; setStartHour(String(newH).padStart(2, "0")); };
   const handleMinuteChange = (delta) => { let newM = parseInt(startMinute, 10) + delta; if (isNaN(newM)) newM = delta; if (newM < 0) newM = 59; if (newM > 59) newM = 0; setStartMinute(String(newM).padStart(2, "0")); };
@@ -199,6 +200,33 @@ export default function SettingsView({ user, setUser, add }) {
           {isSaving ? <RotateCcw size={18} className="animate-spin" /> : <Check size={18} />}
           Zapisz ustawienia
         </button>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="mt-16 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
+        <div className="p-6 md:p-8 border-b border-[#E8DDD0]">
+          <h3 className="text-xl font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
+            <HelpCircle size={22} className="text-[#2D9E6B]" />
+            Często zadawane pytania (FAQ)
+          </h3>
+          <p className="text-sm text-[#5A7368]">Masz problem z obsługą? Sprawdź odpowiedzi na najczęstsze pytania.</p>
+        </div>
+        <div className="divide-y divide-[#E8DDD0]">
+          {[
+            { q: "Jak działa system punktów i roślinka (Streak)?", a: "Za każde odhaczone zadanie zyskujesz XP. Jeśli będziesz systematyczny, Twoja wirtualna roślinka będzie rosła. Gdy zamkniesz 100% dziennego planu - rozkwitnie w pełni!" },
+            { q: "Do czego służy Focus Mode (Tryb Skupienia)?", a: "To specjalny widok pozwalający zablokować rozpraszacze. Klikając w ikonę celownika przy zadaniu, otwierasz pełnoekranowy timer, który pozwala pracować głęboko nad jednym tematem." },
+            { q: "Czy moje dane i wpisy nastrojów są prywatne?", a: "Absolutnie tak. Aplikacja dba o Twoje bezpieczeństwo, a wpisy o Twoim samopoczuciu nie są nigdzie udostępniane (np. do działów HR). Zostały stworzone wyłącznie do Twojego wglądu i po to, by w razie kryzysu podpowiedzieć Ci sprawdzone instytucje zaufania." },
+            { q: "Jak zintegrować aplikację z Kalendarzem Google?", a: "Wystarczy kliknąć przycisk 'Synchronizuj Kalendarz' znajdujący się wyżej. Zaloguj się na konto Google, a aplikacja automatycznie zablokuje w Twoim harmonogramie czas na Twoje spotkania i wykłady." },
+          ].map((faq, i) => (
+            <div key={i} className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors cursor-pointer" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-[#1A2F22]">{faq.q}</h4>
+                {openFaq === i ? <ChevronUp size={18} className="text-[#2D9E6B]" /> : <ChevronDown size={18} className="text-[#9FB5AD]" />}
+              </div>
+              {openFaq === i && <p className="mt-4 text-sm text-[#5A7368] leading-relaxed animate-in fade-in slide-in-from-top-2">{faq.a}</p>}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Danger Zone */}
