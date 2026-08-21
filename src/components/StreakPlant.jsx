@@ -156,22 +156,21 @@ export default function StreakPlant({ tasks = [], userEmail = null }) {
             </AnimatePresence>
           </>
         ) : (
-          /* Realistyczna roślina ze zdjęć z płynnymi przejściami */
-          <div className="relative w-full h-full flex flex-col items-center justify-end pb-2">
-            <div className="relative w-48 h-64 flex items-end justify-center">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentStep}
-                  src={`/plant/step ${currentStep}.png`}
-                  alt={`Etap wzrostu ${currentStep}`}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="absolute bottom-0 w-full h-auto"
-                />
-              </AnimatePresence>
-            </div>
+          /* Roślina ze zdjęć - doniczka w stałym rozmiarze zakotwiczona na dole */
+          <div className="relative w-full h-full flex justify-center items-end pb-2">
+            <AnimatePresence>
+              <motion.img
+                key={currentStep}
+                src={`/plant/step ${currentStep}.png`}
+                alt={`Etap wzrostu ${currentStep}`}
+                initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                style={{ transformOrigin: "bottom center" }}
+                className="absolute bottom-0 w-48 sm:w-52 h-auto object-contain object-bottom pointer-events-none"
+              />
+            </AnimatePresence>
           </div>
         )}
       </div>
