@@ -14,9 +14,28 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
   const handleAIAnalysis = async () => {
     setAiState({ isOpen: true, loading: true, result: "", error: "" });
     try {
-      const validMoods = data.filter(d => d.v !== null);
-      if (validMoods.length === 0) throw new Error("Brak danych nastrojowych do analizy w wybranym okresie.");
+      const validMoods = moods.filter(m => m.v !== null);
+      if (validMoods.length === 0) throw new Error("Brak danych nastrojowych do analizy.");
+      
+      const dataHash = JSON.stringify(validMoods);
+      const cacheKey = `ai_analysis_cache_${userEmail}`;
+      const cached = localStorage.getItem(cacheKey);
+      
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed.hash === dataHash) {
+            // Jeśli dane nastroju się nie zmieniły, używamy zapisanego wyniku
+            setAiState({ isOpen: true, loading: false, result: parsed.result, error: "" });
+            return;
+          }
+        } catch (e) {
+          console.warn("Błąd odczytu cache AI", e);
+        }
+      }
+
       const result = await analyzeMoodWithAI(validMoods, "Użytkownik", userEmail);
+      localStorage.setItem(cacheKey, JSON.stringify({ hash: dataHash, result }));
       setAiState({ isOpen: true, loading: false, result, error: "" });
     } catch (err) {
       setAiState({ isOpen: true, loading: false, result: "", error: err.message });
