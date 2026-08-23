@@ -209,11 +209,46 @@ export default function App() {
             .single();
 
           if (!profileError && profileData) {
+            let currentPrefs = profileData.prefs || {};
+            
+            // LOGIKA STREAKU LOGOWANIA
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const lastLogin = currentPrefs.lastLoginDate;
+            let currentStreak = currentPrefs.loginStreak || 0;
+            
+            let prefsChanged = false;
+            if (lastLogin !== todayStr) {
+              if (lastLogin) {
+                 const yesterday = new Date(now);
+                 yesterday.setDate(yesterday.getDate() - 1);
+                 const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+                 
+                 if (lastLogin === yesterdayStr) {
+                    currentStreak += 1;
+                 } else {
+                    currentStreak = 1; // reset streaku
+                 }
+              } else {
+                 currentStreak = 1; // pierwsze logowanie
+              }
+              currentPrefs.lastLoginDate = todayStr;
+              currentPrefs.loginStreak = currentStreak;
+              prefsChanged = true;
+            }
+
+            if (prefsChanged) {
+              await supabase
+                .from('profiles')
+                .update({ prefs: currentPrefs })
+                .eq('email', user.email);
+            }
+
             // Użytkownik ma już profil - pomiń onboarding i wejdź do apki
             setUser(prev => ({ 
               ...prev, 
-              name: profileData.prefs?.name || prev?.name || user.email.split('@')[0],
-              prefs: profileData.prefs 
+              name: currentPrefs?.name || prev?.name || user.email.split('@')[0],
+              prefs: currentPrefs 
             }));
             setView("app");
           } else {
@@ -797,7 +832,7 @@ export default function App() {
   };
 
   const [xpItems, setXpItems] = useState([]);
-  const streakCount = useMemo(() => calculateStreak(tasks, getNow()), [tasks, getNow]);
+  const streakCount = user?.prefs?.loginStreak || 0;
 
   const toggleTask = async (id, e) => {
     const task = tasks.find(t => t.id === id);
@@ -1055,6 +1090,11 @@ export default function App() {
       <Font />
       <Onboarding initialName={user?.name} onComplete={async (prefs) => {
         try {
+          const now = new Date();
+          const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          prefs.lastLoginDate = todayStr;
+          prefs.loginStreak = 1;
+
           // Zapisz preferencje w Supabase przed wejściem do aplikacji
           const { error } = await supabase
             .from('profiles')
