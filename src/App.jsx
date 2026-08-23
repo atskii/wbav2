@@ -638,6 +638,16 @@ export default function App() {
     // Budujemy listę slotów (luk) między zablokowanymi blokami
     const gaps = [];
     let gapStart = timelineStart * 60;
+    
+    // Zabezpieczenie przed układaniem zadań w przeszłości (jeśli planujemy dzisiejszy dzień)
+    const nowL = new Date();
+    if (selectedDate.toDateString() === nowL.toDateString()) {
+       const currentMins = nowL.getHours() * 60 + nowL.getMinutes();
+       // Zaokrąglamy obecny czas w górę do pełnych 15 minut dla zachowania siatki
+       const roundedCurrentMins = Math.ceil(currentMins / 15) * 15;
+       gapStart = Math.max(gapStart, roundedCurrentMins);
+    }
+
     for (const block of lockedBlocks) {
       if (gapStart < block.sMins) {
         gaps.push({ start: gapStart, end: block.sMins });

@@ -32,6 +32,16 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
   const [draggedTaskId, setDraggedTaskId] = useState(null);
   const [dashDragTarget, setDashDragTarget] = useState(null); // { type: 'timeline'|'backlog', startMins, durationMins, title }
 
+  const [nowMinute, setNowMinute] = useState(new Date().getHours() * 60 + new Date().getMinutes());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const d = new Date();
+      setNowMinute(d.getHours() * 60 + d.getMinutes());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+  const isToday = new Date().toDateString() === selectedDate.toDateString();
+
 
   // Godzina startu z onboardingu (domyślnie 6)
   const parsedStart = userPrefs?.startTime ? userPrefs.startTime.split(':').map(Number) : [6, 0];
@@ -206,6 +216,12 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
           <div className="xl:flex-1 xl:overflow-y-auto relative pr-2 md:pr-4 custom-scrollbar -mr-2 md:-mr-4 min-h-0">
             <div className="relative mt-8" style={{ height: `${minsToRem((timelineEndHour - timelineStart) * 60)}rem` }}>
               <div className="absolute left-[2.5rem] md:left-[3.25rem] top-0 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
+              {isToday && nowMinute >= timelineStart*60 && nowMinute <= timelineEndHour*60 && (
+                <div className="absolute left-[2.5rem] md:left-[3.25rem] right-0 z-40 pointer-events-none flex items-center transition-all duration-1000" style={{ top: `${minsToRem(nowMinute - timelineStart*60)}rem` }}>
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#E40D0D] -ml-[5px] relative z-10" />
+                  <div className="flex-1 h-[2px] bg-[#E40D0D]" />
+                </div>
+              )}
               {hours.map((h, i) => (
                 <div key={h} className="absolute left-0 flex items-center w-full" style={{ top: `${minsToRem(i * 60)}rem` }}>
                   <span className="text-[9px] md:text-[10px] font-bold text-[#9FB5AD] w-8 md:w-10 text-right py-1 relative z-10 bg-[#FAFAFA]">{h}:00</span>
