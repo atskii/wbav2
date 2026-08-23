@@ -1252,6 +1252,12 @@ export default function App() {
                   </AnimatePresence>
                 </motion.div>
 
+                {/* Streak badge obok profilu i pytajnika */}
+                <div className="flex items-center justify-center gap-1.5 px-4 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-sm flex-shrink-0 shadow-sm" title={`${streakCount} dni serii`}>
+                  <img src="/icons/fire.svg" alt="Flame Streak" className="w-5 h-5 object-contain drop-shadow-sm" />
+                  <span>{streakCount}</span>
+                </div>
+
                 {/* Profil z wbudowanym wskaźnikiem streaku 🔥 */}
                 <motion.div 
                   initial={false}
@@ -1322,12 +1328,6 @@ export default function App() {
                         <span className="text-xs font-bold text-[#1A2F22] truncate whitespace-nowrap">
                           {user?.name || "Użytkownik"}
                         </span>
-                        
-                        {/* Flame Streak badge z własną grafiką po prawo od nazwy użytkownika */}
-                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-[11px] flex-shrink-0 ml-0.5" title={`${streakCount} dni serii`}>
-                          <img src="/icons/fire.svg" alt="Flame Streak" className="w-4.5 h-4.5 object-contain drop-shadow-sm" />
-                          <span>{streakCount}</span>
-                        </div>
                       </div>
                       <ChevronDown size={14} className={`text-[#5A7368] transition-transform duration-200 flex-shrink-0 ml-1 ${profileMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
