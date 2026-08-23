@@ -1172,7 +1172,7 @@ export default function App() {
                 </span>
               </div>
 
-              <div className="flex items-center space-x-3 md:space-x-4 flex-shrink-0">
+              <div className="flex items-center justify-end gap-3 md:gap-4 flex-shrink-0 min-w-0">
                 {/* Przycisk pomocy i samouczków (?) */}
                 <motion.div 
                   layout
@@ -1253,24 +1253,40 @@ export default function App() {
                 </motion.div>
 
                 {/* Streak badge obok profilu i pytajnika */}
-                <div className="flex items-center justify-center gap-1.5 px-4 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-sm flex-shrink-0 shadow-sm" title={`${streakCount} dni serii`}>
+                <motion.div 
+                  layout
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex items-center justify-center gap-1.5 px-4 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-sm flex-shrink-0 shadow-sm" 
+                  title={`${streakCount} dni serii`}
+                >
                   <img src="/icons/fire.svg" alt="Flame Streak" className="w-5 h-5 object-contain drop-shadow-sm" />
                   <span>{streakCount}</span>
-                </div>
+                </motion.div>
 
-                {/* Profil z wbudowanym wskaźnikiem streaku 🔥 */}
+                {/* Profil z dynamiczną szerokością zależną od długości imienia */}
                 <motion.div 
+                  layout
                   initial={false}
                   animate={{ 
-                    width: profileMenuOpen ? 250 : 200,
+                    width: profileMenuOpen ? 250 : "auto",
                   }}
                   transition={{ 
                     duration: 0.2, 
                     ease: [0.22, 1, 0.36, 1],
-                    delay: profileMenuOpen ? 0 : 0.2
                   }}
-                  className="relative h-10 z-[100]"
+                  className="relative h-10 z-[100] flex-shrink-0"
                 >
+                  {/* Niewidoczny element rezerwujący naturalną szerokość w flexboxie na podstawie imienia */}
+                  <div className="invisible pointer-events-none h-10 flex items-center justify-between gap-2.5 px-3.5 select-none whitespace-nowrap" aria-hidden="true">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full flex-shrink-0" />
+                      <span className="text-xs font-bold whitespace-nowrap">
+                        {user?.name || "Użytkownik"}
+                      </span>
+                    </div>
+                    <div className="w-3.5 h-3.5 flex-shrink-0 ml-1" />
+                  </div>
+
                   {/* Backdrop do zamykania po kliknięciu poza panelem */}
                   {profileMenuOpen && (
                     <div 
@@ -1305,12 +1321,11 @@ export default function App() {
                   <motion.div 
                     initial={false}
                     animate={{ 
-                      width: profileMenuOpen ? 250 : 200,
+                      width: profileMenuOpen ? 250 : "100%",
                     }}
                     transition={{ 
                       duration: 0.2, 
                       ease: [0.22, 1, 0.36, 1],
-                      delay: profileMenuOpen ? 0 : 0.2
                     }}
                     className={`absolute top-0 right-0 z-[100] bg-white border shadow-sm rounded-2xl md:rounded-3xl overflow-hidden transition-colors duration-200 ${
                       profileMenuOpen ? 'shadow-xl border-[#2D9E6B]/50' : 'border-[#E8DDD0] hover:shadow-md hover:border-[#2D9E6B]'
@@ -1319,13 +1334,13 @@ export default function App() {
                     {/* Nagłówek panelu - Przycisk o stałej wysokości h-10 */}
                     <button 
                       onClick={() => setProfileMenuOpen(!profileMenuOpen)} 
-                      className="w-full h-10 flex items-center justify-between gap-2 px-3 hover:bg-[#F9FAFB] transition-colors text-left overflow-hidden select-none"
+                      className="w-full h-10 flex items-center justify-between gap-2.5 px-3.5 hover:bg-[#F9FAFB] transition-colors text-left select-none whitespace-nowrap"
                     >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 min-w-0">
                         <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#2D9E6B] to-[#1E5C36] text-white flex items-center justify-center font-bold text-xs shadow-inner flex-shrink-0">
                           {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                         </div>
-                        <span className="text-xs font-bold text-[#1A2F22] truncate whitespace-nowrap">
+                        <span className="text-xs font-bold text-[#1A2F22] whitespace-nowrap">
                           {user?.name || "Użytkownik"}
                         </span>
                       </div>
