@@ -1,13 +1,247 @@
 import { useState, useEffect } from "react";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Plus,
-  RefreshCw, Play, Check, RotateCcw, Trash2, Lock, Star, BookOpen, Leaf, X
+  RefreshCw, Play, Check, RotateCcw, Trash2, Lock, Star, BookOpen, Leaf, X, Pencil
 } from "lucide-react";
 import { checkIsDate } from "../lib/dateHelpers";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import PBadge from "./ui/PBadge";
 import StreakPlant from "./StreakPlant";
 import { useTutorials } from "../hooks/useTutorials";
+
+// Komponent dla pojedynczego zadania na osi czasu z obsługą Swipe
+const TaskCard = ({
+  t, pClass, minH, titleSize, btnClass, btnIconSize, showTime, actionsPosClass,
+  isTapped, setTappedTaskId, draggedTaskId, setDraggedTaskId, setDashDragTarget,
+  onEditTask, onFocusTask, onReturnToBacklog, onDelete, onToggle, widthPct, leftOffset, formatTime
+}) => {
+  const x = useMotionValue(0);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchStartY, setTouchStartY] = useState(null);
+  
+  // Zmiana koloru w zależności od przesunięcia
+  const bg = useTransform(
+    x,
+    [-100, 0, 100],
+    ["#FEE2E2", t.done ? "#F9FAFB" : "#FFFFFF", "#DCFCE7"] // Czerwony w lewo, Zielony w prawo
+  );
+  
+  const borderColor = useTransform(
+    x,
+    [-100, 0, 100],
+    ["#F87171", t.done ? "#E5E7EB" : "#E8DDD0", "#4ADE80"]
+  );
+
+  return (
+    <motion.div 
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      whileHover={{ scale: 1.02, y: -3, zIndex: 50, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+      key={t.id} 
+      draggable={!t.isLocked}
+      onDragStart={(e) => { 
+        if (e.dataTransfer) {
+          e.dataTransfer.setData("text/plain", t.id.toString()); 
+          if (e.dataTransfer.setDragImage) {
+            e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
+          }
+        }
+        setDraggedTaskId(t.id.toString());
+        setTappedTaskId(null);
+      }}
+      onDragEnd={() => {
+        setDraggedTaskId(null);
+        setDashDragTarget(null);
+      }}
+      onTouchStart={(e) => {
+        setTouchStartX(e.touches[0].clientX);
+        setTouchStartY(e.touches[0].clientY);
+      }}
+      onTouchMove={(e) => {
+        if (touchStartX === null || touchStartY === null) return;
+        if (draggedTaskId === t.id.toString() || draggedTaskId === t.id) return; // Prevent swipe if drag&drop is active
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const deltaX = currentX - touchStartX;
+        const deltaY = currentY - touchStartY;
+        
+        // Horizontal swipe only
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          // Opor jeśli przesuwamy w prawo zadanie zakończone, itp. - ale tu po prostu elastycznie
+          x.set(deltaX * 0.8); 
+        }
+      }}
+      onTouchEnd={(e) => {
+        if (touchStartX === null || touchStartY === null) return;
+        const currentX = e.changedTouches[0].clientX;
+        const deltaX = currentX - touchStartX;
+        
+        if (Math.abs(deltaX) > 75) {
+          if (deltaX > 75) {
+            onToggle(t.id, e);
+          } else if (deltaX < -75) {
+            if (t.done || t.isLocked) {
+              onDelete(t.id);
+            } else {
+              onReturnToBacklog(t.id);
+            }
+          }
+        }
+        
+        // Zawsze wracaj na pozycję zero (nawet przy usunięciu, żeby animacja layout się nie zepsuła)
+        animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
+        setTouchStartX(null);
+        setTouchStartY(null);
+      }}
+      style={{ 
+        x,
+        backgroundColor: bg,
+        borderColor: borderColor,
+        top: `${t.topRem + 0.2}rem`, 
+        height: `${t.heightRem - 0.4}rem`, 
+        minHeight: minH, 
+        width: `calc(${widthPct}% - 4px)`, 
+        left: `calc(${leftOffset}% + 2px)`,
+        touchAction: "pan-y"
+      }}
+      onClick={(e) => {
+        if (isTapped) {
+          setTappedTaskId(null);
+        } else {
+          setTappedTaskId(t.id);
+        }
+      }} 
+      className={`absolute rounded-[14px] ${pClass} shadow-sm border-2 z-20 hover:z-50 cursor-pointer group flex flex-col justify-center ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : ""} ${t.done ? 'opacity-60 grayscale hover:opacity-80' : 'hover:shadow-md hover:border-[#D4C9BC]'}`} 
+    >
+      <div className={`flex flex-col h-full relative`}>
+        <div className="flex justify-between items-start">
+          <h4 className={`${titleSize} font-bold transition-colors truncate pr-2 flex-1 ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22]'}`} title={t.title}>{t.title}</h4>
+          <div className={`flex items-center gap-2 flex-shrink-0 relative z-30 transition-opacity duration-200 ${isTapped ? 'opacity-0' : 'group-hover:opacity-0'}`}>
+            <PBadge p={t.p} />
+            {t.isLocked && <Lock size={12} strokeWidth={2.5} className="text-[#909090]" />}
+          </div>
+        </div>
+        <div className="mt-auto">
+          {showTime && (
+            <p className={`text-[13px] mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A5A5A]'}`}>{formatTime(t.sMins)} — {formatTime(t.eMins)}</p>
+          )}
+        </div>
+
+        <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-40 bg-white/90 p-1 rounded-xl backdrop-blur-sm ${isTapped ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100'}`}>
+          <button onClick={(e) => { e.stopPropagation(); onEditTask(t); setTappedTaskId(null); }} title="edytuj" className={`${btnClass} rounded-full bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}><Pencil size={btnIconSize} /></button>
+          {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); setTappedTaskId(null); }} title="tryb skupienia" className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
+          {!t.isLocked && !t.done && (
+            <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); setTappedTaskId(null); }} title="cofnij zadanie do listy zadań poza planem" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}>
+              <RotateCcw size={btnIconSize} />
+            </button>
+          )}
+          <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); setTappedTaskId(null); }} title="usuń zadanie" className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}><Trash2 size={btnIconSize} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onToggle(t.id, e); setTappedTaskId(null); }} title="zaznacz zadanie jako wykonane" className={`${btnClass} rounded-full flex items-center justify-center shadow-sm transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Komponent dla zadania w Backlogu
+const BacklogCard = ({
+  t, i, isTapped, setTappedTaskId, draggedTaskId, setDraggedTaskId, setDashDragTarget,
+  onEditTask, onDelete
+}) => {
+  const x = useMotionValue(0);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchStartY, setTouchStartY] = useState(null);
+  
+  const bg = useTransform(x, [-100, 0], ["#FEE2E2", "#F9FAFB"]);
+  const borderColor = useTransform(x, [-100, 0], ["#F87171", "#E8DDD0"]);
+
+  return (
+    <motion.div 
+      layout
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25, delay: i * 0.05 }}
+      key={t.id} 
+      draggable={!t.isLocked}
+      onDragStart={(e) => { 
+        if (e.dataTransfer) {
+          e.dataTransfer.setData("text/plain", t.id.toString()); 
+          if (e.dataTransfer.setDragImage) {
+            e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
+          }
+        }
+        setDraggedTaskId(t.id.toString());
+        setTappedTaskId(null);
+      }}
+      onDragEnd={() => {
+        setDraggedTaskId(null);
+        setDashDragTarget(null);
+      }}
+      onTouchStart={(e) => {
+        setTouchStartX(e.touches[0].clientX);
+        setTouchStartY(e.touches[0].clientY);
+      }}
+      onTouchMove={(e) => {
+        if (touchStartX === null || touchStartY === null) return;
+        if (draggedTaskId === t.id.toString() || draggedTaskId === t.id) return; // Prevent swipe if drag&drop is active
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const deltaX = currentX - touchStartX;
+        const deltaY = currentY - touchStartY;
+        
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          x.set(deltaX * 0.8); 
+        }
+      }}
+      onTouchEnd={(e) => {
+        if (touchStartX === null || touchStartY === null) return;
+        const currentX = e.changedTouches[0].clientX;
+        const deltaX = currentX - touchStartX;
+        
+        if (deltaX < -75) {
+          onDelete(t.id); // Swipe left -> Delete
+        }
+        
+        animate(x, 0, { type: "spring", stiffness: 400, damping: 25 });
+        setTouchStartX(null);
+        setTouchStartY(null);
+      }}
+      style={{ 
+        x,
+        backgroundColor: bg,
+        borderColor: borderColor,
+        minHeight: '4.8rem',
+        touchAction: "pan-y"
+      }}
+      whileHover={{ scale: 1.02, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+      className={`p-4 rounded-2xl border-2 cursor-pointer group relative flex flex-col justify-between ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : "hover:shadow-md"}`} 
+      onClick={(e) => {
+        if (isTapped) {
+          setTappedTaskId(null);
+        } else {
+          setTappedTaskId(t.id);
+        }
+      }} 
+    >
+      <div className="flex items-start gap-3 pr-24">
+        <div className={`mt-0.5 flex-shrink-0 flex items-center gap-1 ${t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
+          <Star size={16} fill="currentColor" strokeWidth={1} />
+          {t.isLocked && <span className="text-red-600 font-black text-[10px] animate-pulse">!</span>}
+        </div>
+        <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
+      </div>
+      <div className={`flex items-center gap-2 transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 bg-white/90 p-1 rounded-xl backdrop-blur-sm ${isTapped ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        <button onClick={(e) => { e.stopPropagation(); onEditTask(t); setTappedTaskId(null); }} title="edytuj" className="w-9 h-9 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center shadow-sm transition-all"><Pencil size={16} /></button>
+        <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); setTappedTaskId(null); }} title="usuń zadanie" className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all"><Trash2 size={16} /></button>
+      </div>
+      {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
+    </motion.div>
+  );
+};
 
 // ═══════════════════════════════════════════════════
 //  DASHBOARD VIEW (ZAMROŻONY PLAN Z GUZIKIEM GENERUJ)
@@ -31,6 +265,12 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
   // Stany Drag & Drop z czytelnym podglądem godziny
   const [draggedTaskId, setDraggedTaskId] = useState(null);
   const [dashDragTarget, setDashDragTarget] = useState(null); // { type: 'timeline'|'backlog', startMins, durationMins, title }
+  
+  // Mobile interactions state
+  const [tappedTaskId, setTappedTaskId] = useState(null);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchStartY, setTouchStartY] = useState(null);
+  const [swipeOffsets, setSwipeOffsets] = useState({});
 
   const [nowMinute, setNowMinute] = useState(new Date().getHours() * 60 + new Date().getMinutes());
   useEffect(() => {
@@ -383,55 +623,19 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                           const showTime = !isSmall;
 
                           const actionsPosClass = (isSmall || isMedium) ? 'top-1/2 -translate-y-1/2 right-0' : 'top-0 right-0';
+                          const isTapped = tappedTaskId === t.id.toString() || tappedTaskId === t.id;
 
                           return (
-                            <motion.div 
-                              layout
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                              whileHover={{ scale: 1.02, y: -3, zIndex: 50, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-                              key={t.id} 
-                              draggable={!t.isLocked}
-                              onDragStart={(e) => { 
-                                e.dataTransfer.setData("text/plain", t.id.toString()); 
-                                setDraggedTaskId(t.id.toString());
-                              }}
-                              onDragEnd={() => {
-                                setDraggedTaskId(null);
-                                setDashDragTarget(null);
-                              }}
-                              onClick={() => onEditTask(t)} 
-                              className={`absolute rounded-[14px] ${pClass} shadow-sm border z-20 hover:z-50 transition-colors cursor-pointer group flex flex-col justify-center ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : ""} ${t.done ? 'bg-gray-50 border-gray-200 opacity-60 grayscale hover:opacity-80' : 'bg-white border-[#E8DDD0] hover:shadow-md hover:border-[#D4C9BC]'}`} 
-                              style={{ top: `${t.topRem + 0.2}rem`, height: `${t.heightRem - 0.4}rem`, minHeight: minH, width: `calc(${widthPct}% - 4px)`, left: `calc(${leftOffset}% + 2px)` }}
-                            >
-                              <div className={`flex flex-col h-full relative`}>
-                                <div className="flex justify-between items-start">
-                                  <h4 className={`${titleSize} font-bold transition-colors truncate pr-2 flex-1 ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22]'}`} title={t.title}>{t.title}</h4>
-                                  <div className="flex items-center gap-2 flex-shrink-0 relative z-30 transition-opacity duration-200 group-hover:opacity-0">
-                                    <PBadge p={t.p} />
-                                    {t.isLocked && <Lock size={12} strokeWidth={2.5} className="text-[#909090]" />}
-                                  </div>
-                                </div>
-                                <div className="mt-auto">
-                                  {showTime && (
-                                    <p className={`text-[13px] mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A5A5A]'}`}>{formatTime(t.sMins)} — {formatTime(t.sMins + t.durMins)}</p>
-                                  )}
-                                </div>
-
-                                <div className={`absolute ${actionsPosClass} flex items-center gap-1 sm:gap-1.5 transition-all z-40 opacity-0 group-hover:opacity-100 bg-white/90 p-1 rounded-xl backdrop-blur-sm`}>
-                                  {!t.done && <button onClick={(e) => { e.stopPropagation(); onFocusTask(t); }} title="tryb skupienia" className={`${btnClass} rounded-full bg-[#E8F4ED] text-[#1E5C36] hover:bg-[#1E5C36] hover:text-white flex items-center justify-center shadow-sm transition-all`}><Play size={btnIconSize} className="ml-0.5" /></button>}
-                                  {!t.isLocked && !t.done && (
-                                    <button onClick={(e) => { e.stopPropagation(); onReturnToBacklog(t.id); }} title="cofnij zadanie do listy zadań poza planem" className={`${btnClass} rounded-full bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}>
-                                      <RotateCcw size={btnIconSize} />
-                                    </button>
-                                  )}
-                                  <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className={`${btnClass} rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all`}><Trash2 size={btnIconSize} /></button>
-                                  <button onClick={(e) => { e.stopPropagation(); onToggle(t.id, e); }} title="zaznacz zadanie jako wykonane" className={`${btnClass} rounded-full flex items-center justify-center shadow-sm transition-all ${t.done ? 'bg-[#5A7368] text-white' : 'bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]'}`}><Check size={btnIconSize} /></button>
-                                </div>
-                              </div>
-                            </motion.div>
+                            <TaskCard
+                              key={t.id}
+                              t={t} pClass={pClass} minH={minH} titleSize={titleSize} btnClass={btnClass}
+                              btnIconSize={btnIconSize} showTime={showTime} actionsPosClass={actionsPosClass}
+                              isTapped={isTapped} setTappedTaskId={setTappedTaskId} draggedTaskId={draggedTaskId}
+                              setDraggedTaskId={setDraggedTaskId} setDashDragTarget={setDashDragTarget}
+                              onEditTask={onEditTask} onFocusTask={onFocusTask} onReturnToBacklog={onReturnToBacklog}
+                              onDelete={onDelete} onToggle={onToggle} widthPct={widthPct} leftOffset={leftOffset}
+                              formatTime={formatTime}
+                            />
                           );
                         })}
                       </AnimatePresence>
@@ -484,41 +688,16 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                         >
                           <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar pt-2">
                             <AnimatePresence>
-                              {backlog.map((t, i) => (
-                                <motion.div 
-                                  layout
-                                  initial={{ opacity: 0, x: -10 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  exit={{ opacity: 0, scale: 0.9 }}
-                                  transition={{ type: "spring", stiffness: 400, damping: 25, delay: i * 0.05 }}
-                                  key={t.id} 
-                                  draggable={!t.isLocked}
-                                  onDragStart={(e) => { 
-                                    e.dataTransfer.setData("text/plain", t.id.toString()); 
-                                    setDraggedTaskId(t.id.toString());
-                                  }}
-                                  onDragEnd={() => {
-                                    setDraggedTaskId(null);
-                                    setDashDragTarget(null);
-                                  }}
-                                  whileHover={{ scale: 1.02, x: 2, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-                                  className={`p-4 rounded-2xl border transition-all cursor-pointer group relative flex flex-col justify-between ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : "bg-[#F9FAFB] border-[#E8DDD0] hover:border-[#2D9E6B] hover:shadow-md"}`} 
-                                  onClick={() => onEditTask(t)} 
-                                  style={{ minHeight: '4.8rem' }}
-                                >
-                                  <div className="flex items-start gap-3 pr-24">
-                                    <div className={`mt-0.5 flex-shrink-0 flex items-center gap-1 ${t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                      <Star size={16} fill="currentColor" strokeWidth={1} />
-                                      {t.isLocked && <span className="text-red-600 font-black text-[10px] animate-pulse">!</span>}
-                                    </div>
-                                    <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
-                                  </div>
-                                  <div className="flex transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 opacity-0 group-hover:opacity-100">
-                                    <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all"><Trash2 size={16} /></button>
-                                  </div>
-                                  {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
-                                </motion.div>
-                              ))}
+                              {backlog.map((t, i) => {
+                                const isTapped = tappedTaskId === t.id.toString() || tappedTaskId === t.id;
+                                return (
+                                  <BacklogCard
+                                    key={t.id} t={t} i={i} isTapped={isTapped} setTappedTaskId={setTappedTaskId}
+                                    draggedTaskId={draggedTaskId} setDraggedTaskId={setDraggedTaskId}
+                                    setDashDragTarget={setDashDragTarget} onEditTask={onEditTask} onDelete={onDelete}
+                                  />
+                                );
+                              })}
                             </AnimatePresence>
                           </div>
                         </motion.div>

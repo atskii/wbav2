@@ -8,13 +8,14 @@ import { useTutorials } from "../hooks/useTutorials";
 // ═══════════════════════════════════════════════════
 export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
   const [title, setTitle] = useState(taskToEdit?.title || "");
-  const { isTooltipSeen, markTooltipSeen } = useTutorials(userEmail);
-  const [showDurationTutorial, setShowDurationTutorial] = useState(() => !isTooltipSeen('task_duration'));
-  const [showDeadlineTutorial, setShowDeadlineTutorial] = useState(() => !isTooltipSeen('task_deadline'));
-  const [showDifficultyTutorial, setShowDifficultyTutorial] = useState(() => !isTooltipSeen('task_difficulty'));
-  const [showPriorityTutorial, setShowPriorityTutorial] = useState(() => !isTooltipSeen('task_priority'));
-  const [showRecurrenceTutorial, setShowRecurrenceTutorial] = useState(() => !isTooltipSeen('task_recurrence'));
-  const [showLockTutorial, setShowLockTutorial] = useState(() => !isTooltipSeen('task_lock'));
+  const { isTooltipSeen, markTooltipSeen, loading } = useTutorials(userEmail);
+  
+  const showDurationTutorial = !loading && !isTooltipSeen('task_duration');
+  const showDeadlineTutorial = !loading && !isTooltipSeen('task_deadline');
+  const showDifficultyTutorial = !loading && !isTooltipSeen('task_difficulty');
+  const showPriorityTutorial = !loading && !isTooltipSeen('task_priority');
+  const showRecurrenceTutorial = !loading && !isTooltipSeen('task_recurrence');
+  const showLockTutorial = !loading && !isTooltipSeen('task_lock');
 
   const [duration, setDuration] = useState(taskToEdit?.duration ? taskToEdit.duration.replace(" min", "") : "60");
   const [deadline, setDeadline] = useState(taskToEdit?.deadline ? taskToEdit.deadline.replace(" o ", "T") : "");
@@ -96,7 +97,6 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowDurationTutorial(false);
                       markTooltipSeen("task_duration");
                     }}
                     className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
@@ -126,7 +126,6 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowDeadlineTutorial(false);
                       markTooltipSeen("task_deadline");
                     }}
                     className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
@@ -162,7 +161,6 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowDifficultyTutorial(false);
                     markTooltipSeen("task_difficulty");
                   }}
                   className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
@@ -193,7 +191,6 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowPriorityTutorial(false);
                     markTooltipSeen("task_priority");
                   }}
                   className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
@@ -319,7 +316,6 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowRecurrenceTutorial(false);
                       markTooltipSeen("task_recurrence");
                     }}
                     className="absolute top-1.5 right-1.5 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
@@ -354,7 +350,6 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowLockTutorial(false);
                       markTooltipSeen("task_lock");
                     }}
                     className="absolute top-1.5 right-1.5 p-1 hover:bg-amber-50 text-amber-700 rounded-full transition-all cursor-pointer"

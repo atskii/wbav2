@@ -920,6 +920,14 @@ export default function App() {
     }
 
     try {
+      if (taskToSave.isLocked && taskToSave.lockDateTime && taskToSave.recurrence === "jednorazowo") {
+        const d = new Date(taskToSave.lockDateTime);
+        taskToSave.pDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        taskToSave.sMins = d.getHours() * 60 + d.getMinutes();
+        const durMatch = taskToSave.duration ? taskToSave.duration.match(/(\d+)/) : null;
+        taskToSave.eMins = taskToSave.sMins + (durMatch ? parseInt(durMatch[1]) : 60);
+      }
+
       // Oddzielamy id od reszty danych
       const { id, ...taskDataWithoutId } = taskToSave;
 
