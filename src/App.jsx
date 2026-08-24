@@ -400,6 +400,7 @@ export default function App() {
       try {
         await supabase.from('tasks').delete().eq('user_email', user.email);
         await supabase.from('moods').delete().eq('user_email', user.email);
+        await supabase.from('tutorials').delete().eq('user_email', user.email);
         await supabase.from('profiles').delete().eq('email', user.email);
 
         setTasks([]);

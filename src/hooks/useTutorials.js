@@ -1,62 +1,87 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "../lib/supabase";
 
-const TUTORIAL_STORAGE_PREFIX = "wba_tutorials_";
 const TUTORIAL_CHANGE_EVENT = "wba_tutorials_changed";
 
-function getStorageKey(userEmail) {
-  return `${TUTORIAL_STORAGE_PREFIX}${userEmail || "guest"}`;
-}
+async function saveTutorialState(userEmail, state) {
+  if (!userEmail) return;
 
-function loadTutorialState(userEmail) {
-  try {
-    const raw = localStorage.getItem(getStorageKey(userEmail));
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        screens: (parsed && typeof parsed.screens === 'object' && parsed.screens !== null) ? parsed.screens : {},
-        tooltips: (parsed && typeof parsed.tooltips === 'object' && parsed.tooltips !== null) ? parsed.tooltips : {},
-      };
-    }
-  } catch (e) {
-    console.error("Error reading tutorial state:", e);
-  }
-  return {
-    screens: {},
-    tooltips: {},
+  const safeState = {
+    screens: state?.screens || {},
+    tooltips: state?.tooltips || {},
   };
-}
 
-function saveTutorialState(userEmail, state) {
   try {
-    const safeState = {
-      screens: state?.screens || {},
-      tooltips: state?.tooltips || {},
-    };
-    localStorage.setItem(getStorageKey(userEmail), JSON.stringify(safeState));
+    const { error } = await supabase
+      .from("tutorials")
+      .upsert(
+        { user_email: userEmail, state: safeState },
+        { onConflict: "user_email" }
+      );
+
+    if (error) {
+      console.error("Error saving tutorial state to Supabase:", error);
+    }
+    
+    // Zdarzenie lokalne, żeby odświeżyć inne komponenty korzystające z hooka w tym samym oknie
     window.dispatchEvent(new CustomEvent(TUTORIAL_CHANGE_EVENT, { detail: { userEmail } }));
   } catch (e) {
-    console.error("Error saving tutorial state:", e);
+    console.error("Exception saving tutorial state:", e);
   }
 }
 
 export function useTutorials(userEmail = null) {
-  const [state, setState] = useState(() => loadTutorialState(userEmail));
+  const [state, setState] = useState({ screens: {}, tooltips: {} });
+  const [loading, setLoading] = useState(true);
 
-  // Sync state when userEmail changes or when other components update tutorials
+  const fetchState = useCallback(async () => {
+    if (!userEmail) {
+      setState({ screens: {}, tooltips: {} });
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("tutorials")
+        .select("state")
+        .eq("user_email", userEmail)
+        .maybeSingle(); // Używamy maybeSingle, aby uniknąć błędów gdy nie ma wiersza
+
+      if (error) {
+        console.error("Error loading tutorials from Supabase:", error);
+      } else if (data && data.state) {
+        setState({
+          screens: data.state.screens || {},
+          tooltips: data.state.tooltips || {},
+        });
+      } else {
+        setState({ screens: {}, tooltips: {} });
+      }
+    } catch (e) {
+      console.error("Exception loading tutorials:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [userEmail]);
+
+  // Pobierz stan początkowy oraz synchronizuj po zmianie e-maila
   useEffect(() => {
-    setState(loadTutorialState(userEmail));
+    fetchState();
+  }, [fetchState]);
 
-    const handleUpdate = () => {
-      setState(loadTutorialState(userEmail));
+  // Nasłuchuj na zmiany wymuszone lokalnie (w innej części aplikacji)
+  useEffect(() => {
+    const handleUpdate = (e) => {
+      if (e.detail?.userEmail === userEmail) {
+        fetchState();
+      }
     };
 
     window.addEventListener(TUTORIAL_CHANGE_EVENT, handleUpdate);
-    window.addEventListener("storage", handleUpdate);
-    return () => {
-      window.removeEventListener(TUTORIAL_CHANGE_EVENT, handleUpdate);
-      window.removeEventListener("storage", handleUpdate);
-    };
-  }, [userEmail]);
+    return () => window.removeEventListener(TUTORIAL_CHANGE_EVENT, handleUpdate);
+  }, [userEmail, fetchState]);
 
   // Sprawdza czy dany dymek był już zobaczony/zamknięty
   const isTooltipSeen = useCallback((tooltipId) => {
@@ -80,8 +105,9 @@ export function useTutorials(userEmail = null) {
 
   // Sprawdza, czy to pierwsza wizyta na danym ekranie
   const isFirstScreenVisit = useCallback((screenName) => {
+    if (loading) return false; // Nie pokazujemy dopóki się nie załaduje, by uniknąć mignięcia
     return !state?.screens?.[screenName];
-  }, [state?.screens]);
+  }, [state?.screens, loading]);
 
   // Oznacza ekran jako odwiedzony
   const markScreenVisited = useCallback((screenName) => {
@@ -89,7 +115,7 @@ export function useTutorials(userEmail = null) {
       const newState = {
         ...prevState,
         screens: {
-          ...prevState.screens,
+          ...(prevState?.screens || {}),
           [screenName]: true,
         },
       };
@@ -112,7 +138,7 @@ export function useTutorials(userEmail = null) {
     });
   }, [userEmail]);
 
-  // Resetuje samouczki dla danego ekranu
+  // Resetuje samouczki dla danego ekranu (ustawia na "0" / nieodwiedzony)
   const resetScreen = useCallback((screenName) => {
     setState((prevState) => {
       const nextScreens = { ...prevState.screens };
@@ -132,8 +158,8 @@ export function useTutorials(userEmail = null) {
       screens: {},
       tooltips: {},
     };
-    saveTutorialState(userEmail, emptyState);
     setState(emptyState);
+    saveTutorialState(userEmail, emptyState);
   }, [userEmail]);
 
   return {
@@ -145,5 +171,6 @@ export function useTutorials(userEmail = null) {
     resetScreen,
     resetAllTutorials,
     tutorialState: state,
+    loading,
   };
 }
