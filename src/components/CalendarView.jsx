@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ChevronDown, ChevronLeft, ChevronRight, ArrowRight,
   Star, Trash2, X, Calendar as CalendarIcon, Check
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import SkeletonScreen from "./ui/Skeleton";
 import { checkIsDate } from "../lib/dateHelpers";
 
@@ -27,12 +28,16 @@ export default function CalendarView({
 }) {
   const [viewType, setViewType] = useState("Miesiąc");
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const [slideDirection, setSlideDirection] = useState(1);
   const calendarScrollRef = useRef(null);
   const [nowMinute, setNowMinute] = useState(new Date().getHours() * 60 + new Date().getMinutes());
 
   // Stan wspierający czytelny podgląd Drag and Drop (Google Calendar Style)
   const [draggedTaskId, setDraggedTaskId] = useState(null);
   const [dragTarget, setDragTarget] = useState(null); // { type: 'grid'|'weekly'|'month'|'backlog', dateStr, startMins, durationMins, title }
+
+  // Obsługa gestów swipe (przesuwanie w lewo / prawo na telefonie)
+  const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
 
   const formatMinsToTime = (mins) => {
     const h = Math.floor(mins / 60);
@@ -102,6 +107,57 @@ export default function CalendarView({
       onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
     }
     setIsMonthPickerOpen(false);
+  };
+
+  // Obsługa gestów swipe (przesuwanie w lewo / prawo na telefonie)
+
+  const handleTouchStart = (e) => {
+    setTouchStart({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    });
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!e.changedTouches || e.changedTouches.length === 0) return;
+    const touchEnd = {
+      x: e.changedTouches[0].clientX,
+      y: e.changedTouches[0].clientY,
+    };
+
+    const deltaX = touchEnd.x - touchStart.x;
+    const deltaY = touchEnd.y - touchStart.y;
+
+    // Wykrycie przesunięcia w poziomie o co najmniej 45 pikseli
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 45) {
+      if (deltaX < 0) {
+        // Przesunięcie w lewo -> Następny dzień lub miesiąc (slide w prawo do lewej)
+        setSlideDirection(1);
+        if (viewType === "Miesiąc") {
+          const d = new Date(selectedDate);
+          d.setMonth(d.getMonth() + 1);
+          if (setSelectedDate) setSelectedDate(d);
+          else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+        } else if (viewType === "Dzień") {
+          onChangeDate(1);
+        } else if (viewType === "Tydzień") {
+          onChangeDate(7);
+        }
+      } else {
+        // Przesunięcie w prawo -> Poprzedni dzień lub miesiąc (slide w lewo do prawej)
+        setSlideDirection(-1);
+        if (viewType === "Miesiąc") {
+          const d = new Date(selectedDate);
+          d.setMonth(d.getMonth() - 1);
+          if (setSelectedDate) setSelectedDate(d);
+          else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+        } else if (viewType === "Dzień") {
+          onChangeDate(-1);
+        } else if (viewType === "Tydzień") {
+          onChangeDate(-7);
+        }
+      }
+    }
   };
 
   const getStartOfWeek = (date) => {
@@ -513,9 +569,9 @@ export default function CalendarView({
     
     return (
       <div className="flex-1 flex flex-col h-full min-h-0 bg-white relative">
-        <div className="grid grid-cols-7 border-b border-[#E8DDD0] shrink-0 bg-[#FAFAFA]">
+        <div className="grid grid-cols-7 shrink-0 bg-[#FAFAFA]">
           {dayNames.map(d => (
-            <div key={d} className="text-center py-2 text-[10px] md:text-[11px] font-black text-[#5A7368] uppercase tracking-wider border-r border-[#F0F0F0] last:border-0">
+            <div key={d} className="text-center py-2 text-[10px] md:text-[11px] font-black text-[#5A7368] uppercase tracking-wider">
               {d}
             </div>
           ))}
@@ -531,7 +587,7 @@ export default function CalendarView({
                 <div 
                   key={idx} 
                   onClick={() => handleSelectDay(item.date)}
-                  className={`border-r border-b border-[#F0F0F0] p-1 md:p-1.5 flex flex-col justify-between transition-all cursor-pointer hover:bg-[#E8F4ED]/60 active:scale-[0.98] select-none ${
+                  className={`p-1 md:p-1.5 flex flex-col justify-between transition-all cursor-pointer hover:bg-[#E8F4ED]/60 active:scale-[0.98] select-none ${
                     isSelectedDay 
                       ? "bg-[#E8F4ED]/80 ring-2 ring-inset ring-[#1E5C36]/30" 
                       : item.isCurrentMonth 
@@ -613,13 +669,13 @@ export default function CalendarView({
 
   return (
     <div className="flex h-full bg-[#FAFAFA] overflow-hidden">
-      <div className="flex-1 flex flex-col p-3 md:p-6 md:pr-8 h-full min-h-0">
-        <header className="mb-2 md:mb-4 flex flex-col gap-1 shrink-0">
+      <div className="flex-1 flex flex-col p-0 md:p-6 md:pr-8 h-full min-h-0">
+        <header className="mb-4 hidden md:flex md:flex-col gap-1 shrink-0">
           <h1 className="text-2xl md:text-3xl font-bold text-[#1A2F22]">Kalendarz</h1>
           <p className="text-[#5A7368] text-sm md:text-base hidden md:block">Twój czas, twoje zasady! Zaplanuj dzień, tydzień lub cały miesiąc.</p>
         </header>
 
-        <div className="flex-1 bg-white border border-[#E8DDD0] rounded-2xl flex flex-col overflow-hidden shadow-sm min-h-0 relative h-full">
+        <div className="flex-1 bg-white border-none md:border md:border-[#E8DDD0] rounded-none md:rounded-2xl flex flex-col overflow-hidden shadow-none md:shadow-sm min-h-0 relative h-full">
           {/* PASEK NAWIGACJI KALENDARZA */}
           <div className="h-12 md:h-[70px] border-b border-[#E8DDD0] flex items-center justify-between px-3 md:px-6 shrink-0 bg-white z-[60]">
             {/* Widok Dzienny: Tytuł dnia po lewej, Przycisk X w prawym rogu */}
@@ -721,6 +777,7 @@ export default function CalendarView({
                   <div className="flex items-center gap-1 border border-[#E8DDD0] rounded-xl overflow-hidden shadow-sm bg-white">
                     <button 
                       onClick={() => {
+                        setSlideDirection(-1);
                         const d = new Date(selectedDate);
                         if (viewType === "Tydzień") {
                           onChangeDate(-7);
@@ -740,6 +797,7 @@ export default function CalendarView({
                     <div className="w-px h-5 bg-[#E8DDD0]"></div>
                     <button 
                       onClick={() => {
+                        setSlideDirection(1);
                         const d = new Date(selectedDate);
                         if (viewType === "Tydzień") {
                           onChangeDate(7);
@@ -762,11 +820,44 @@ export default function CalendarView({
             )}
           </div>
 
-          {/* Renderowanie widoków */}
-          <div className="flex-1 flex flex-col min-h-0 h-full">
-            {viewType === "Dzień" && renderDailyView()}
-            {viewType === "Tydzień" && renderWeeklyView()}
-            {viewType === "Miesiąc" && renderMonthlyView()}
+          {/* Renderowanie widoków z obsługą gestów Swipe i animacją slajdu (Google Calendar style) */}
+          <div 
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            className="flex-1 flex flex-col min-h-0 h-full touch-pan-y relative overflow-hidden"
+          >
+            <AnimatePresence mode="popLayout" custom={slideDirection}>
+              <motion.div
+                key={viewType === "Miesiąc" ? `month-${selectedDate.getFullYear()}-${selectedDate.getMonth()}` : `day-${selectedYMD}`}
+                custom={slideDirection}
+                variants={{
+                  enter: (dir) => ({
+                    x: dir > 0 ? "100%" : "-100%",
+                    opacity: 1,
+                  }),
+                  center: {
+                    x: 0,
+                    opacity: 1,
+                  },
+                  exit: (dir) => ({
+                    x: dir > 0 ? "-100%" : "100%",
+                    opacity: 1,
+                  }),
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.2 }
+                }}
+                className="flex-1 flex flex-col min-h-0 h-full w-full bg-white"
+              >
+                {viewType === "Dzień" && renderDailyView()}
+                {viewType === "Tydzień" && renderWeeklyView()}
+                {viewType === "Miesiąc" && renderMonthlyView()}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
