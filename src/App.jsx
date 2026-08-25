@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw, X, Coins } from "lucide-react";
+import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw, X, Coins, Home, Smile, LifeBuoy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Lib
@@ -1270,23 +1270,20 @@ export default function App() {
             setIsMobileOpen={setIsMobileSidebarOpen}
           />
           <main className="flex-1 overflow-hidden relative bg-[#FAFAFA] flex flex-col">
-            {/* NOWY HEADER RESPANSYWNY - UPROSZCZONY */}
-            <header className="w-full px-4 md:px-10 py-6 flex items-center justify-between z-[60]">
-              <div className="flex items-center space-x-2 md:space-x-4 truncate">
-                <button
-                  className="md:hidden p-1 mr-1 text-[#1A2F22]"
-                  onClick={() => setIsMobileSidebarOpen(true)}
-                >
-                  <Menu size={24} />
-                </button>
-                <span className="text-xl md:text-2xl font-bold text-[#1A2F22] flex items-baseline gap-1 md:gap-2 truncate">
+            {/* NOWY HEADER RESPANSYWNY */}
+            <header className="w-full px-4 md:px-10 py-4 md:py-6 flex items-center justify-between z-[60] gap-2">
+              <div className="hidden md:flex items-center space-x-2 md:space-x-4 min-w-0 flex-1">
+                <span className="text-lg md:text-2xl font-bold text-[#1A2F22] flex items-baseline gap-1 md:gap-2 truncate">
                   <span className="truncate">Cześć {user?.name ? user.name.split(' ')[0] : "Natalia"}!</span>
-                  <span className="capitalize text-sm md:text-xl text-[#5A7368] font-medium hidden sm:inline ml-1">{getNow().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                  <span className="capitalize text-xs md:text-xl text-[#5A7368] font-medium hidden sm:inline ml-1">
+                    {getNow().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </span>
                 </span>
               </div>
 
-              <div className="flex items-center justify-end gap-3 md:gap-4 flex-shrink-0 min-w-0">
-                {/* Przycisk pomocy i samouczków (?) */}
+              {/* WERSJA DESKTOP (md:flex) - Pełne, osobne pigułki z nazwą użytkownika */}
+              <div className="hidden md:flex items-center justify-end gap-3 md:gap-4 flex-shrink-0 min-w-0">
+                {/* 1. Przycisk pomocy i samouczków (?) */}
                 <motion.div 
                   layout
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
@@ -1308,7 +1305,7 @@ export default function App() {
                     ?
                   </button>
 
-                  {/* Dymek samouczka przycisku pomocy (?) - po lewej stronie bez wychodzenia poza ekran */}
+                  {/* Dymek samouczka przycisku pomocy (?) */}
                   {showHelpTutorial && !helpMenuOpen && (
                     <div className="absolute top-0 right-[calc(100%+14px)] w-60 p-3.5 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-right-2 duration-300 text-left">
                       <button
@@ -1365,7 +1362,7 @@ export default function App() {
                   </AnimatePresence>
                 </motion.div>
 
-                {/* Streak badge obok profilu i pytajnika */}
+                {/* 2. Streak badge */}
                 <motion.div 
                   layout
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
@@ -1376,7 +1373,7 @@ export default function App() {
                   <span>{streakCount}</span>
                 </motion.div>
 
-                {/* Monety / Tokeny AI obok streaku */}
+                {/* 3. Monety / Tokeny AI */}
                 <motion.div 
                   layout
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
@@ -1397,7 +1394,7 @@ export default function App() {
                   <span>{aiTokens}</span>
                 </motion.div>
 
-                {/* Profil z dynamiczną szerokością zależną od długości imienia */}
+                {/* 4. Profil z dynamiczną szerokością i pełną nazwą użytkownika */}
                 <motion.div 
                   layout
                   initial={false}
@@ -1410,7 +1407,6 @@ export default function App() {
                   }}
                   className="relative h-10 z-[100] flex-shrink-0"
                 >
-                  {/* Niewidoczny element rezerwujący naturalną szerokość w flexboxie na podstawie imienia */}
                   <div className="invisible pointer-events-none h-10 flex items-center justify-between gap-2.5 px-3.5 select-none whitespace-nowrap" aria-hidden="true">
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <div className="w-7 h-7 rounded-full flex-shrink-0" />
@@ -1421,7 +1417,6 @@ export default function App() {
                     <div className="w-3.5 h-3.5 flex-shrink-0 ml-1" />
                   </div>
 
-                  {/* Backdrop do zamykania po kliknięciu poza panelem */}
                   {profileMenuOpen && (
                     <div 
                       className="fixed inset-0 z-[90]" 
@@ -1429,9 +1424,8 @@ export default function App() {
                     />
                   )}
 
-                  {/* Dymek samouczka profilu */}
                   {showProfileTutorial && !profileMenuOpen && (
-                    <div className="absolute top-[calc(100%+12px)] right-0 w-64 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="absolute top-[calc(100%+12px)] right-0 w-64 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300 text-left">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1465,10 +1459,9 @@ export default function App() {
                       profileMenuOpen ? 'shadow-xl border-[#2D9E6B]/50' : 'border-[#E8DDD0] hover:shadow-md hover:border-[#2D9E6B]'
                     }`}
                   >
-                    {/* Nagłówek panelu - Przycisk o stałej wysokości h-10 */}
                     <button 
                       onClick={() => setProfileMenuOpen(!profileMenuOpen)} 
-                      className="w-full h-10 flex items-center justify-between gap-2.5 px-3.5 hover:bg-[#F9FAFB] transition-colors text-left select-none whitespace-nowrap"
+                      className="w-full h-10 flex items-center justify-between gap-2.5 px-3.5 hover:bg-[#F9FAFB] transition-colors text-left select-none whitespace-nowrap cursor-pointer"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#2D9E6B] to-[#1E5C36] text-white flex items-center justify-center font-bold text-xs shadow-inner flex-shrink-0">
@@ -1481,7 +1474,6 @@ export default function App() {
                       <ChevronDown size={14} className={`text-[#5A7368] transition-transform duration-200 flex-shrink-0 ml-1 ${profileMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
 
-                    {/* Treść rozwijana: Otwieranie (w lewo -> w dół), Zamykanie (w górę -> w prawo) */}
                     <AnimatePresence>
                       {profileMenuOpen && (
                         <motion.div 
@@ -1503,7 +1495,7 @@ export default function App() {
                         >
                           <button
                             onClick={() => { setProfileMenuOpen(false); handleNav("settings"); }}
-                            className="w-full px-3 py-2 text-xs font-semibold text-[#1A2F22] hover:bg-[#F5EFE6] rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap"
+                            className="w-full px-3 py-2 text-xs font-semibold text-[#1A2F22] hover:bg-[#F5EFE6] rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap cursor-pointer"
                           >
                             <Settings size={15} className="text-[#057E85]" /> Ustawienia konta
                           </button>
@@ -1511,7 +1503,7 @@ export default function App() {
                           <button
                             onClick={handleGlobalGoogleSync}
                             disabled={isSyncingCalendar}
-                            className="w-full px-3 py-2 text-xs font-semibold text-[#1E5C36] hover:bg-[#E8F4ED] rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap disabled:opacity-50"
+                            className="w-full px-3 py-2 text-xs font-semibold text-[#1E5C36] hover:bg-[#E8F4ED] rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap disabled:opacity-50 cursor-pointer"
                           >
                             {isSyncingCalendar ? <RefreshCw size={15} className="animate-spin text-[#2D9E6B]" /> : <Calendar size={15} className="text-[#2D9E6B]" />}
                             {isSyncingCalendar ? "Synchronizuję..." : "Połącz z kalendarzem"}
@@ -1519,7 +1511,7 @@ export default function App() {
 
                           <button
                             onClick={() => { setProfileMenuOpen(false); handleLogout(); }}
-                            className="w-full px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap"
+                            className="w-full px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl flex items-center gap-2.5 transition-all text-left whitespace-nowrap cursor-pointer"
                           >
                             <LogOut size={15} className="text-red-500" /> Wyloguj się
                           </button>
@@ -1529,9 +1521,151 @@ export default function App() {
                   </motion.div>
                 </motion.div>
               </div>
+
+              {/* WERSJA MOBILNA (md:hidden) - Samouczek po lewej, streak + monety + profil po prawej */}
+              <div className="flex md:hidden w-full items-center justify-between px-2">
+                {/* 1. Przycisk pomocy (?) */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setHelpMenuOpen(!helpMenuOpen)}
+                    className="h-10 w-10 rounded-full bg-[#1E5C36]/10 hover:bg-[#1E5C36] text-[#1E5C36] hover:text-white flex items-center justify-center font-black text-lg transition-all duration-200 cursor-pointer active:scale-95 flex-shrink-0"
+                    title="Centrum pomocy i samouczki (?)"
+                  >
+                    ?
+                  </button>
+
+                  <AnimatePresence>
+                    {helpMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-0 top-12 w-64 bg-white border border-[#E8DDD0] shadow-xl rounded-2xl p-2.5 z-[100] text-left text-sm"
+                      >
+                        <div className="px-2.5 py-1 border-b border-gray-100 mb-1.5">
+                          <span className="text-[10px] font-black text-[#5A7368] tracking-wider uppercase block">
+                            SAMOUCZEK
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <button
+                            onClick={() => {
+                              resetAllTutorials();
+                              resetScreen(activeTab);
+                              setHelpMenuOpen(false);
+                              add("Przywrócono samouczek dla tego ekranu!", "success");
+                            }}
+                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-[#1A2F22] hover:bg-[#E8F4ED] hover:text-[#1E5C36] transition-colors text-left cursor-pointer"
+                          >
+                            <RefreshCw size={14} className="text-[#2D9E6B] flex-shrink-0" />
+                            <span>Odpal samouczek na tym ekranie ponownie</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Grupa elementów po prawej stronie */}
+                <div className="flex items-center gap-3.5 sm:gap-5">
+                  {/* 2. Streak badge */}
+                  <div 
+                    className="flex items-center justify-center gap-1 px-1 h-10 text-amber-700 font-extrabold text-base flex-shrink-0" 
+                    title={`${streakCount} dni serii`}
+                  >
+                    <img src="/icons/fire.svg" alt="Flame Streak" className="w-6 h-6 object-contain drop-shadow-sm" />
+                    <span>{streakCount}</span>
+                  </div>
+
+                  {/* 3. Monety / Tokeny AI */}
+                  <div 
+                    className={`flex items-center justify-center gap-1 px-1 h-10 font-extrabold text-base flex-shrink-0 transition-all ${
+                      aiTokens > 2
+                        ? "text-[#02848C]"
+                        : aiTokens > 0
+                        ? "text-amber-700"
+                        : "text-rose-600 opacity-80"
+                    }`} 
+                    title={`${aiTokens} monet AI`}
+                  >
+                    <img 
+                      src="/icons/AI Coin.svg" 
+                      alt="AI Coin" 
+                      className={`w-6 h-6 object-contain drop-shadow-sm ${aiTokens === 0 ? "opacity-40 grayscale" : ""}`} 
+                    />
+                    <span>{aiTokens}</span>
+                  </div>
+
+                  {/* 4. Profil z ikonką awatara */}
+                  <div className="relative flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                      className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2D9E6B] to-[#1E5C36] text-white flex items-center justify-center font-bold text-base shadow-inner cursor-pointer active:scale-95 transition-all flex-shrink-0"
+                      title={`Profil: ${user?.name || "Użytkownik"}`}
+                    >
+                      {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </button>
+
+                    <AnimatePresence>
+                      {profileMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 top-12 w-56 bg-white border border-[#E8DDD0] shadow-xl rounded-2xl p-2 z-[100] text-left text-sm"
+                        >
+                          <div className="px-3 py-2 border-b border-gray-100 mb-1.5 flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#2D9E6B] to-[#1E5C36] text-white flex items-center justify-center font-bold text-sm shadow-inner shrink-0">
+                              {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-xs font-bold text-[#1A2F22] block truncate">
+                                {user?.name || "Użytkownik"}
+                              </span>
+                              <span className="text-[10px] text-[#5A7368] block truncate">
+                                {user?.email || ""}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => { setProfileMenuOpen(false); handleNav("settings"); }}
+                              className="w-full px-3 py-2 text-xs font-semibold text-[#1A2F22] hover:bg-[#F5EFE6] rounded-xl flex items-center gap-2 transition-all text-left whitespace-nowrap cursor-pointer"
+                            >
+                              <Settings size={14} className="text-[#057E85]" /> Ustawienia konta
+                            </button>
+
+                            <button
+                              onClick={handleGlobalGoogleSync}
+                              disabled={isSyncingCalendar}
+                              className="w-full px-3 py-2 text-xs font-semibold text-[#1E5C36] hover:bg-[#E8F4ED] rounded-xl flex items-center gap-2 transition-all text-left whitespace-nowrap disabled:opacity-50 cursor-pointer"
+                            >
+                              {isSyncingCalendar ? <RefreshCw size={14} className="animate-spin text-[#2D9E6B]" /> : <Calendar size={14} className="text-[#2D9E6B]" />}
+                              {isSyncingCalendar ? "Synchronizuję..." : "Połącz z kalendarzem"}
+                            </button>
+
+                            <button
+                              onClick={() => { setProfileMenuOpen(false); handleLogout(); }}
+                              className="w-full px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl flex items-center gap-2 transition-all text-left whitespace-nowrap cursor-pointer"
+                            >
+                              <LogOut size={14} className="text-red-500" /> Wyloguj się
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
             </header>
 
-            <div className="flex-1 min-h-0 relative flex flex-col w-full">
+            <div className="flex-1 min-h-0 relative flex flex-col w-full pb-16 md:pb-0">
               {activeTab === "dashboard" && (
                 <DashboardView
                   tasks={tasks}
@@ -1585,6 +1719,31 @@ export default function App() {
               {activeTab === "warning" && <WarningView loading={isLoading} user={user} />}
               {activeTab === "settings" && <SettingsView user={user} setUser={setUser} add={add} />}
             </div>
+
+            {/* DOLNY PASEK NAWIGACYJNY - TYLKO WERSJA MOBILNA */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#E8DDD0] flex justify-around items-center z-[70] shadow-[0_-4px_10px_rgba(0,0,0,0.03)] px-2">
+              {[
+                { id: "dashboard", icon: <Home size={22} />, label: "Główna" },
+                { id: "calendar", icon: <Calendar size={22} />, label: "Kalendarz" },
+                { id: "mood", icon: <Smile size={22} />, label: "Nastrój" },
+                { id: "warning", icon: <div className="relative"><LifeBuoy size={22} />{activeAlert && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />}</div>, label: "Pomoc" },
+                { id: "settings", icon: <Settings size={22} />, label: "Ustawienia" }
+              ].map(item => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleNav(item.id)}
+                    className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 ${isActive ? 'text-[#1E5C36] bg-[#1E5C36]/10' : 'text-[#9FB5AD] hover:text-[#5A7368] hover:bg-gray-50'}`}
+                    aria-label={item.label}
+                  >
+                    <div className={`${isActive ? 'scale-110' : ''} transition-transform`}>
+                      {item.icon}
+                    </div>
+                  </button>
+                );
+              })}
+            </nav>
           </main>
 
           {isTaskModalOpen && (

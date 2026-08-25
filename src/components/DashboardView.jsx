@@ -344,7 +344,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
   const formatTime = (mins) => `${Math.floor(mins / 60)}:${(mins % 60).toString().padStart(2, '0')}`;
 
   return (
-    <div className="px-4 md:px-6 pt-2 pb-6 max-w-6xl mx-auto w-full xl:h-[calc(100vh-88px)] flex flex-col overflow-y-auto xl:overflow-hidden">
+    <div className="px-4 md:px-6 pt-2 pb-0 md:pb-6 max-w-6xl mx-auto w-full xl:h-[calc(100vh-88px)] flex flex-col overflow-y-auto xl:overflow-hidden">
       <div className="xl:grid xl:grid-cols-12 xl:gap-16 items-start flex-1 min-h-0">
         <div className="xl:col-span-8 relative max-w-4xl mx-auto w-full xl:h-full flex flex-col min-h-0">
           {/* NAGŁÓWEK DASHBOARDU PRZENIESIONY TUTAJ - NAD PLAN DNI */}

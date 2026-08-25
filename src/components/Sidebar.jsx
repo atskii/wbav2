@@ -37,15 +37,8 @@ export default function Sidebar({ active, onNav, user, onLogout, selectedDate, s
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 bg-black/20 z-[60] md:hidden" onClick={() => setIsMobileOpen(false)} />
-      )}
-      
       <aside className={`
-        fixed md:sticky top-0 left-0 z-[70] h-screen bg-white border-r border-[#E8DDD0] flex flex-col transition-transform duration-300
-        ${isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0"}
-        md:w-64 flex-shrink-0
+        hidden md:flex md:sticky top-0 left-0 z-[70] h-screen bg-white border-r border-[#E8DDD0] flex-col w-64 flex-shrink-0
       `}>
         <div className={`px-5 py-6 border-b border-[#E8DDD0] flex items-center justify-between`}>
           <span className={`font-lora text-[#1E5C36] font-bold text-xl tracking-tight inline`}>Wellbeing app</span>
