@@ -678,39 +678,36 @@ export default function CalendarView({
         <div className="flex-1 bg-white border-none md:border md:border-[#E8DDD0] rounded-none md:rounded-2xl flex flex-col overflow-hidden shadow-none md:shadow-sm min-h-0 relative h-full">
           {/* PASEK NAWIGACJI KALENDARZA */}
           <div className="h-12 md:h-[70px] border-b border-[#E8DDD0] flex items-center justify-between px-3 md:px-6 shrink-0 bg-white z-[60]">
-            {/* Widok Dzienny: Tytuł dnia po lewej, Przycisk X w prawym rogu */}
-            {viewType === "Dzień" ? (
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center min-w-0 pr-2">
-                  <span className="text-base md:text-lg font-black text-[#1A2F22] capitalize truncate">
-                    {selectedDate.toLocaleDateString("pl-PL", { weekday: "short", day: "numeric", month: "long" })}
-                  </span>
-                </div>
-
-                {/* Przycisk X w prawym rogu zamiast strzałek */}
-                <button 
-                  onClick={() => setViewType("Miesiąc")}
-                  className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-100 hover:bg-[#E8F4ED] text-[#1A2F22] hover:text-[#1E5C36] flex items-center justify-center transition-colors cursor-pointer active:scale-95 shrink-0"
-                  title="Zamknij widok dnia (wróć do miesiąca)"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            ) : (
-              /* Widok Miesięczny / Tygodniowy */
-              <>
-                <div className="flex items-center gap-2 md:gap-6 min-w-0 relative">
+            {/* WERSJA MOBILNA (< md) */}
+            <div className="flex md:hidden items-center justify-between w-full">
+              {viewType === "Dzień" ? (
+                <>
+                  <div className="flex items-center min-w-0 pr-2">
+                    <span className="text-base font-black text-[#1A2F22] capitalize truncate">
+                      {selectedDate.toLocaleDateString("pl-PL", { weekday: "short", day: "numeric", month: "long" })}
+                    </span>
+                  </div>
+                  {/* Przycisk X w prawym rogu */}
+                  <button 
+                    onClick={() => setViewType("Miesiąc")}
+                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-[#E8F4ED] text-[#1A2F22] hover:text-[#1E5C36] flex items-center justify-center transition-colors cursor-pointer active:scale-95 shrink-0"
+                    title="Zamknij widok dnia (wróć do miesiąca)"
+                  >
+                    <X size={18} />
+                  </button>
+                </>
+              ) : (
+                <>
                   {/* Tytuł miesiąca z rozwijaną strzałką */}
                   <div className="relative">
                     <button
                       onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
-                      className="flex items-center gap-1.5 hover:bg-[#F5EFE6] px-2 py-1 -ml-1 rounded-xl text-base md:text-lg font-black text-[#1A2F22] capitalize transition-colors cursor-pointer active:scale-95"
+                      className="flex items-center gap-1.5 hover:bg-[#F5EFE6] px-2 py-1 -ml-1 rounded-xl text-base font-black text-[#1A2F22] capitalize transition-colors cursor-pointer active:scale-95"
                     >
                       <span>{selectedDate.toLocaleDateString("pl-PL", { month: "long", year: "numeric" })}</span>
                       <ChevronDown size={18} className={`text-[#5A7368] transition-transform duration-200 ${isMonthPickerOpen ? "rotate-180 text-[#1E5C36]" : ""}`} />
                     </button>
 
-                    {/* Menu rozwijane wyboru miesiąca */}
                     {isMonthPickerOpen && (
                       <>
                         <div 
@@ -720,7 +717,6 @@ export default function CalendarView({
                         <div className="absolute left-0 top-full mt-2 w-64 max-h-80 overflow-y-auto bg-white border border-[#E8DDD0] rounded-2xl shadow-2xl p-2 z-[120] animate-in fade-in zoom-in-95 duration-150 custom-scrollbar">
                           {yearsList.map(year => (
                             <div key={year} className="mb-2 last:mb-0">
-                              {/* Nieklikalny nagłówek roku */}
                               <div className="px-3 py-1.5 bg-[#F5EFE6] rounded-xl text-center text-xs font-black text-[#1E5C36] uppercase tracking-widest my-1 select-none pointer-events-none">
                                 {year}
                               </div>
@@ -749,47 +745,17 @@ export default function CalendarView({
                     )}
                   </div>
 
-                  {/* Wybór widoku na desktopie */}
-                  <div className="relative group z-[100] hidden md:block">
-                    <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[#1A2F22] font-semibold text-sm transition-colors border border-transparent hover:border-gray-200">
-                      {viewType} <ChevronDown size={16} className="text-gray-500" />
-                    </button>
-                    <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[110]">
-                      {["Dzień", "Tydzień", "Miesiąc"].map(v => (
-                        <button key={v} onClick={() => setViewType(v)} className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${viewType === v ? "font-bold text-[#1E5C36]" : "text-gray-700"}`}>
-                          {v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 md:gap-3">
-                  {/* Przycisk Dzisiaj na desktopie */}
-                  <button 
-                    onClick={handleGoToToday} 
-                    className="hidden md:flex px-4 py-1.5 bg-white border border-[#E8DDD0] rounded-xl text-[#1A2F22] font-bold text-sm hover:bg-[#F5EFE6] transition-colors shadow-sm items-center gap-2 cursor-pointer"
-                  >
-                    Dzisiaj <ArrowRight size={16} className="text-[#5A7368] -rotate-45" />
-                  </button>
-
-                  {/* Przyciski przewijania miesięcy */}
+                  {/* Przyciski przewijania miesięcy na telefonie */}
                   <div className="flex items-center gap-1 border border-[#E8DDD0] rounded-xl overflow-hidden shadow-sm bg-white">
                     <button 
                       onClick={() => {
                         setSlideDirection(-1);
                         const d = new Date(selectedDate);
-                        if (viewType === "Tydzień") {
-                          onChangeDate(-7);
-                        } else if (viewType === "Dzień") {
-                          onChangeDate(-1);
-                        } else {
-                          d.setMonth(d.getMonth() - 1);
-                          if (setSelectedDate) setSelectedDate(d);
-                          else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
-                        }
+                        d.setMonth(d.getMonth() - 1);
+                        if (setSelectedDate) setSelectedDate(d);
+                        else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
                       }} 
-                      className="p-1.5 md:p-2 hover:bg-[#F5EFE6] text-[#1A2F22] transition-colors cursor-pointer"
+                      className="p-1.5 hover:bg-[#F5EFE6] text-[#1A2F22] transition-colors cursor-pointer"
                       title="Poprzedni"
                     >
                       <ChevronLeft size={18} />
@@ -799,25 +765,139 @@ export default function CalendarView({
                       onClick={() => {
                         setSlideDirection(1);
                         const d = new Date(selectedDate);
-                        if (viewType === "Tydzień") {
-                          onChangeDate(7);
-                        } else if (viewType === "Dzień") {
-                          onChangeDate(1);
-                        } else {
-                          d.setMonth(d.getMonth() + 1);
-                          if (setSelectedDate) setSelectedDate(d);
-                          else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
-                        }
+                        d.setMonth(d.getMonth() + 1);
+                        if (setSelectedDate) setSelectedDate(d);
+                        else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
                       }} 
-                      className="p-1.5 md:p-2 hover:bg-[#F5EFE6] text-[#1A2F22] transition-colors cursor-pointer"
+                      className="p-1.5 hover:bg-[#F5EFE6] text-[#1A2F22] transition-colors cursor-pointer"
                       title="Następny"
                     >
                       <ChevronRight size={18} />
                     </button>
                   </div>
+                </>
+              )}
+            </div>
+
+            {/* WERSJA DESKTOP (>= md) - Pełne menu zawsze widoczne dla wszystkich widoków (Dzień, Tydzień, Miesiąc) */}
+            <div className="hidden md:flex items-center justify-between w-full">
+              <div className="flex items-center gap-6 min-w-0 relative">
+                {/* Tytuł miesiąca z rozwijaną strzałką */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
+                    className="flex items-center gap-1.5 hover:bg-[#F5EFE6] px-2 py-1 -ml-1 rounded-xl text-lg font-black text-[#1A2F22] capitalize transition-colors cursor-pointer active:scale-95"
+                  >
+                    <span>{selectedDate.toLocaleDateString("pl-PL", { month: "long", year: "numeric" })}</span>
+                    <ChevronDown size={18} className={`text-[#5A7368] transition-transform duration-200 ${isMonthPickerOpen ? "rotate-180 text-[#1E5C36]" : ""}`} />
+                  </button>
+
+                  {/* Menu rozwijane wyboru miesiąca */}
+                  {isMonthPickerOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-[110]" 
+                        onClick={() => setIsMonthPickerOpen(false)} 
+                      />
+                      <div className="absolute left-0 top-full mt-2 w-64 max-h-80 overflow-y-auto bg-white border border-[#E8DDD0] rounded-2xl shadow-2xl p-2 z-[120] animate-in fade-in zoom-in-95 duration-150 custom-scrollbar">
+                        {yearsList.map(year => (
+                          <div key={year} className="mb-2 last:mb-0">
+                            <div className="px-3 py-1.5 bg-[#F5EFE6] rounded-xl text-center text-xs font-black text-[#1E5C36] uppercase tracking-widest my-1 select-none pointer-events-none">
+                              {year}
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                              {MONTH_NAMES.map((mName, mIdx) => {
+                                const isSelected = selectedDate.getFullYear() === year && selectedDate.getMonth() === mIdx;
+                                return (
+                                  <button
+                                    key={mIdx}
+                                    onClick={() => handlePickMonthYear(mIdx, year)}
+                                    className={`py-2 px-1 rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
+                                      isSelected 
+                                        ? "bg-[#1E5C36] text-white shadow-sm" 
+                                        : "text-[#1A2F22] hover:bg-[#E8F4ED] hover:text-[#1E5C36]"
+                                    }`}
+                                  >
+                                    {mName.slice(0, 3)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
-              </>
-            )}
+
+                {/* Wybór widoku na desktopie */}
+                <div className="relative group z-[100]">
+                  <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[#1A2F22] font-semibold text-sm transition-colors border border-transparent hover:border-gray-200">
+                    {viewType} <ChevronDown size={16} className="text-gray-500" />
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[110]">
+                    {["Dzień", "Tydzień", "Miesiąc"].map(v => (
+                      <button key={v} onClick={() => setViewType(v)} className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${viewType === v ? "font-bold text-[#1E5C36]" : "text-gray-700"}`}>
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Przycisk Dzisiaj na desktopie */}
+                <button 
+                  onClick={handleGoToToday} 
+                  className="px-4 py-1.5 bg-white border border-[#E8DDD0] rounded-xl text-[#1A2F22] font-bold text-sm hover:bg-[#F5EFE6] transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
+                >
+                  Dzisiaj <ArrowRight size={16} className="text-[#5A7368] -rotate-45" />
+                </button>
+
+                {/* Przyciski nawigacji na desktopie */}
+                <div className="flex items-center gap-1 border border-[#E8DDD0] rounded-xl overflow-hidden shadow-sm bg-white">
+                  <button 
+                    onClick={() => {
+                      setSlideDirection(-1);
+                      const d = new Date(selectedDate);
+                      if (viewType === "Tydzień") {
+                        onChangeDate(-7);
+                      } else if (viewType === "Dzień") {
+                        onChangeDate(-1);
+                      } else {
+                        d.setMonth(d.getMonth() - 1);
+                        if (setSelectedDate) setSelectedDate(d);
+                        else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+                      }
+                    }} 
+                    className="p-2 hover:bg-[#F5EFE6] text-[#1A2F22] transition-colors cursor-pointer"
+                    title="Poprzedni"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <div className="w-px h-5 bg-[#E8DDD0]"></div>
+                  <button 
+                    onClick={() => {
+                      setSlideDirection(1);
+                      const d = new Date(selectedDate);
+                      if (viewType === "Tydzień") {
+                        onChangeDate(7);
+                      } else if (viewType === "Dzień") {
+                        onChangeDate(1);
+                      } else {
+                        d.setMonth(d.getMonth() + 1);
+                        if (setSelectedDate) setSelectedDate(d);
+                        else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+                      }
+                    }} 
+                    className="p-2 hover:bg-[#F5EFE6] text-[#1A2F22] transition-colors cursor-pointer"
+                    title="Następny"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Renderowanie widoków z obsługą gestów Swipe i animacją slajdu (Google Calendar style) */}
