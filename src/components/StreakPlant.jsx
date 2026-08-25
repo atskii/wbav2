@@ -119,7 +119,7 @@ export default function StreakPlant({ tasks = [], userEmail = null }) {
   }, [xpProgress, hasFlowered, total]);
 
   return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-6 border border-[#E8DDD0] shadow-sm hover:shadow-md transition-all relative overflow-visible">
+    <div className="bg-white md:bg-white/90 backdrop-blur-sm md:rounded-3xl p-6 md:border md:border-[#E8DDD0] md:shadow-sm md:hover:shadow-md transition-all relative overflow-visible h-full flex flex-col justify-center">
       <h3 className="font-lora text-xl font-bold text-[#1A2F22] mb-1">Twoja roślinka streaku</h3>
       <p className="text-xs text-[#5A7368] mb-5 leading-relaxed">
         Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie daje punkty XP i zasila roślinę.

@@ -718,7 +718,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
             )}
           </div>
         </div>
-        <div className="xl:col-span-4 xl:h-full w-full mt-8 xl:mt-0">
+        <div className="hidden md:block xl:col-span-4 xl:h-full w-full mt-8 xl:mt-0">
           <StreakPlant tasks={scheduled} userEmail={userEmail} />
         </div>
       </div>

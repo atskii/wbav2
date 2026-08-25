@@ -63,6 +63,7 @@ async function syncToSupabase(userEmail, state) {
 
 export function useTutorials(userEmail = null) {
   const [state, setState] = useState(() => getLocalTutorials(userEmail));
+  const stateRef = useRef(state);
   const [loading, setLoading] = useState(false);
   const userEmailRef = useRef(userEmail);
   userEmailRef.current = userEmail;
@@ -76,6 +77,7 @@ export function useTutorials(userEmail = null) {
     }
 
     const local = getLocalTutorials(userEmail);
+    stateRef.current = local;
     setState(local);
 
     let isMounted = true;
@@ -94,6 +96,7 @@ export function useTutorials(userEmail = null) {
           const currentLocal = getLocalTutorials(userEmail);
           const merged = mergeTutorialStates(currentLocal, data.state);
           setLocalTutorials(userEmail, merged);
+          stateRef.current = merged;
           setState(merged);
 
           // Jeśli stan lokalny miał nowe dymki/ekrany nieobecne w Supabase, zaktualizuj bazę
@@ -123,6 +126,7 @@ export function useTutorials(userEmail = null) {
   useEffect(() => {
     const handleUpdate = (e) => {
       if (e.detail?.userEmail === userEmail && e.detail?.newState) {
+        stateRef.current = e.detail.newState;
         setState(e.detail.newState);
       }
     };
@@ -136,25 +140,27 @@ export function useTutorials(userEmail = null) {
       const email = userEmailRef.current;
       if (!email) return;
 
-      setState((prevState) => {
-        const nextState = typeof updater === "function" ? updater(prevState) : updater;
-        const safeNext = {
-          screens: nextState?.screens || {},
-          tooltips: nextState?.tooltips || {},
-        };
+      const prevState = stateRef.current;
+      const nextState = typeof updater === "function" ? updater(prevState) : updater;
+      
+      const safeNext = {
+        screens: nextState?.screens || {},
+        tooltips: nextState?.tooltips || {},
+      };
 
-        setLocalTutorials(email, safeNext);
+      stateRef.current = safeNext;
+      setState(safeNext);
 
-        // Powiadom inne komponenty z nowym stanem bez ponownego pobierania z bazy
-        window.dispatchEvent(
-          new CustomEvent(TUTORIAL_CHANGE_EVENT, {
-            detail: { userEmail: email, newState: safeNext },
-          })
-        );
+      setLocalTutorials(email, safeNext);
 
-        syncToSupabase(email, safeNext);
-        return safeNext;
-      });
+      // Powiadom inne komponenty z nowym stanem bez ponownego pobierania z bazy
+      window.dispatchEvent(
+        new CustomEvent(TUTORIAL_CHANGE_EVENT, {
+          detail: { userEmail: email, newState: safeNext },
+        })
+      );
+
+      syncToSupabase(email, safeNext);
     },
     []
   );

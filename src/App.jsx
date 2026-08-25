@@ -35,6 +35,7 @@ import WarningView from "./components/WarningView";
 import SettingsView from "./components/SettingsView";
 import DebugModal from "./components/DebugModal";
 import AdminPanel from "./components/AdminPanel";
+import StreakPlant from "./components/StreakPlant";
 
 const ADMIN_EMAILS = ["admin@wellbeing.app", "admin@wba.com"];
 const TEST_EMAIL = "testuser@testuser";
@@ -1718,6 +1719,16 @@ export default function App() {
                   addToast={add}
                 />
               )}
+              {activeTab === "plant" && (
+                <div className="flex-1 overflow-y-auto bg-white flex flex-col min-h-0 pb-16">
+                  <div className="w-full h-full max-w-md mx-auto">
+                    <StreakPlant 
+                      tasks={tasks.filter(t => checkIsDate(t.pDate, new Date()) || (!t.pDate && (checkIsDate(t.t, new Date()) || checkIsDate(t.deadline, new Date()))))} 
+                      userEmail={user?.email} 
+                    />
+                  </div>
+                </div>
+              )}
               {activeTab === "warning" && <WarningView loading={isLoading} user={user} />}
               {activeTab === "settings" && <SettingsView user={user} setUser={setUser} add={add} />}
             </div>
@@ -1727,6 +1738,11 @@ export default function App() {
               {[
                 { id: "dashboard", icon: <Home size={22} />, label: "Główna" },
                 { id: "calendar", icon: <Calendar size={22} />, label: "Kalendarz" },
+                { 
+                  id: "plant", 
+                  icon: <img src="/plant.png" alt="Roślina" className={`w-[22px] h-[22px] object-contain transition-all ${activeTab === 'plant' ? '' : 'grayscale opacity-70'}`} />, 
+                  label: "Roślina" 
+                },
                 { id: "mood", icon: <Smile size={22} />, label: "Nastrój" },
                 { id: "warning", icon: <div className="relative"><LifeBuoy size={22} />{activeAlert && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />}</div>, label: "Pomoc" },
                 { id: "settings", icon: <Settings size={22} />, label: "Ustawienia" }
