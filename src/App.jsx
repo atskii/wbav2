@@ -1693,6 +1693,7 @@ export default function App() {
                 <CalendarView
                   tasks={tasks}
                   selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
                   onChangeDate={(offset) => setSelectedDate(d => { const nd = new Date(d); nd.setDate(d.getDate() + offset); return nd; })}
                   onToggle={toggleTask}
                   onDelete={deleteTask}
@@ -1701,6 +1702,7 @@ export default function App() {
                   onMoveTask={handleMoveTask}
                   onReturnToBacklog={returnToBacklog}
                   loading={isLoading}
+                  onNav={handleNav}
                 />
               )}
 

@@ -1,20 +1,34 @@
 import { useState, useEffect, useRef } from "react";
 import {
-  Search, ChevronDown, ChevronLeft, ChevronRight, ArrowRight,
-  Star, Trash2, X
+  ChevronDown, ChevronLeft, ChevronRight, ArrowRight,
+  Star, Trash2, X, Calendar as CalendarIcon, Check
 } from "lucide-react";
 import SkeletonScreen from "./ui/Skeleton";
 import { checkIsDate } from "../lib/dateHelpers";
 
-export default function CalendarView({ tasks, selectedDate, onChangeDate, onToggle, onDelete, onFocusTask, onEditTask, onMoveTask, onReturnToBacklog, loading }) {
-  const [searchRight, setSearchRight] = useState("");
-  const [searchCal, setSearchCal] = useState("");
-  const [viewType, setViewType] = useState("Dzień");
-  const [popoverDay, setPopoverDay] = useState(null);
+const MONTH_NAMES = [
+  "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+  "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+];
+
+export default function CalendarView({
+  tasks,
+  selectedDate,
+  setSelectedDate,
+  onChangeDate,
+  onToggle,
+  onDelete,
+  onFocusTask,
+  onEditTask,
+  onMoveTask,
+  onReturnToBacklog,
+  loading,
+  onNav
+}) {
+  const [viewType, setViewType] = useState("Miesiąc");
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
   const calendarScrollRef = useRef(null);
-  const popoverRef = useRef(null);
   const [nowMinute, setNowMinute] = useState(new Date().getHours() * 60 + new Date().getMinutes());
-  const [popoverStyle, setPopoverStyle] = useState({});
 
   // Stan wspierający czytelny podgląd Drag and Drop (Google Calendar Style)
   const [draggedTaskId, setDraggedTaskId] = useState(null);
@@ -34,20 +48,6 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (!popoverDay || !popoverRef.current) return;
-    const el = popoverRef.current;
-    const rect = el.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const style = {};
-    if (rect.right > vw - 8) style.left = `${el.offsetLeft - (rect.right - vw) - 16}px`;
-    if (rect.left < 8) style.left = `${el.offsetLeft + (8 - rect.left)}px`;
-    if (rect.bottom > vh - 8) style.top = `${el.offsetTop - (rect.bottom - vh) - 16}px`;
-    if (rect.top < 8) style.top = `${el.offsetTop + (8 - rect.top)}px`;
-    if (Object.keys(style).length > 0) setPopoverStyle(style);
-  }, [popoverDay]);
-
   const hours = Array.from({ length: 17 }, (_, i) => i + 6);
 
   const isSameDate = (textString, targetDate = selectedDate) => checkIsDate(textString, targetDate);
@@ -57,7 +57,6 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
   const selectedYMD = formatYMD(selectedDate);
 
   // Główne źródło prawdy o przynależności do dnia = pDate.
-  // Fallback na parsowanie t/deadline tylko dla starych zadań bez pDate.
   const isTaskForDate = (t, targetDate) => {
     const targetYMD = formatYMD(targetDate);
     if (t.pDate) return t.pDate === targetYMD;
@@ -65,45 +64,51 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
   };
 
   const timelineTasks = tasks.filter(t => isTaskForDate(t, selectedDate));
-  // Prawa kolumna: backlog (brak pDate) + zadania zaplanowane na wybrany dzień
-  const queueTasks = tasks.filter(t => {
-    if (searchRight && !t.title.toLowerCase().includes(searchRight.toLowerCase())) return false;
-    return !t.pDate || t.pDate === selectedYMD;
-  });
-
-  useEffect(() => {
-    if (searchCal && calendarScrollRef.current && viewType === "Dzień") {
-      const matchedTask = timelineTasks.find(t => t.title.toLowerCase().includes(searchCal.toLowerCase()));
-      if (matchedTask) {
-        let taskHour = 6;
-        if (isSameDate(matchedTask.t, selectedDate)) {
-          const match = matchedTask.t ? matchedTask.t.match(/(\d{1,2}):\d{2}/) : null;
-          taskHour = match ? parseInt(match[1]) : 8;
-        } else if (isSameDate(matchedTask.deadline, selectedDate)) {
-          const match = matchedTask.deadline.match(/o (\d{1,2}):\d{2}/);
-          if (match) taskHour = parseInt(match[1]);
-        }
-        const scrollPosition = Math.max(0, (taskHour - 6) * 86.4 - 50);
-        calendarScrollRef.current.scrollTo({ top: scrollPosition, behavior: 'smooth' });
-      }
-    }
-  }, [searchCal, timelineTasks, selectedDate, viewType]);
+  const queueTasks = tasks.filter(t => !t.pDate || t.pDate === selectedYMD);
 
   if (loading) return <SkeletonScreen />;
   const isToday = new Date().toDateString() === selectedDate.toDateString();
-  
+
+  const handleSelectDay = (targetDate) => {
+    if (setSelectedDate) {
+      setSelectedDate(new Date(targetDate));
+    } else if (onChangeDate) {
+      const diffDays = Math.round((targetDate.getTime() - selectedDate.getTime()) / (1000 * 3600 * 24));
+      onChangeDate(diffDays);
+    }
+    setViewType("Dzień");
+  };
+
   const handleGoToToday = () => {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const selected = new Date(selectedDate); selected.setHours(0,0,0,0);
-    const diffDays = Math.round((today.getTime() - selected.getTime()) / (1000 * 3600 * 24));
-    onChangeDate(diffDays);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (setSelectedDate) {
+      setSelectedDate(today);
+    } else if (onChangeDate) {
+      const selected = new Date(selectedDate);
+      selected.setHours(0, 0, 0, 0);
+      const diffDays = Math.round((today.getTime() - selected.getTime()) / (1000 * 3600 * 24));
+      onChangeDate(diffDays);
+    }
+  };
+
+  const handlePickMonthYear = (monthIndex, year) => {
+    const d = new Date(selectedDate);
+    d.setFullYear(year);
+    d.setMonth(monthIndex);
+    if (setSelectedDate) {
+      setSelectedDate(d);
+    } else if (onChangeDate) {
+      onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+    }
+    setIsMonthPickerOpen(false);
   };
 
   const getStartOfWeek = (date) => {
     const d = new Date(date);
     const day = d.getDay() === 0 ? 6 : d.getDay() - 1;
     d.setDate(d.getDate() - day);
-    d.setHours(0,0,0,0);
+    d.setHours(0, 0, 0, 0);
     return d;
   };
 
@@ -118,19 +123,20 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
     const firstDayIndex = (startOfMonth.getDay() + 6) % 7;
     const days = [];
-    
+
     const prevMonthEnd = new Date(date.getFullYear(), date.getMonth(), 0);
     for (let i = firstDayIndex - 1; i >= 0; i--) {
       const d = new Date(prevMonthEnd);
       d.setDate(prevMonthEnd.getDate() - i);
       days.push({ date: d, isCurrentMonth: false });
     }
-    
+
     for (let i = 1; i <= endOfMonth.getDate(); i++) {
       days.push({ date: new Date(date.getFullYear(), date.getMonth(), i), isCurrentMonth: true });
     }
-    
-    const totalCells = days.length <= 35 ? 35 : 42;
+
+    // Always 42 days (6 full rows)
+    const totalCells = 42;
     let nextMonthDay = 1;
     while (days.length < totalCells) {
       days.push({ date: new Date(date.getFullYear(), date.getMonth() + 1, nextMonthDay++), isCurrentMonth: false });
@@ -256,7 +262,7 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     const positionedTasks = computeOverlapLayout(timelineTasks, selectedDate, 3.5);
 
     return (
-      <div className="flex-1 overflow-y-auto relative pb-10" ref={calendarScrollRef}>
+      <div className="flex-1 overflow-y-auto relative pb-10 custom-scrollbar" ref={calendarScrollRef}>
         {isToday && nowMinute >= 6*60 && nowMinute <= 23*60 && (
           <div className="absolute left-[64px] right-0 z-40 pointer-events-none flex items-center transition-all duration-1000" style={{ top: `${(nowMinute - 6*60) * (86.4/60) + 16}px` }}>
             <div className="w-2.5 h-2.5 rounded-full bg-[#E40D0D] -ml-[5px] relative z-10" />
@@ -501,77 +507,95 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
     </div>
   );
 
-
   const renderMonthlyView = () => {
     const days = getDaysOfMonth(selectedDate);
-    const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
-    const popoverItem = popoverDay ? days.find(d => d.date.toDateString() === popoverDay.toDateString()) : null;
-    const popoverTasks = popoverItem ? tasks.filter(t => isTaskForDate(t, popoverItem.date)) : [];
+    const dayNames = ['Pn', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'];
     
     return (
-      <div className="flex-1 flex flex-col min-h-0 bg-white relative">
-        <div className="grid grid-cols-7 border-b border-[#E8E8E8] shrink-0">
+      <div className="flex-1 flex flex-col h-full min-h-0 bg-white relative">
+        <div className="grid grid-cols-7 border-b border-[#E8DDD0] shrink-0 bg-[#FAFAFA]">
           {dayNames.map(d => (
-            <div key={d} className="text-center py-2 md:py-3 text-[10px] md:text-[11px] font-bold text-[#75757A] uppercase tracking-wider border-r border-[#F0F0F0] last:border-0">
+            <div key={d} className="text-center py-2 text-[10px] md:text-[11px] font-black text-[#5A7368] uppercase tracking-wider border-r border-[#F0F0F0] last:border-0">
               {d}
             </div>
           ))}
         </div>
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-7 auto-rows-[minmax(6rem,1fr)] relative">
+        <div className="flex-1 h-full min-h-0">
+          <div className="grid grid-cols-7 grid-rows-6 h-full w-full">
             {days.map((item, idx) => {
               const isTodayMonth = new Date().toDateString() === item.date.toDateString();
+              const isSelectedDay = selectedDate.toDateString() === item.date.toDateString();
               const dayTasks = tasks.filter(t => isTaskForDate(t, item.date));
               
               return (
                 <div 
                   key={idx} 
-                  className={`border-r border-b border-[#F0F0F0] p-1 flex flex-col transition-colors hover:bg-gray-100 ${item.isCurrentMonth ? "bg-white" : "bg-gray-50/50"}`}
+                  onClick={() => handleSelectDay(item.date)}
+                  className={`border-r border-b border-[#F0F0F0] p-1 md:p-1.5 flex flex-col justify-between transition-all cursor-pointer hover:bg-[#E8F4ED]/60 active:scale-[0.98] select-none ${
+                    isSelectedDay 
+                      ? "bg-[#E8F4ED]/80 ring-2 ring-inset ring-[#1E5C36]/30" 
+                      : item.isCurrentMonth 
+                      ? "bg-white" 
+                      : "bg-gray-50/60"
+                  }`}
                   onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
                   onDrop={(e) => {
                     e.preventDefault();
                     const taskId = e.dataTransfer.getData("text/plain");
                     const dateStr = formatYMD(item.date);
-                    // Ustalamy godzinę 8:00 domyślnie przy zrzucaniu na cały dzień z miesiąca, lub pozostawiamy null. Dla kompatybilności dodajemy 8*60.
                     if(taskId && onMoveTask) onMoveTask(parseInt(taskId), dateStr, 8 * 60);
                   }}
                 >
-                  <div className="flex justify-center mb-0.5 md:mb-1">
+                  <div className="flex justify-between items-center px-0.5 mb-1">
                     <div 
-                      onClick={() => { onChangeDate(Math.round((item.date - selectedDate) / (1000 * 3600 * 24))); setViewType("Dzień"); }} 
-                      className={`w-5 h-5 md:w-7 md:h-7 flex items-center justify-center rounded-full text-[10px] md:text-xs font-bold hover:bg-gray-200 cursor-pointer transition-colors ${isTodayMonth ? "bg-[#057E85] text-white hover:bg-[#04666d] shadow-sm" : item.isCurrentMonth ? "text-[#303030]" : "text-[#C0C0C0]"}`}>
+                      className={`w-6 h-6 md:w-7 md:h-7 flex items-center justify-center rounded-full text-[11px] md:text-xs font-black transition-all ${
+                        isTodayMonth 
+                          ? "bg-[#1E5C36] text-white shadow-sm" 
+                          : isSelectedDay
+                          ? "bg-[#2D9E6B] text-white shadow-sm"
+                          : item.isCurrentMonth 
+                          ? "text-[#1A2F22]" 
+                          : "text-[#B0B0B0]"
+                      }`}
+                    >
                       {item.date.getDate()}
                     </div>
+
+                    {/* Licznik zadań na mobile */}
+                    {dayTasks.length > 0 && (
+                      <span className="text-[9px] font-extrabold text-[#1E5C36] bg-[#1E5C36]/10 px-1.5 py-0.2 rounded-full">
+                        {dayTasks.length}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex-1 overflow-hidden flex flex-col gap-0.5" onClick={() => { if(dayTasks.length > 0) { setPopoverStyle({}); setPopoverDay(item.date); } }}>
-                    {dayTasks.slice(0, 3).map(t => {
-                      const isDeadlineBlock = !isSameDate(t.t, item.date) && isSameDate(t.deadline, item.date);
-                      let timeStr = "";
-                      if (isDeadlineBlock) {
-                        const m = t.deadline.match(/o (\d{1,2}:\d{2})/);
-                        if (m) timeStr = m[1];
-                      } else if (t.t) {
-                        const m = t.t.match(/(\d{1,2}:\d{2})/);
-                        if (m) timeStr = m[1];
-                        else if (t.hour) timeStr = `${t.hour}:00`;
-                      }
+
+                  {/* Bezpośrednie tytuły zadań w komórce */}
+                  <div className="flex-1 overflow-hidden flex flex-col justify-start gap-1 px-0.5">
+                    {dayTasks.slice(0, 2).map(t => {
+                      const isDeadline = !isSameDate(t.t, item.date) && isSameDate(t.deadline, item.date);
                       return (
                         <div 
                           key={t.id} 
-                          draggable={!t.isLocked}
-                          onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); e.stopPropagation(); }}
-                          onClick={(e) => { e.stopPropagation(); onEditTask(t); }} 
-                          className={`flex items-center gap-1.5 px-1 py-0.5 rounded text-[10px] hover:bg-gray-200 truncate cursor-pointer transition-colors ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""}`}
+                          className={`flex items-center gap-1 px-1 py-0.5 rounded text-[9px] md:text-[10px] font-bold truncate leading-tight border transition-colors ${
+                            t.done
+                              ? "bg-gray-100 text-gray-400 border-gray-200 line-through"
+                              : isDeadline
+                              ? "bg-red-50 text-red-700 border-red-200"
+                              : t.p === "wysoki"
+                              ? "bg-amber-50 text-amber-800 border-amber-200"
+                              : "bg-[#E8F4ED] text-[#1E5C36] border-[#2D9E6B]/30"
+                          }`}
                         >
-                          <div className={`w-2 h-2 rounded-full shrink-0 pointer-events-none ${isDeadlineBlock ? "bg-[#D04F4F]" : "bg-[#057E85]"}`} />
-                          {timeStr && <span className="font-medium text-[#5A7368] text-[9px] pointer-events-none">{timeStr}</span>}
-                          <span className={`font-bold truncate pointer-events-none ${isDeadlineBlock ? "text-[#303030]" : "text-[#303030]"}`}>{t.title}</span>
+                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            t.done ? "bg-gray-300" : isDeadline ? "bg-red-500" : t.p === "wysoki" ? "bg-amber-500" : "bg-[#2D9E6B]"
+                          }`} />
+                          <span className="truncate">{t.title}</span>
                         </div>
-                      )
+                      );
                     })}
-                    {dayTasks.length > 3 && (
-                      <div onClick={(e) => { e.stopPropagation(); setPopoverStyle({}); setPopoverDay(item.date); }} className="text-[10px] font-bold text-[#303030] pl-1 hover:text-[#057E85] cursor-pointer mt-0.5 transition-colors">
-                        +{dayTasks.length - 3} więcej
+                    {dayTasks.length > 2 && (
+                      <div className="text-[8px] md:text-[9px] font-extrabold text-[#1E5C36] pl-0.5 leading-none mt-0.5">
+                        +{dayTasks.length - 2} więcej
                       </div>
                     )}
                   </div>
@@ -580,116 +604,184 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
             })}
           </div>
         </div>
-
-        {/* POPOVER — rendered outside the grid, uses fixed positioning to stay on screen */}
-        {popoverDay && popoverItem && (
-          <>
-            <div className="fixed inset-0 z-[998]" onClick={() => setPopoverDay(null)} />
-            <div ref={popoverRef} style={popoverStyle} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 md:w-72 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] border border-[#E8DDD0] z-[999] overflow-hidden cursor-default" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0F0]">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold uppercase text-[#75757A]">{dayNames[(popoverDay.getDay()+6)%7]}</span>
-                  <span className="text-xl font-bold text-[#303030] leading-none">{popoverDay.getDate()}</span>
-                </div>
-                <button onClick={() => setPopoverDay(null)} className="p-1 hover:bg-gray-100 rounded-full text-[#75757A] transition-colors"><X size={16}/></button>
-              </div>
-              <div className="p-2 max-h-72 overflow-y-auto space-y-0.5">
-                {popoverTasks.map(t => {
-                  const isDeadlineBlock = !isSameDate(t.t, popoverItem.date) && isSameDate(t.deadline, popoverItem.date);
-                  let timeStr = "";
-                  if (isDeadlineBlock) {
-                    const m = t.deadline.match(/o (\d{1,2}:\d{2})/);
-                    if (m) timeStr = m[1];
-                  } else if (t.t) {
-                    const m = t.t.match(/(\d{1,2}:\d{2})/);
-                    if (m) timeStr = m[1];
-                    else if (t.hour) timeStr = `${t.hour}:00`;
-                  }
-                  return (
-                    <div key={t.id} onClick={() => { setPopoverDay(null); onEditTask(t); }} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${isDeadlineBlock ? "bg-[#D04F4F]" : "bg-[#057E85]"}`} />
-                      {timeStr && <span className="font-medium text-[#5A7368] text-[10px] w-8 shrink-0">{timeStr}</span>}
-                      <span className={`text-[11px] font-bold truncate group-hover:text-[#057E85] transition-colors ${isDeadlineBlock ? "text-[#303030]" : "text-[#303030]"}`}>{t.title}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </>
-        )}
       </div>
     );
   };
 
+  const currentYear = selectedDate.getFullYear();
+  const yearsList = [currentYear - 1, currentYear, currentYear + 1];
+
   return (
-    <div className="flex h-full bg-[#FCFCFD] overflow-hidden">
-      <div className="flex-1 flex flex-col p-6 pr-8 h-full">
-        <header className="mb-6 flex flex-col gap-2 shrink-0">
-          <h1 className="font-lora text-3xl font-bold text-[#303030]">Kalendarz</h1>
-          <p className="text-[#1D1B20] text-base">Twój czas, twoje zasady! Zaplanuj dzień, tydzień lub cały miesiąc.<br />Pamiętaj, że każdy mały krok ma znaczenie.</p>
+    <div className="flex h-full bg-[#FAFAFA] overflow-hidden">
+      <div className="flex-1 flex flex-col p-3 md:p-6 md:pr-8 h-full min-h-0">
+        <header className="mb-2 md:mb-4 flex flex-col gap-1 shrink-0">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#1A2F22]">Kalendarz</h1>
+          <p className="text-[#5A7368] text-sm md:text-base hidden md:block">Twój czas, twoje zasady! Zaplanuj dzień, tydzień lub cały miesiąc.</p>
         </header>
-        <div className="flex-1 bg-white border border-[#E8E8E8] rounded-[13px] flex flex-col overflow-hidden shadow-sm min-h-0 relative">
-          <div className="h-[70px] border-b border-[#E8E8E8] flex items-center justify-between px-6 shrink-0 bg-white z-[60]">
-            <div className="flex items-center gap-6">
-              <span className="text-lg font-bold text-[#202021] capitalize w-48 truncate">
-                {viewType === "Dzień" && selectedDate.toLocaleDateString("pl-PL", { day: "numeric", month: "long", year: "numeric" })}
-                {viewType === "Tydzień" && `${weekDays[0].getDate()} ${weekDays[0].toLocaleDateString("pl-PL",{month:"short"})} - ${weekDays[6].getDate()} ${weekDays[6].toLocaleDateString("pl-PL",{month:"short"})}`}
-                {viewType === "Miesiąc" && selectedDate.toLocaleDateString("pl-PL", { month: "long", year: "numeric" })}
-              </span>
-              <div className="relative group z-[100]">
-                <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[#202021] font-medium text-sm transition-colors border border-transparent hover:border-gray-200">{viewType} <ChevronDown size={16} className="text-gray-500" /></button>
-                <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[110]">
-                  {["Dzień", "Tydzień", "Miesiąc"].map(v => (<button key={v} onClick={() => setViewType(v)} className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${viewType === v ? "font-bold text-[#057E85]" : "text-gray-700"}`}>{v}</button>))}
+
+        <div className="flex-1 bg-white border border-[#E8DDD0] rounded-2xl flex flex-col overflow-hidden shadow-sm min-h-0 relative h-full">
+          {/* PASEK NAWIGACJI KALENDARZA */}
+          <div className="h-12 md:h-[70px] border-b border-[#E8DDD0] flex items-center justify-between px-3 md:px-6 shrink-0 bg-white z-[60]">
+            {/* Widok Dzienny: Tytuł dnia po lewej, Przycisk X w prawym rogu */}
+            {viewType === "Dzień" ? (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center min-w-0 pr-2">
+                  <span className="text-base md:text-lg font-black text-[#1A2F22] capitalize truncate">
+                    {selectedDate.toLocaleDateString("pl-PL", { weekday: "short", day: "numeric", month: "long" })}
+                  </span>
                 </div>
+
+                {/* Przycisk X w prawym rogu zamiast strzałek */}
+                <button 
+                  onClick={() => setViewType("Miesiąc")}
+                  className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-100 hover:bg-[#E8F4ED] text-[#1A2F22] hover:text-[#1E5C36] flex items-center justify-center transition-colors cursor-pointer active:scale-95 shrink-0"
+                  title="Zamknij widok dnia (wróć do miesiąca)"
+                >
+                  <X size={18} />
+                </button>
               </div>
-              <div className="relative w-[300px] ml-4 hidden md:block">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9D9898]" />
-                <input type="text" placeholder="Szukaj w planie..." value={searchCal} onChange={(e) => setSearchCal(e.target.value)} className="w-full pl-9 pr-4 py-1.5 rounded-md border border-[#E8E8E8] text-sm focus:outline-none focus:border-[#057E85] bg-white transition-all shadow-sm placeholder:text-[#75757A]" />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={handleGoToToday} className="px-4 py-1.5 bg-white border border-[#E8E8E8] rounded-md text-[#202021] font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">Dzisiaj <ArrowRight size={16} className="text-[#9D9898] -rotate-45" /></button>
-              <div className="flex items-center gap-1 border border-[#E8E8E8] rounded-md overflow-hidden shadow-sm">
-                <button onClick={() => {
-                  if (viewType === "Tydzień") onChangeDate(-7);
-                  else if (viewType === "Miesiąc") {
-                    const d = new Date(selectedDate);
-                    d.setMonth(d.getMonth() - 1);
-                    onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
-                  }
-                  else onChangeDate(-1);
-                }} className="p-1.5 bg-white hover:bg-gray-50 text-gray-600 transition-colors"><ChevronLeft size={18} /></button>
-                <div className="w-px h-5 bg-[#E8E8E8]"></div>
-                <button onClick={() => {
-                  if (viewType === "Tydzień") onChangeDate(7);
-                  else if (viewType === "Miesiąc") {
-                    const d = new Date(selectedDate);
-                    d.setMonth(d.getMonth() + 1);
-                    onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
-                  }
-                  else onChangeDate(1);
-                }} className="p-1.5 bg-white hover:bg-gray-50 text-gray-600 transition-colors"><ChevronRight size={18} /></button>
-              </div>
-            </div>
+            ) : (
+              /* Widok Miesięczny / Tygodniowy */
+              <>
+                <div className="flex items-center gap-2 md:gap-6 min-w-0 relative">
+                  {/* Tytuł miesiąca z rozwijaną strzałką */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
+                      className="flex items-center gap-1.5 hover:bg-[#F5EFE6] px-2 py-1 -ml-1 rounded-xl text-base md:text-lg font-black text-[#1A2F22] capitalize transition-colors cursor-pointer active:scale-95"
+                    >
+                      <span>{selectedDate.toLocaleDateString("pl-PL", { month: "long", year: "numeric" })}</span>
+                      <ChevronDown size={18} className={`text-[#5A7368] transition-transform duration-200 ${isMonthPickerOpen ? "rotate-180 text-[#1E5C36]" : ""}`} />
+                    </button>
+
+                    {/* Menu rozwijane wyboru miesiąca */}
+                    {isMonthPickerOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-[110]" 
+                          onClick={() => setIsMonthPickerOpen(false)} 
+                        />
+                        <div className="absolute left-0 top-full mt-2 w-64 max-h-80 overflow-y-auto bg-white border border-[#E8DDD0] rounded-2xl shadow-2xl p-2 z-[120] animate-in fade-in zoom-in-95 duration-150 custom-scrollbar">
+                          {yearsList.map(year => (
+                            <div key={year} className="mb-2 last:mb-0">
+                              {/* Nieklikalny nagłówek roku */}
+                              <div className="px-3 py-1.5 bg-[#F5EFE6] rounded-xl text-center text-xs font-black text-[#1E5C36] uppercase tracking-widest my-1 select-none pointer-events-none">
+                                {year}
+                              </div>
+                              <div className="grid grid-cols-3 gap-1">
+                                {MONTH_NAMES.map((mName, mIdx) => {
+                                  const isSelected = selectedDate.getFullYear() === year && selectedDate.getMonth() === mIdx;
+                                  return (
+                                    <button
+                                      key={mIdx}
+                                      onClick={() => handlePickMonthYear(mIdx, year)}
+                                      className={`py-2 px-1 rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
+                                        isSelected 
+                                          ? "bg-[#1E5C36] text-white shadow-sm" 
+                                          : "text-[#1A2F22] hover:bg-[#E8F4ED] hover:text-[#1E5C36]"
+                                      }`}
+                                    >
+                                      {mName.slice(0, 3)}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Wybór widoku na desktopie */}
+                  <div className="relative group z-[100] hidden md:block">
+                    <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[#1A2F22] font-semibold text-sm transition-colors border border-transparent hover:border-gray-200">
+                      {viewType} <ChevronDown size={16} className="text-gray-500" />
+                    </button>
+                    <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[110]">
+                      {["Dzień", "Tydzień", "Miesiąc"].map(v => (
+                        <button key={v} onClick={() => setViewType(v)} className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${viewType === v ? "font-bold text-[#1E5C36]" : "text-gray-700"}`}>
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 md:gap-3">
+                  {/* Przycisk Dzisiaj na desktopie */}
+                  <button 
+                    onClick={handleGoToToday} 
+                    className="hidden md:flex px-4 py-1.5 bg-white border border-[#E8DDD0] rounded-xl text-[#1A2F22] font-bold text-sm hover:bg-[#F5EFE6] transition-colors shadow-sm items-center gap-2 cursor-pointer"
+                  >
+                    Dzisiaj <ArrowRight size={16} className="text-[#5A7368] -rotate-45" />
+                  </button>
+
+                  {/* Przyciski przewijania miesięcy */}
+                  <div className="flex items-center gap-1 border border-[#E8DDD0] rounded-xl overflow-hidden shadow-sm bg-white">
+                    <button 
+                      onClick={() => {
+                        const d = new Date(selectedDate);
+                        if (viewType === "Tydzień") {
+                          onChangeDate(-7);
+                        } else if (viewType === "Dzień") {
+                          onChangeDate(-1);
+                        } else {
+                          d.setMonth(d.getMonth() - 1);
+                          if (setSelectedDate) setSelectedDate(d);
+                          else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+                        }
+                      }} 
+                      className="p-1.5 md:p-2 hover:bg-[#F5EFE6] text-[#1A2F22] transition-colors cursor-pointer"
+                      title="Poprzedni"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <div className="w-px h-5 bg-[#E8DDD0]"></div>
+                    <button 
+                      onClick={() => {
+                        const d = new Date(selectedDate);
+                        if (viewType === "Tydzień") {
+                          onChangeDate(7);
+                        } else if (viewType === "Dzień") {
+                          onChangeDate(1);
+                        } else {
+                          d.setMonth(d.getMonth() + 1);
+                          if (setSelectedDate) setSelectedDate(d);
+                          else onChangeDate(Math.round((d - selectedDate) / (1000 * 3600 * 24)));
+                        }
+                      }} 
+                      className="p-1.5 md:p-2 hover:bg-[#F5EFE6] text-[#1A2F22] transition-colors cursor-pointer"
+                      title="Następny"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-          {viewType === "Dzień" && renderDailyView()}
-          {viewType === "Tydzień" && renderWeeklyView()}
-          {viewType === "Miesiąc" && renderMonthlyView()}
+
+          {/* Renderowanie widoków */}
+          <div className="flex-1 flex flex-col min-h-0 h-full">
+            {viewType === "Dzień" && renderDailyView()}
+            {viewType === "Tydzień" && renderWeeklyView()}
+            {viewType === "Miesiąc" && renderMonthlyView()}
+          </div>
         </div>
       </div>
-      <div className="w-[300px] bg-[#F5F7F5] border-l border-[#F0F0F0] rounded-l-[12px] flex flex-col hidden lg:flex shrink-0 h-full relative z-10 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.02)]">
-        <div className="p-6 pb-4 pt-8 shrink-0 bg-[#F5F7F5] z-20">
-          <h2 className="text-[26px] font-bold text-[#303030] mb-6">Zadania</h2>
-          <div className="relative">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9FB5AD]" />
-            <input type="text" placeholder="Szukaj..." value={searchRight} onChange={(e) => setSearchRight(e.target.value)} className="w-full pl-11 pr-4 py-2.5 rounded-[6px] border border-[#E8E8E8] text-[13px] focus:outline-none focus:border-[#057E85] bg-white transition-all shadow-sm placeholder:text-[#9FB5AD]" />
-          </div>
+
+      {/* Prawa kolumna (Backlog / Zadania) na dużych ekranach */}
+      <div className="w-[300px] bg-[#FAFAFA] border-l border-[#E8DDD0] flex flex-col hidden lg:flex shrink-0 h-full relative z-10">
+        <div className="p-6 pb-4 pt-6 shrink-0 bg-[#FAFAFA] z-20">
+          <h2 className="text-xl font-bold text-[#1A2F22] mb-2">Zadania na ten dzień</h2>
+          <p className="text-xs text-[#5A7368]">Kliknij zadanie, aby je edytować.</p>
         </div>
         <div 
           className={`flex-1 overflow-y-auto px-6 pb-8 relative transition-all duration-200 ${dragTarget && dragTarget.type === 'backlog' ? "bg-emerald-50/70 border-2 border-dashed border-[#057E85] rounded-2xl shadow-inner" : ""}`}
           onDragOver={(e) => { 
             e.preventDefault(); 
-            e.dataTransfer.dropEffect = "move";
+            e.dataTransfer.dropEffect = "move"; 
             setDragTarget({ type: 'backlog' });
           }}
           onDragLeave={(e) => {
@@ -710,38 +802,40 @@ export default function CalendarView({ tasks, selectedDate, onChangeDate, onTogg
               <span className="text-[12px] font-bold text-[#057E85]">📥 Upuść tutaj, aby cofnąć zadanie do Backlogu</span>
             </div>
           )}
-          <div className="absolute left-[33px] top-0 bottom-0 w-px bg-[#BBBBBB] z-0 hidden"></div>
-          <div className="space-y-4">
-            {queueTasks.map((t, idx) => {
+          <div className="space-y-3">
+            {queueTasks.map((t) => {
               const deadlineToday = isSameDate(t.deadline, selectedDate);
               return (
-                <div key={t.id} className="relative z-10 pl-6">
-                  <div className="absolute left-[3px] top-[26px] w-2 h-2 rounded-full bg-[#0A0291] border border-white shadow-sm z-20"></div>
-                  {idx !== queueTasks.length-1 && (<div className="absolute left-[6px] top-[34px] bottom-[-24px] w-px bg-[#BBBBBB] z-0"></div>)}
-                  <div 
-                    onClick={() => onEditTask(t)} 
-                    draggable={!t.isLocked}
-                    onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); }}
-                    className={`bg-white p-4 rounded-[16px] border border-[#0A0291]/60 transition-all duration-300 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${t.done ? "opacity-60 grayscale border-gray-200" : ""}`}
-                  >
-                    <div className="flex justify-between items-start mb-2 pointer-events-none">
-                      <div className="flex items-center gap-1.5"><Star size={14} className={t.p === "wysoki" ? "text-red-400 fill-red-400" : (t.p === "sredni" ? "text-yellow-400 fill-yellow-400" : "text-green-400")} /></div>
-                      {deadlineToday && !t.done && <span className="text-[10px] text-[#D04F4F] bg-[#FFDBDB] px-2 py-0.5 rounded-full font-medium">dzisiaj</span>}
-                      {t.done && <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">zrobione</span>}
+                <div 
+                  key={t.id}
+                  onClick={() => onEditTask(t)} 
+                  draggable={!t.isLocked}
+                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); }}
+                  className={`bg-white p-3.5 rounded-2xl border border-[#E8DDD0] transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${t.done ? "opacity-60 grayscale border-gray-200" : ""}`}
+                >
+                  <div className="flex justify-between items-start mb-1.5 pointer-events-none">
+                    <div className="flex items-center gap-1.5">
+                      <Star size={14} className={t.p === "wysoki" ? "text-red-500 fill-red-500" : (t.p === "sredni" ? "text-amber-500 fill-amber-500" : "text-emerald-500 fill-emerald-500")} />
                     </div>
-                    <h4 className={`text-[13px] font-bold mb-1 transition-colors leading-snug pointer-events-none ${t.done ? "line-through text-gray-500" : "text-[#303030]"}`}>{t.title}</h4>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[11px] text-[#BDBDBD] font-medium pointer-events-none">{t.duration || "60 min"}</span>
-                      <div className="ml-auto flex gap-1">
-                        <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
-                      </div>
+                    {deadlineToday && !t.done && <span className="text-[10px] text-red-700 bg-red-50 px-2 py-0.5 rounded-full font-bold">dzisiaj</span>}
+                    {t.done && <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">zrobione</span>}
+                  </div>
+                  <h4 className={`text-xs font-bold mb-1 transition-colors leading-snug pointer-events-none ${t.done ? "line-through text-gray-400" : "text-[#1A2F22]"}`}>{t.title}</h4>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[10px] text-[#5A7368] font-semibold pointer-events-none">{t.duration || "60 min"}</span>
+                    <div className="ml-auto flex gap-1">
+                      <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
-          {queueTasks.length === 0 && (<div className="text-center py-20 opacity-70 relative z-10 pl-6"><p className="text-[11px] font-medium text-[#9FB5AD]">{searchRight ? "Brak wyników" : "Wszystko zrobione!"}</p></div>)}
+          {queueTasks.length === 0 && (
+            <div className="text-center py-16 opacity-70">
+              <p className="text-xs font-medium text-[#5A7368]">Brak zadań na ten dzień</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
