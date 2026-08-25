@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw, X } from "lucide-react";
+import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw, X, Coins } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Lib
@@ -201,15 +201,18 @@ export default function App() {
             .order('d', { ascending: true });
           setMoods(moodsData || []);
 
-          // 3. Pobierz preferencje (status onboardingu)
+          // 3. Pobierz preferencje (status onboardingu) oraz tokeny AI
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('prefs')
+            .select('prefs, ai_tokens')
             .eq('email', user.email)
             .single();
 
           if (!profileError && profileData) {
             let currentPrefs = profileData.prefs || {};
+            const initialAiTokens = (profileData.ai_tokens !== null && profileData.ai_tokens !== undefined)
+              ? profileData.ai_tokens
+              : (currentPrefs.ai_tokens ?? 10);
             
             // LOGIKA STREAKU LOGOWANIA
             const now = new Date();
@@ -248,7 +251,8 @@ export default function App() {
             setUser(prev => ({ 
               ...prev, 
               name: currentPrefs?.name || prev?.name || user.email.split('@')[0],
-              prefs: currentPrefs 
+              prefs: currentPrefs,
+              aiTokens: initialAiTokens
             }));
             setView("app");
           } else {
@@ -356,8 +360,103 @@ export default function App() {
     }
   };
 
+  // Obsługa zużywania monet AI (np. analiza nastroju)
+  const spendAiTokens = async (amount = 1) => {
+    if (!user || !user.email) return false;
+    const currentTokens = user.aiTokens !== undefined ? user.aiTokens : (user.prefs?.ai_tokens ?? 10);
+    if (currentTokens < amount) return false;
+
+    const newTokens = Math.max(0, currentTokens - amount);
+    
+    // Natychmiastowa optymistyczna zmiana w stanie React
+    setUser(prev => ({
+      ...prev,
+      aiTokens: newTokens,
+      prefs: { ...(prev?.prefs || {}), ai_tokens: newTokens }
+    }));
+
+    try {
+      // Prosty odczyt bieżących statystyk dla bezpieczeństwa (lub zakładamy, że mamy je w profilu, 
+      // dla uproszczenia robimy po prostu update, który powiększy wydatki jeśli śledzimy stan w pamięci).
+      
+      // Ponieważ nie mamy "spent" w pamięci aplikacji, aby było to 100% bezpieczne, po prostu aktualizujemy bilans.
+      // Aby w pełni zrealizować statystyki "spent", musimy najpierw pobrać aktualny stan z bazy (lub polegać na wbudowanej inkrementacji).
+      // Zrobimy inkrementację w Supabase (gdybyśmy mieli włączone uprawnienia). Dla pewności najpierw zapytamy.
+      const { data: profile } = await supabase.from('profiles').select('ai_tokens_spent').eq('email', user.email).single();
+      const currentSpent = profile?.ai_tokens_spent || 0;
+      
+      await supabase
+        .from('profiles')
+        .update({ 
+            ai_tokens: newTokens,
+            ai_tokens_spent: currentSpent + amount
+        })
+        .eq('email', user.email);
+
+      return true;
+    } catch (err) {
+      console.error("Błąd zapisu tokenów AI w Supabase:", err);
+      return true;
+    }
+  };
+
+  // Pomocnicza metoda do testowania / debugowania salda monet oraz śledzenia zysków
+  const setAiTokensDebug = async (newAmount) => {
+    if (!user || !user.email) return;
+    const validAmount = Math.max(0, newAmount);
+    const currentTokens = user.aiTokens !== undefined ? user.aiTokens : (user.prefs?.ai_tokens ?? 10);
+    const diff = validAmount - currentTokens;
+
+    setUser(prev => ({
+      ...prev,
+      aiTokens: validAmount,
+      prefs: { ...(prev?.prefs || {}), ai_tokens: validAmount }
+    }));
+
+    try {
+      const { data: profile } = await supabase.from('profiles').select('ai_tokens_gained').eq('email', user.email).single();
+      const currentGained = profile?.ai_tokens_gained || 10;
+      
+      const updatePayload = { ai_tokens: validAmount };
+      if (diff > 0) {
+          updatePayload.ai_tokens_gained = currentGained + diff;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updatePayload)
+        .eq('email', user.email);
+
+      if (error) {
+        const currentPrefs = user.prefs || {};
+        await supabase
+          .from('profiles')
+          .update({ prefs: { ...currentPrefs, ai_tokens: validAmount } })
+          .eq('email', user.email);
+      }
+      add(`Ustawiono ${validAmount} monet AI (Test)`, 'info');
+    } catch (err) {
+      console.error("Błąd aktualizacji tokenów AI:", err);
+      add("Błąd zapisu tokenów.", "warn");
+    }
+  };
+
   const debugActions = {
     triggerScenario: handleTriggerScenario,
+    setAiTokens: setAiTokensDebug,
+    addAiTokens: async (amount = 5) => {
+      const cur = user?.aiTokens ?? (user?.prefs?.ai_tokens ?? 10);
+      await setAiTokensDebug(cur + amount);
+      setShowDebugModal(false);
+    },
+    resetAiTokens: async () => {
+      await setAiTokensDebug(10);
+      setShowDebugModal(false);
+    },
+    zeroAiTokens: async () => {
+      await setAiTokensDebug(0);
+      setShowDebugModal(false);
+    },
 
     clearTasks: async () => {
       await supabase.from('tasks').delete().eq('user_email', user.email);
@@ -505,6 +604,10 @@ export default function App() {
               await debugActions.clearTasks();
             } else if (cmd.command_name === 'clearMoods') {
               await debugActions.clearMoods();
+            } else if (cmd.command_name === 'setAiTokens' && cmd.payload !== undefined) {
+              await debugActions.setAiTokens(Number(cmd.payload));
+            } else if (cmd.command_name === 'addAiTokens') {
+              await debugActions.addAiTokens(Number(cmd.payload) || 5);
             }
 
             // Oznacz komendę jako wykonaną
@@ -834,6 +937,7 @@ export default function App() {
 
   const [xpItems, setXpItems] = useState([]);
   const streakCount = user?.prefs?.loginStreak || 0;
+  const aiTokens = user?.aiTokens !== undefined ? user.aiTokens : (user?.prefs?.ai_tokens ?? 10);
 
   const toggleTask = async (id, e) => {
     const task = tasks.find(t => t.id === id);
@@ -1104,14 +1208,14 @@ export default function App() {
           prefs.lastLoginDate = todayStr;
           prefs.loginStreak = 1;
 
-          // Zapisz preferencje w Supabase przed wejściem do aplikacji
+          // Zapisz preferencje oraz 10 monet AI w Supabase przed wejściem do aplikacji
           const { error } = await supabase
             .from('profiles')
-            .upsert({ email: user.email, prefs }, { onConflict: 'email' });
+            .upsert({ email: user.email, prefs, ai_tokens: 10 }, { onConflict: 'email' });
 
           if (error) throw error;
 
-          setUser({ ...user, name: prefs.name || user.name, prefs });
+          setUser({ ...user, name: prefs.name || user.name, prefs, aiTokens: 10 });
           setView("app");
           add("Ustawienia zostały zapisane!");
         } catch (err) {
@@ -1270,6 +1374,27 @@ export default function App() {
                 >
                   <img src="/icons/fire.svg" alt="Flame Streak" className="w-5 h-5 object-contain drop-shadow-sm" />
                   <span>{streakCount}</span>
+                </motion.div>
+
+                {/* Monety / Tokeny AI obok streaku */}
+                <motion.div 
+                  layout
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className={`flex items-center justify-center gap-1.5 px-4 h-10 rounded-full font-extrabold text-sm flex-shrink-0 shadow-sm transition-all ${
+                    aiTokens > 2
+                      ? "bg-[#E5F2F3] border border-[#1A949A]/30 text-[#02848C]"
+                      : aiTokens > 0
+                      ? "bg-amber-500/10 border border-amber-500/20 text-amber-700"
+                      : "bg-rose-500/10 border border-rose-500/20 text-rose-600 opacity-80"
+                  }`} 
+                  title={`${aiTokens} monet AI`}
+                >
+                  <img 
+                    src="/icons/AI Coin.svg" 
+                    alt="AI Coin" 
+                    className={`w-5 h-5 object-contain drop-shadow-sm ${aiTokens === 0 ? "opacity-40 grayscale" : ""}`} 
+                  />
+                  <span>{aiTokens}</span>
                 </motion.div>
 
                 {/* Profil z dynamiczną szerokością zależną od długości imienia */}
@@ -1452,6 +1577,9 @@ export default function App() {
                   onEditMood={handleEditMood}
                   todayDate={getNow()}
                   userEmail={user?.email}
+                  aiTokens={aiTokens}
+                  onSpendTokens={spendAiTokens}
+                  addToast={add}
                 />
               )}
               {activeTab === "warning" && <WarningView loading={isLoading} user={user} />}

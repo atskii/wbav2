@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Play, Trash2, Zap, Loader2 } from 'lucide-react';
+import { LogOut, Play, Trash2, Zap, Loader2, Coins } from 'lucide-react';
 
 export default function AdminPanel({ user, onLogout, addToast, supabase }) {
     const [accounts, setAccounts] = useState([]);
@@ -79,6 +79,9 @@ export default function AdminPanel({ user, onLogout, addToast, supabase }) {
                                     </button>
                                     <button onClick={() => sendCommand(account, 'generateFakeMoods')} className="flex items-center gap-1 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-500 hover:text-white transition-colors">
                                         <Zap size={16} /> Fake Moods
+                                    </button>
+                                    <button onClick={() => sendCommand(account, 'addAiTokens', 5)} className="flex items-center gap-1 bg-amber-50 text-amber-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-amber-500 hover:text-white transition-colors">
+                                        <Coins size={16} /> +5 Monet AI
                                     </button>
                                     <button onClick={() => sendCommand(account, 'totalWipe')} className="flex items-center gap-1 bg-red-50 text-red-500 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-500 hover:text-white transition-colors ml-auto">
                                         <Trash2 size={16} /> Total Wipe

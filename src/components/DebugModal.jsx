@@ -7,6 +7,7 @@ export default function DebugModal({ onClose, actions }) {
     { id: "scenarios", label: "Ostrzeżenia" },
     { id: "tasks", label: "Zadania" },
     { id: "moods", label: "Nastroje" },
+    { id: "tokens", label: "Monety AI" },
     { id: "time", label: "Czas" },
     { id: "account", label: "Konto" }
   ];
@@ -51,6 +52,37 @@ export default function DebugModal({ onClose, actions }) {
             <div className="space-y-4">
               <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between"><div><h4 className="font-bold text-[#1A2F22] mb-1">Generuj losową historię</h4><p className="text-xs text-gray-500">Zapełnia 15 dni wstecz losowymi nastrojami.</p></div><button onClick={actions.generateFakeMoods} className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200">Uruchom</button></div>
               <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between"><div><h4 className="font-bold text-red-600 mb-1">Wyczyść nastroje</h4><p className="text-xs text-gray-500">Usuwa całą zarejestrowaną dotąd historię nastrojów z bazy.</p></div><button onClick={actions.clearMoods} className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg hover:bg-red-100">Uruchom</button></div>
+            </div>
+          )}
+          {activeTab === "tokens" && (
+            <div className="space-y-4">
+              <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-[#1A2F22] mb-1">Dodaj +5 monet AI</h4>
+                  <p className="text-xs text-gray-500">Zwiększa bieżące saldo monet o 5 sztuk.</p>
+                </div>
+                <button onClick={() => actions.addAiTokens(5)} className="px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-lg hover:bg-amber-100 transition-colors">
+                  +5 Monet
+                </button>
+              </div>
+              <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-[#1A2F22] mb-1">Zresetuj do 10 monet AI</h4>
+                  <p className="text-xs text-gray-500">Przywraca domyślny pakiet startowy 10 monet.</p>
+                </div>
+                <button onClick={actions.resetAiTokens} className="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors">
+                  Ustaw 10
+                </button>
+              </div>
+              <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-rose-600 mb-1">Wyzeruj monety (0 monet)</h4>
+                  <p className="text-xs text-gray-500">Symuluje brak tokenów do testowania blokad AI.</p>
+                </div>
+                <button onClick={actions.zeroAiTokens} className="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold rounded-lg hover:bg-rose-100 transition-colors">
+                  Wyzeruj (0)
+                </button>
+              </div>
             </div>
           )}
           {activeTab === "time" && (

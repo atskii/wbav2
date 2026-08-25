@@ -3,7 +3,7 @@ import { Calendar, Search, Smile, X, Sparkles, Loader2 } from "lucide-react";
 import { EMOJIS, MOOD_L } from "../lib/constants";
 import { analyzeMoodWithAI } from "../lib/gemini";
 
-export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, userEmail }) {
+export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, userEmail, aiTokens = 10, onSpendTokens, addToast }) {
   const [filter, setFilter] = useState("Tydzień");
   const [hovered, setHovered] = useState(null);
   const [showAvg, setShowAvg] = useState(true);
@@ -12,6 +12,17 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
   const [aiState, setAiState] = useState({ isOpen: false, loading: false, result: "", error: "" });
 
   const handleAIAnalysis = async () => {
+    if (aiTokens < 1) {
+      setAiState({ 
+        isOpen: true, 
+        loading: false, 
+        result: "", 
+        error: "Brak monet AI! Wykorzystałeś wszystkie darmowe monety (0/10). Potrzebujesz 1 monety, aby wygenerować nową analizę." 
+      });
+      if (addToast) addToast("Brak monet AI do wykonania analizy.", "warn");
+      return;
+    }
+
     setAiState({ isOpen: true, loading: true, result: "", error: "" });
     try {
       const validMoods = moods.filter(m => m.v !== null);
@@ -36,6 +47,15 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
 
       const result = await analyzeMoodWithAI(validMoods, "Użytkownik", userEmail);
       localStorage.setItem(cacheKey, JSON.stringify({ hash: dataHash, result }));
+
+      // Pobierz 1 monetę po pomyślnej analizie (operacja asynchroniczna w tle, nie blokuje UI)
+      if (onSpendTokens) {
+        onSpendTokens(1).catch(e => console.error("Błąd pobierania monet:", e));
+      }
+      if (addToast) {
+        addToast("Wygenerowano analizę AI (-1 moneta AI)", "info");
+      }
+
       setAiState({ isOpen: true, loading: false, result, error: "" });
     } catch (err) {
       setAiState({ isOpen: true, loading: false, result: "", error: err.message });
@@ -97,7 +117,19 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
         </div>
         <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
           <button className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Calendar size={14} /><span className="text-xs font-semibold">Wybierz datę</span></button>
-          <button onClick={handleAIAnalysis} disabled={aiState.loading} className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all disabled:opacity-50"><Sparkles size={14} /><span className="text-xs font-semibold">Analiza AI</span></button>
+          <button 
+            onClick={handleAIAnalysis} 
+            disabled={aiState.loading} 
+            className={`flex items-center gap-2 px-3 py-2 rounded-md shadow-sm transition-all ${
+              aiTokens < 1 
+                ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed hover:bg-gray-100" 
+                : "bg-[#02848C] text-white hover:bg-[#02747b]"
+            } disabled:opacity-50`}
+            title={aiTokens < 1 ? "Brak monet AI" : "Wykonaj analizę nastroju za pomocą AI"}
+          >
+            <Sparkles size={14} />
+            <span className="text-xs font-semibold">Analiza AI</span>
+          </button>
           <button onClick={onOpenModal} className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Smile size={14} /><span className="text-xs font-semibold">Zarejestruj swój nastrój</span></button>
         </div>
       </div>
