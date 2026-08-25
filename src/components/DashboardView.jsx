@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Plus,
-  RefreshCw, Play, Check, RotateCcw, Trash2, Lock, Star, BookOpen, Leaf, X, Pencil
+  RefreshCw, Play, Check, RotateCcw, Trash2, Lock, Star, BookOpen, Leaf, X, Pencil, HelpCircle
 } from "lucide-react";
 import { checkIsDate } from "../lib/dateHelpers";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
@@ -251,7 +251,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
   const [showBacklog, setShowBacklog] = useState(false);
 
   // Samouczki
-  const { isTooltipSeen, markTooltipSeen } = useTutorials(userEmail || userPrefs?.email);
+  const { isTooltipSeen, markTooltipSeen, resetTooltipGroup } = useTutorials(userEmail || userPrefs?.email);
   const [showDateNavTutorial, setShowDateNavTutorial] = useState(false);
   const [showGeneratePlanTutorial, setShowGeneratePlanTutorial] = useState(false);
   const [showAddTaskTutorial, setShowAddTaskTutorial] = useState(false);
@@ -350,7 +350,16 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
           {/* NAGŁÓWEK DASHBOARDU PRZENIESIONY TUTAJ - NAD PLAN DNI */}
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5 lg:gap-0 mb-6 flex-shrink-0">
             <div className="flex flex-col items-start gap-1 w-full lg:w-auto">
-              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#1A2F22] tracking-tight">Dzisiejsze zadania</h1>
+                <button 
+                  onClick={() => resetTooltipGroup(['dashboard_date_nav', 'dashboard_generate_plan', 'dashboard_add_task', 'dashboard_streak_plant'])}
+                  className="p-1.5 sm:p-2 mt-1 hover:bg-[#E8F4ED] rounded-full transition-all text-[#5A7368] hover:text-[#1E5C36]"
+                  title="Przywróć samouczki ekranu"
+                >
+                  <HelpCircle size={22} className="sm:w-6 sm:h-6" />
+                </button>
+              </div>
               
               <div className="flex gap-2 w-full lg:w-auto mt-4 mb-2 lg:hidden">
                 <button onClick={onOpenTaskModal} className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">

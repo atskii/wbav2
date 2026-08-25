@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, HelpCircle } from "lucide-react";
 import { PRIOS } from "../lib/constants";
 import { useTutorials } from "../hooks/useTutorials";
 
@@ -8,7 +8,7 @@ import { useTutorials } from "../hooks/useTutorials";
 // ═══════════════════════════════════════════════════
 export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
   const [title, setTitle] = useState(taskToEdit?.title || "");
-  const { isTooltipSeen, markTooltipSeen, loading } = useTutorials(userEmail);
+  const { isTooltipSeen, markTooltipSeen, resetTooltipGroup, loading } = useTutorials(userEmail);
   
   const showDurationTutorial = !loading && !isTooltipSeen('task_duration');
   const showDeadlineTutorial = !loading && !isTooltipSeen('task_deadline');
@@ -16,6 +16,17 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
   const showPriorityTutorial = !loading && !isTooltipSeen('task_priority');
   const showRecurrenceTutorial = !loading && !isTooltipSeen('task_recurrence');
   const showLockTutorial = !loading && !isTooltipSeen('task_lock');
+
+  const handleResetTooltips = () => {
+    resetTooltipGroup([
+      'task_duration',
+      'task_deadline',
+      'task_difficulty',
+      'task_priority',
+      'task_recurrence',
+      'task_lock'
+    ]);
+  };
 
   const [duration, setDuration] = useState(taskToEdit?.duration ? taskToEdit.duration.replace(" min", "") : "60");
   const [deadline, setDeadline] = useState(taskToEdit?.deadline ? taskToEdit.deadline.replace(" o ", "T") : "");
@@ -80,7 +91,16 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
       <div className="bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl p-5 sm:p-10 w-full max-w-lg border border-white/20 relative my-auto" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6 sm:mb-8">
           <h3 className="text-2xl sm:text-3xl font-bold text-[#1A2F22]">{taskToEdit ? "Edytuj zadanie" : "Nowe zadanie"}</h3>
-          <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full transition-all"><X size={24} className="text-[#1A2F22] sm:w-7 sm:h-7" /></button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleResetTooltips}
+              className="p-2 hover:bg-[#E8F4ED] rounded-full transition-all text-[#5A7368] hover:text-[#1E5C36]"
+              title="Przywróć samouczki"
+            >
+              <HelpCircle size={24} className="sm:w-6 sm:h-6" />
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-full transition-all"><X size={24} className="text-[#1A2F22] sm:w-7 sm:h-7" /></button>
+          </div>
         </div>
 
         <div className="space-y-5 sm:space-y-6">
