@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Calendar, Search, Smile, X, Sparkles, Loader2 } from "lucide-react";
 import { EMOJIS, MOOD_L } from "../lib/constants";
 import { analyzeMoodWithAI } from "../lib/gemini";
@@ -6,10 +6,21 @@ import { analyzeMoodWithAI } from "../lib/gemini";
 export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, userEmail, aiTokens = 10, onSpendTokens, addToast }) {
   const [filter, setFilter] = useState("Tydzień");
   const [hovered, setHovered] = useState(null);
-  const [showAvg, setShowAvg] = useState(true);
+  const [showAvg, setShowAvg] = useState(false);
   const [editingMood, setEditingMood] = useState(null);
   const [editingNote, setEditingNote] = useState("");
   const [aiState, setAiState] = useState({ isOpen: false, loading: false, result: "", error: "" });
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+        }
+      }, 0);
+    }
+  }, [filter, moods, aiState.isOpen]);
 
   const handleAIAnalysis = async () => {
     if (aiTokens < 1) {
@@ -85,35 +96,37 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
   }
 
   const avgV = countV > 0 ? sumV / countV : 0;
-  const width = 1000;
-  const height = 300;
-  const paddingX = 40;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const width = Math.max(isMobile ? window.innerWidth - 40 : 1000, daysToShow * (isMobile ? 22 : 40));
+  const height = isMobile ? 260 : 380;
+  const paddingX = 20;
 
   const points = data.map((d, i) => {
     if (d.v === null) return null;
-    const x = paddingX + (i / (daysToShow - 1)) * (width - paddingX - 40);
-    const yPos = 20 + (1 - d.v / 6) * (height - 40);
+    const x = paddingX + (i / (daysToShow - 1)) * (width - paddingX * 2);
+    const yPos = 20 + (1 - d.v / 6) * (height - 60);
     return { x, y: yPos, data: d };
   }).filter(Boolean);
 
-  const avgY = 20 + (1 - avgV / 6) * (height - 40);
+  const avgY = 20 + (1 - avgV / 6) * (height - 60);
   const linePath = points.map((p, i) => (i === 0 ? `M ${p.x},${p.y}` : `L ${p.x},${p.y}`)).join(" ");
   const firstX = points.length > 0 ? points[0].x : paddingX;
-  const lastX = points.length > 0 ? points[points.length - 1].x : width - 40;
+  const lastX = points.length > 0 ? points[points.length - 1].x : width - paddingX;
   const areaPath = points.length > 0 ? `${linePath} L ${lastX},${height} L ${firstX},${height} Z` : "";
   const hitRadius = Math.min(25, Math.max(6, (width / daysToShow) / 2));
 
   return (
-    <div className="w-full h-full p-4 lg:p-6 flex flex-col items-center bg-[#FCFCFD] overflow-y-auto relative">
-      <div className="w-full max-w-6xl flex flex-col mb-4 shrink-0">
+    <div className="w-full h-full p-0 md:p-4 lg:p-6 flex flex-col items-center bg-[#FCFCFD] overflow-y-auto relative pb-20 md:pb-4">
+      {/* TITLE (Desktop only) */}
+      <div className="hidden md:flex w-full max-w-6xl flex-col mb-4 shrink-0 mt-4 md:mt-0">
         <h1 className="text-[24px] font-bold text-[#303030] leading-[130%] mb-1">Monitor nastroju</h1>
         <p className="text-sm text-[#1D1B20] max-w-3xl">Poświęć chwilę, aby zaznaczyć, jak się czujesz. To pomoże Ci lepiej zrozumieć siebie i śledzić swoje samopoczucie.</p>
       </div>
-      <div className="w-full max-w-6xl flex flex-col md:flex-row justify-between items-center bg-white border-b border-[#E8E8E8] pb-4 mb-4 gap-4 shrink-0">
+
+      {/* DESKTOP ACTION BAR (Hidden on mobile) */}
+      <div className="hidden md:flex w-full max-w-6xl justify-between items-center bg-white border-b border-[#E8E8E8] pb-4 mb-4 gap-4 shrink-0">
         <div className="flex bg-white rounded-xl overflow-hidden self-start md:self-auto">
-          <button onClick={() => setShowAvg(!showAvg)} className={`px-4 py-2 text-sm transition-all border border-[#F4F4F4] rounded-l-xl z-10 relative ${showAvg ? "font-bold text-[#000000] bg-white shadow-sm" : "font-semibold text-[#707070] bg-[#FAFAFA]"}`}>Średnia</button>
-          <button className="px-4 py-2 text-sm font-semibold text-[#707070] border border-[#F4F4F4] bg-white -ml-[1px]">Wzrost</button>
-          <button className="px-4 py-2 text-sm font-semibold text-[#707070] border border-[#F4F4F4] rounded-r-xl bg-white -ml-[1px]">Spadek</button>
+          <button onClick={() => setShowAvg(!showAvg)} className={`px-4 py-2 text-sm transition-all border border-[#F4F4F4] rounded-xl z-10 relative ${showAvg ? "font-bold text-[#000000] bg-white shadow-sm" : "font-semibold text-[#707070] bg-[#FAFAFA]"}`}>Średnia</button>
         </div>
         <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
           <button className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Calendar size={14} /><span className="text-xs font-semibold">Wybierz datę</span></button>
@@ -133,19 +146,45 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
           <button onClick={onOpenModal} className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Smile size={14} /><span className="text-xs font-semibold">Zarejestruj swój nastrój</span></button>
         </div>
       </div>
-      <div className="w-full max-w-6xl bg-white rounded-[10px] p-4 lg:p-6 shadow-sm border border-[#E8E8E8] shrink-0 flex flex-col">
+
+      {/* MOBILE TOP ACTION BAR */}
+      <div className="md:hidden w-full px-4 pt-4 pb-2 shrink-0">
+        <div className="grid grid-cols-2 gap-3">
+          <button className="flex justify-center items-center gap-2 px-3 py-3 bg-white text-[#02848C] border-2 border-[#02848C] rounded-xl shadow-sm transition-all active:scale-[0.98]">
+            <Calendar size={16} />
+            <span className="text-sm font-bold">Wybierz datę</span>
+          </button>
+          <button 
+            onClick={handleAIAnalysis} 
+            disabled={aiState.loading} 
+            className={`flex justify-center items-center gap-2 px-3 py-3 rounded-xl shadow-sm transition-all active:scale-[0.98] ${
+              aiTokens < 1 
+                ? "bg-gray-100 text-gray-400 border-2 border-gray-200" 
+                : "bg-[#F3E8FF] text-[#7E22CE] border-2 border-[#D8B4FE]"
+            }`}
+          >
+            <Sparkles size={16} />
+            <span className="text-sm font-bold">Analiza AI</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="w-full max-w-6xl bg-white md:rounded-[10px] p-4 lg:p-6 md:shadow-sm border-b md:border border-[#E8E8E8] shrink-0 flex flex-col mt-2 md:mt-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4 shrink-0">
-          <h2 className="text-xl font-bold text-[#151515]">Wykres Twojego nastroju w czasie</h2>
+          <div className="flex items-center justify-between w-full md:w-auto">
+            <h2 className="text-lg md:text-xl font-bold text-[#151515]">Wykres nastroju w czasie</h2>
+            <button onClick={() => setShowAvg(!showAvg)} className={`md:hidden px-3 py-1.5 text-xs transition-all border rounded-lg ${showAvg ? "font-bold text-[#02848C] border-[#02848C] bg-[#E5F2F3]" : "font-semibold text-[#707070] border-[#E8E8E8] bg-white"}`}>Średnia</button>
+          </div>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 w-full md:w-auto">
-            <div className="flex rounded-lg overflow-hidden self-stretch md:self-auto">
+            <div className="flex w-full md:w-auto overflow-x-auto hide-scrollbar rounded-lg border border-[#F4F4F4]">
               {["Dzień", "Tydzień", "Miesiąc", "Kwartał", "Rok"].map((f, i) => {
                 const isDisabled = f === "Rok" || f === "Dzień";
                 const isFirst = i === 0; const isLast = i === 4;
                 const roundedClass = isFirst ? "rounded-l-lg" : isLast ? "rounded-r-lg" : "";
-                return (<button key={f} onClick={() => !isDisabled && setFilter(f)} disabled={isDisabled} className={`px-3 lg:px-4 py-2 text-xs transition-all border border-[#F4F4F4] -ml-[1px] first:ml-0 ${roundedClass} ${isDisabled ? "text-[#707070] cursor-not-allowed bg-white" : filter === f ? "bg-white font-bold text-[#000000] shadow-sm relative z-10" : "bg-white font-semibold text-[#707070] hover:text-[#151515]"}`}>{f}</button>);
+                return (<button key={f} onClick={() => !isDisabled && setFilter(f)} disabled={isDisabled} className={`px-3 lg:px-4 py-2 text-[11px] md:text-xs transition-all border border-[#F4F4F4] -ml-[1px] first:ml-0 whitespace-nowrap ${roundedClass} ${isDisabled ? "text-[#707070] cursor-not-allowed bg-white" : filter === f ? "bg-white font-bold text-[#000000] shadow-sm relative z-10" : "bg-white font-semibold text-[#707070] hover:text-[#151515]"}`}>{f}</button>);
               })}
             </div>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="hidden md:flex items-center gap-2 shrink-0">
               <div className="w-2.5 h-2.5 rounded-full border-2 border-[#1A949A]" />
               <span className="text-xs font-semibold text-[#5A5A5A]">Twój nastrój</span>
             </div>
@@ -182,17 +221,28 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
           </div>
         )}
 
-        <div className="relative w-full h-[300px] shrink-0 mt-2 mb-10">
-          {[0,1,2,3,4,5,6].map(level => {
-            const yPos = 20 + (1 - level / 6) * (height - 40);
-            return (<div key={`html-emoji-${level}`} className="absolute text-xl flex items-center justify-center bg-transparent text-[#5A5A5A] w-6 h-6 rounded-full" style={{ left: 0, top: `${(yPos / height) * 100}%`, transform: 'translateY(-50%)' }}><span className="opacity-90">{EMOJIS[level]}</span></div>);
-          })}
-          <div className="absolute left-[40px] right-[40px] bottom-[-25px] flex justify-between">
-            {data.map((d, i) => { if (!d.label) return null; return (<div key={i} className="text-xs font-semibold text-[#8B8692] -ml-3 text-center w-8">{d.label}</div>); })}
+        <div className="relative w-full shrink-0 mt-4 mb-2 flex border border-[#F4F4F4] rounded-xl bg-white shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)]" style={{ height: `${height}px` }}>
+          {/* Y-AXIS (EMOJIS) - FIXED */}
+          <div className="w-10 shrink-0 relative h-full bg-white z-20 border-r border-[#F4F4F4] rounded-l-xl">
+            {[0,1,2,3,4,5,6].map(level => {
+              const yPos = 20 + (1 - level / 6) * (height - 60);
+              return (
+                <div key={`html-emoji-${level}`} className="absolute text-[16px] md:text-xl flex items-center justify-center bg-white text-[#5A5A5A] w-6 h-6 rounded-full" style={{ right: '8px', top: `${(yPos / height) * 100}%`, transform: 'translateY(-50%)' }}>
+                  <span className="opacity-100">{EMOJIS[level]}</span>
+                </div>
+              );
+            })}
           </div>
-          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible absolute top-0 left-0" preserveAspectRatio="none">
+
+          {/* SCROLLABLE X-AXIS CHART */}
+          <div ref={scrollRef} className="flex-1 overflow-x-auto hide-scrollbar relative h-full bg-white rounded-r-xl" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="relative h-full" style={{ width: `${width}px` }}>
+              <div className="absolute left-0 right-0 bottom-4 flex justify-between px-[20px]">
+                {data.map((d, i) => { if (!d.label) return null; return (<div key={i} className="text-[10px] md:text-[11px] font-semibold text-[#8B8692] text-center w-12 -ml-6">{d.label}</div>); })}
+              </div>
+              <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible absolute top-0 left-0" preserveAspectRatio="none">
             <defs><linearGradient id="chartGradientNew" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6ECCD2" stopOpacity="0.4" /><stop offset="100%" stopColor="#6ECCD2" stopOpacity="0.0" /></linearGradient></defs>
-            {[0,1,2,3,4,5,6].map(level => { const yPos = 20 + (1 - level / 6) * (height - 40); return (<g key={`grid-${level}`}><line x1={paddingX} y1={yPos} x2={width} y2={yPos} stroke="#F4F4F4" strokeWidth="1.5" /></g>); })}
+            {[0,1,2,3,4,5,6].map(level => { const yPos = 20 + (1 - level / 6) * (height - 60); return (<g key={`grid-${level}`}><line x1={paddingX} y1={yPos} x2={width} y2={yPos} stroke="#F4F4F4" strokeWidth="1.5" /></g>); })}
             {points.length > 0 && (<><path d={areaPath} fill="url(#chartGradientNew)" /><path d={linePath} fill="none" stroke="#1A949A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></>)}
             {showAvg && countV > 0 && (<g className="animate-in fade-in duration-500"><line x1={paddingX} y1={avgY} x2={width} y2={avgY} stroke="#02848C" strokeWidth="2" strokeDasharray="8,6" strokeLinecap="round" /><rect x={width - 120} y={avgY - 24} width="110" height="20" rx="4" fill="#02848C" /><text x={width - 65} y={avgY - 10} fill="white" fontSize="10" fontWeight="bold" textAnchor="middle">Średnia: {avgV.toFixed(1)} / 6.0</text></g>)}
             {points.map((p, i) => { const isHovered = hovered?.d === p.data.d; return (<g key={i}>{isHovered && (<line x1={p.x} y1={p.y} x2={p.x} y2={height} stroke="#1A949A" strokeWidth="1" strokeDasharray="4,4" />)}<circle cx={p.x} cy={p.y} r={isHovered ? 6 : 4} fill="#1A949A" className="transition-all" />{isHovered && <circle cx={p.x} cy={p.y} r={12} fill="#1A949A" className="opacity-20" />}<circle cx={p.x} cy={p.y} r={hitRadius} fill="transparent" className="cursor-pointer" onMouseEnter={() => !editingMood && setHovered(p.data)} onMouseLeave={() => !editingMood && setHovered(null)} onClick={() => { setHovered(null); setEditingMood(p.data); setEditingNote(p.data.note || ""); }} /></g>); })}
@@ -212,6 +262,16 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
             </div>
           )}
         </div>
+        </div>
+      </div>
+      </div>
+
+      {/* MOBILE BOTTOM ACTION BAR */}
+      <div className="md:hidden w-full max-w-6xl mt-2 px-4 pb-8 flex flex-col gap-3 shrink-0">
+        <button onClick={onOpenModal} className="w-full flex justify-center items-center gap-2 px-4 py-3.5 bg-[#02848C] text-white rounded-xl shadow-sm hover:bg-[#02747b] transition-all active:scale-[0.98]">
+          <Smile size={18} />
+          <span className="text-[15px] font-bold">Zarejestruj swój nastrój</span>
+        </button>
       </div>
     </div>
   );
