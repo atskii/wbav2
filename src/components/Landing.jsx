@@ -259,7 +259,7 @@ export default function Landing({ onCTA }) {
                 </div>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" className="mt-1 w-4 h-4 md:w-5 md:h-5 border-[#DFDBDB] rounded accent-[#0E6630] shrink-0" />
-                  <span className="text-[#151515] text-xs md:text-sm mt-0.5">Akceptuję <a href="#" className="underline">regulamin</a></span>
+                  <span className="text-[#151515] text-xs md:text-sm mt-0.5">Akceptuję <a href="/regulamin" className="underline">regulamin</a></span>
                 </label>
                 <button className="flex justify-center items-center gap-2 px-6 py-3 bg-[#0E6630] text-white font-medium rounded-lg hover:bg-[#0b5025] transition-colors w-full md:w-auto mt-2">
                   Wyślij <ArrowRight size={18} />
@@ -286,8 +286,8 @@ export default function Landing({ onCTA }) {
           <div className="w-full h-px bg-[#F6F6F6]" />
           <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 text-xs md:text-sm text-[#121212] order-2 md:order-1">
-              <a href="#" className="underline hover:text-[#0E6630]">Polityka prywatności</a>
-              <a href="#" className="underline hover:text-[#0E6630]">Regulamin</a>
+              <a href="/polityka-prywatnosci" className="underline hover:text-[#0E6630]">Polityka prywatności</a>
+              <a href="/regulamin" className="underline hover:text-[#0E6630]">Regulamin</a>
               <a href="#" className="underline hover:text-[#0E6630]">Pliki cookies</a>
             </div>
             <p className="text-[#121212] text-xs md:text-sm order-1 md:order-2">© 2026 Nasza Aplikacja Wellbeing</p>
