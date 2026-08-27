@@ -119,6 +119,8 @@ export default function SettingsView({ user, setUser, add }) {
         <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-[#E8DDD0]"><Settings size={24} className="text-[#1E5C36]" /></div>
         <div><h1 className="font-lora text-3xl font-bold text-[#1A2F22]">Ustawienia</h1><p className="text-[#5A7368]">Dostosuj aplikację do swojego rytmu dnia</p></div>
       </div>
+      
+      {/* Podstawowe ustawienia */}
       <div className="bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
         <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
           <div className="flex-1">
@@ -172,9 +174,19 @@ export default function SettingsView({ user, setUser, add }) {
             ))}
           </div>
         </div>
+      </div>
 
-        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors border-t border-[#E8DDD0]">
-          <div className="mb-4 flex items-start gap-4 justify-between">
+      <div className="mt-8 flex justify-end">
+        <button onClick={handleSave} disabled={isSaving || isDeleting} className="w-full md:w-auto flex items-center justify-center gap-2 px-8 py-4 md:py-3 bg-[#1E5C36] text-white rounded-2xl font-bold hover:bg-[#164a2c] transition-all shadow-lg hover:shadow-xl disabled:opacity-70 text-lg md:text-base">
+          {isSaving ? <RotateCcw size={18} className="animate-spin" /> : <Check size={18} />}
+          Zapisz ustawienia
+        </button>
+      </div>
+
+      {/* Integracje i Połączenia */}
+      <div className="mt-16 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
+        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
               <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
                 <Calendar size={20} className="text-[#2D9E6B]" />
@@ -187,78 +199,30 @@ export default function SettingsView({ user, setUser, add }) {
             <button 
               onClick={handleGoogleSync} 
               disabled={isSyncing}
-              className="whitespace-nowrap px-4 py-2.5 bg-white border border-[#2D9E6B] text-[#1E5C36] rounded-xl font-semibold text-sm hover:bg-[#E8F4ED] transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+              className="w-full sm:w-auto whitespace-nowrap px-4 py-2.5 bg-white border border-[#2D9E6B] text-[#1E5C36] rounded-xl font-semibold text-sm hover:bg-[#E8F4ED] transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <Calendar size={16} />}
               {isSyncing ? "Pobieranie..." : "Synchronizuj Kalendarz"}
             </button>
           </div>
         </div>
-
-        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors border-t border-[#E8DDD0]">
-          <div className="mb-4 flex items-start gap-4 justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
-                <Shield size={20} className="text-[#0E6630]" />
-                Polityka Prywatności
-              </h3>
-              <p className="text-sm text-[#5A7368]">
-                Przeczytaj, w jaki sposób zbieramy, używamy i chronimy Twoje dane, w tym dane z kalendarza Google.
-              </p>
-            </div>
-            <a 
-              href="/polityka-prywatnosci"
-              className="whitespace-nowrap px-4 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl font-semibold text-sm hover:border-[#2D9E6B] hover:text-[#1E5C36] transition-all shadow-sm flex items-center gap-2"
-            >
-              Zobacz
-            </a>
-          </div>
-        </div>
-
-        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors border-t border-[#E8DDD0]">
-          <div className="mb-4 flex items-start gap-4 justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
-                <FileText size={20} className="text-[#0E6630]" />
-                Regulamin Usługi (Terms of Service)
-              </h3>
-              <p className="text-sm text-[#5A7368]">
-                Poznaj warunki korzystania z naszej aplikacji, ograniczenia odpowiedzialności oraz kwestie bezpieczeństwa.
-              </p>
-            </div>
-            <a 
-              href="/regulamin"
-              className="whitespace-nowrap px-4 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl font-semibold text-sm hover:border-[#2D9E6B] hover:text-[#1E5C36] transition-all shadow-sm flex items-center gap-2"
-            >
-              Zobacz
-            </a>
-          </div>
-        </div>
-
-      </div>
-
-      <div className="mt-8 flex justify-end">
-        <button onClick={handleSave} disabled={isSaving || isDeleting} className="flex items-center gap-2 px-8 py-3 bg-[#1E5C36] text-white rounded-2xl font-bold hover:bg-[#164a2c] transition-all shadow-lg hover:shadow-xl disabled:opacity-70">
-          {isSaving ? <RotateCcw size={18} className="animate-spin" /> : <Check size={18} />}
-          Zapisz ustawienia
-        </button>
       </div>
 
       {/* FAQ Section */}
-      <div className="mt-16 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
+      <div className="mt-8 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
         <div 
           className="p-6 md:p-8 flex items-center justify-between cursor-pointer hover:bg-[#FAFAFA] transition-colors"
           onClick={() => setIsFaqSectionOpen(!isFaqSectionOpen)}
         >
-          <div>
-            <h3 className="text-xl font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
+          <div className="flex-1 mr-4">
+            <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
               <HelpCircle size={22} className="text-[#2D9E6B]" />
-              Często zadawane pytania (FAQ)
+              FAQ
             </h3>
-            <p className="text-sm text-[#5A7368]">Masz problem z obsługą? Sprawdź odpowiedzi na {APP_FAQS.length} najczęstszych pytań.</p>
+            <p className="text-sm text-[#5A7368]">Odpowiedzi na {APP_FAQS.length} najczęstszych pytań.</p>
           </div>
-          <div className="bg-[#F5EFE6] p-2 rounded-xl text-[#5A7368]">
-            {isFaqSectionOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+          <div className="bg-[#F5EFE6] p-2 rounded-xl text-[#5A7368] flex-shrink-0">
+            {isFaqSectionOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </div>
         </div>
         
@@ -266,15 +230,60 @@ export default function SettingsView({ user, setUser, add }) {
           <div className="divide-y divide-[#E8DDD0] border-t border-[#E8DDD0] animate-in slide-in-from-top-4 duration-300">
             {APP_FAQS.map((faq, i) => (
               <div key={i} className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors cursor-pointer" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <h4 className="font-bold text-[#1A2F22]">{faq.q}</h4>
-                  {openFaq === i ? <ChevronUp size={18} className="text-[#2D9E6B]" /> : <ChevronDown size={18} className="text-[#9FB5AD]" />}
+                  <div className="flex-shrink-0">
+                    {openFaq === i ? <ChevronUp size={18} className="text-[#2D9E6B]" /> : <ChevronDown size={18} className="text-[#9FB5AD]" />}
+                  </div>
                 </div>
                 {openFaq === i && <p className="mt-4 text-sm text-[#5A7368] leading-relaxed animate-in fade-in slide-in-from-top-2">{faq.a}</p>}
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* Legal Section */}
+      <div className="mt-8 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
+        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors border-b border-[#E8DDD0]">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
+                <Shield size={20} className="text-[#0E6630]" />
+                Polityka Prywatności
+              </h3>
+              <p className="text-sm text-[#5A7368]">
+                Przeczytaj, w jaki sposób zbieramy i chronimy Twoje dane.
+              </p>
+            </div>
+            <a 
+              href="/polityka-prywatnosci"
+              className="w-full sm:w-auto text-center whitespace-nowrap px-4 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl font-semibold text-sm hover:border-[#2D9E6B] hover:text-[#1E5C36] transition-all shadow-sm flex items-center justify-center gap-2"
+            >
+              Zobacz
+            </a>
+          </div>
+        </div>
+
+        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
+                <FileText size={20} className="text-[#0E6630]" />
+                Regulamin Usługi (ToS)
+              </h3>
+              <p className="text-sm text-[#5A7368]">
+                Poznaj warunki korzystania z naszej aplikacji i ograniczenia.
+              </p>
+            </div>
+            <a 
+              href="/regulamin"
+              className="w-full sm:w-auto text-center whitespace-nowrap px-4 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl font-semibold text-sm hover:border-[#2D9E6B] hover:text-[#1E5C36] transition-all shadow-sm flex items-center justify-center gap-2"
+            >
+              Zobacz
+            </a>
+          </div>
+        </div>
       </div>
 
       {/* Danger Zone */}
@@ -292,7 +301,7 @@ export default function SettingsView({ user, setUser, add }) {
           <button 
             onClick={handleDeleteAccount} 
             disabled={isDeleting}
-            className="whitespace-nowrap px-6 py-3 bg-white text-red-600 border border-red-200 rounded-2xl font-semibold text-sm hover:bg-red-50 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+            className="w-full md:w-auto whitespace-nowrap px-6 py-3 bg-white text-red-600 border border-red-200 rounded-2xl font-semibold text-sm hover:bg-red-50 transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isDeleting ? "Usuwanie..." : "Usuń konto bezpowrotnie"}
           </button>
