@@ -36,12 +36,17 @@ import SettingsView from "./components/SettingsView";
 import DebugModal from "./components/DebugModal";
 import AdminPanel from "./components/AdminPanel";
 import StreakPlant from "./components/StreakPlant";
+import PrivacyPolicy from "./components/PrivacyPolicy";
 
 const ADMIN_EMAILS = ["admin@wellbeing.app", "admin@wba.com"];
 const TEST_EMAIL = "testuser@testuser";
 
 export default function App() {
-  const [view, setView] = useState("landing");
+  const [view, setView] = useState(() => {
+    const path = window.location.pathname;
+    if (path === "/polityka-prywatnosci" || path === "/privacy") return "privacy";
+    return "landing";
+  });
   const [authMode, setAuthMode] = useState("login");
   const [user, setUser] = usePersist("wba_user", null);
 
@@ -161,7 +166,9 @@ export default function App() {
         });
       } else {
         setUser(null);
-        setView("landing");
+        if (window.location.pathname !== "/polityka-prywatnosci" && window.location.pathname !== "/privacy") {
+          setView("landing");
+        }
       }
     });
 
@@ -180,7 +187,9 @@ export default function App() {
     if (user && user.email) {
       // Admin nie potrzebuje danych użytkownika ani onboardingu
       if (ADMIN_EMAILS.includes(user.email)) {
-        setView("app");
+        if (window.location.pathname !== "/polityka-prywatnosci" && window.location.pathname !== "/privacy") {
+          setView("app");
+        }
         return;
       }
 
@@ -255,10 +264,14 @@ export default function App() {
               prefs: currentPrefs,
               aiTokens: initialAiTokens
             }));
-            setView("app");
+            if (window.location.pathname !== "/polityka-prywatnosci" && window.location.pathname !== "/privacy") {
+              setView("app");
+            }
           } else {
             // Brak profilu w bazie - wymuś onboarding
-            setView("onboarding");
+            if (window.location.pathname !== "/polityka-prywatnosci" && window.location.pathname !== "/privacy") {
+              setView("onboarding");
+            }
           }
         } catch (err) {
           console.error("Błąd synchronizacji:", err);
@@ -568,7 +581,7 @@ export default function App() {
 
   useEffect(() => {
     if (view === "landing" && user) setView("app");
-    if (!user && view !== "landing" && view !== "auth") setView("landing");
+    if (!user && view !== "landing" && view !== "auth" && view !== "privacy") setView("landing");
   }, [user, view]);
 
   // --- REALTIME: Nasłuchiwanie zdalnych komend dla zwykłych użytkowników ---
@@ -1223,6 +1236,16 @@ export default function App() {
           console.error(err);
           add("Nie udało się zapisać ustawień onboardingu.", "warn");
         }
+      }} />
+    </>
+  );
+
+  if (view === "privacy") return (
+    <>
+      <Font />
+      <PrivacyPolicy onBack={() => {
+        window.history.pushState({}, '', '/');
+        setView(user ? "app" : "landing");
       }} />
     </>
   );
