@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronUp, ChevronDown, Check, RotateCcw, Settings, Trash2, Calendar, RefreshCw, HelpCircle, Shield } from "lucide-react";
+import { ChevronUp, ChevronDown, Check, RotateCcw, Settings, Trash2, Calendar, RefreshCw, HelpCircle, Shield, FileText } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { fetchGoogleCalendarEvents, mapGoogleEventsToTasks } from "../lib/googleCalendar";
 import { APP_FAQS } from "../lib/constants";
@@ -208,6 +208,26 @@ export default function SettingsView({ user, setUser, add }) {
             </div>
             <a 
               href="/polityka-prywatnosci"
+              className="whitespace-nowrap px-4 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl font-semibold text-sm hover:border-[#2D9E6B] hover:text-[#1E5C36] transition-all shadow-sm flex items-center gap-2"
+            >
+              Zobacz
+            </a>
+          </div>
+        </div>
+
+        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors border-t border-[#E8DDD0]">
+          <div className="mb-4 flex items-start gap-4 justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
+                <FileText size={20} className="text-[#0E6630]" />
+                Regulamin Usługi (Terms of Service)
+              </h3>
+              <p className="text-sm text-[#5A7368]">
+                Poznaj warunki korzystania z naszej aplikacji, ograniczenia odpowiedzialności oraz kwestie bezpieczeństwa.
+              </p>
+            </div>
+            <a 
+              href="/regulamin"
               className="whitespace-nowrap px-4 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl font-semibold text-sm hover:border-[#2D9E6B] hover:text-[#1E5C36] transition-all shadow-sm flex items-center gap-2"
             >
               Zobacz
