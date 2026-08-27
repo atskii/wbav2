@@ -704,24 +704,46 @@ export default function App() {
     const lastMood = moods.length > 0 ? moods[moods.length - 1].v : 2;
 
     const getScore = (task) => {
-      // USUNIĘTO: Zrzucanie zrobionych zadań na dno. Teraz wynik zawsze jest taki sam!
       let score = 0;
 
-      if (task.p === "wysoki") score += 30;
-      if (task.p === "sredni") score += 20;
-      if (task.p === "niski") score += 10;
-
-      if (task.deadline && task.deadline.startsWith(todayStr)) score += 100;
+      // 1. WSPT (Weighted Shortest Processing Time)
+      let weight = 10; // "niski" by default
+      if (task.p === "wysoki") weight = 30;
+      else if (task.p === "sredni") weight = 20;
 
       const match = task.duration ? task.duration.match(/(\d+)/) : null;
-      const mins = match ? parseInt(match[1]) : 60;
-      if (mins <= 30) score += 5;
+      const mins = match ? Math.max(1, parseInt(match[1])) : 60;
+      
+      // Gęstość = Waga / Czas trwania. Mnożymy przez 100 dla spójności z resztą punktacji.
+      score += (weight / mins) * 100;
 
+      // 2. Płynne EDD (Earliest Due Date)
+      if (task.deadline) {
+        const deadlineDate = new Date(task.deadline);
+        if (!isNaN(deadlineDate.getTime())) {
+          const diffHours = (deadlineDate - nowLocal) / (1000 * 60 * 60);
+          
+          if (diffHours < 0) {
+            // Po terminie - bazowo duży bonus, rośnie z czasem opóźnienia (capped do +100 dodatkowych pkt)
+            score += 150 + Math.min(Math.abs(diffHours), 100);
+          } else if (diffHours <= 168) {
+            // W ciągu najbliższych 7 dni (168 godzin)
+            // Liniowo spada od 100 pkt (teraz) do 0 pkt (za 7 dni)
+            score += 100 * (1 - (diffHours / 168));
+          }
+        } else if (task.deadline.startsWith(todayStr)) {
+          // Fallback
+          score += 100;
+        }
+      }
+
+      // 3. Wpływ nastroju i trudności
       if (lastMood <= 1) {
         score -= (task.difficulty || 0) * 15;
       } else {
         score += (task.difficulty || 0) * 6;
       }
+      
       return score;
     };
 
@@ -738,7 +760,7 @@ export default function App() {
     const parsedStart = user?.prefs?.startTime ? user.prefs.startTime.split(':').map(Number) : [6, 0];
     const timelineStart = parsedStart[0] || 6;
     const workHours = user?.prefs?.hours || 15;
-    const dayLimitMins = (timelineStart + workHours) * 60;
+    const dayLimitMins = Math.min(timelineStart + workHours, 24) * 60;
     const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
 
     let currentTasks = [...tasks];

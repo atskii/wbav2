@@ -338,7 +338,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
   // Długość dnia pracy z onboardingu (domyślnie 12h od startu)
   const workHours = userPrefs?.hours || 12;
   const lastTaskMins = scheduled.length > 0 ? scheduled[scheduled.length - 1].eMins : ((timelineStart + workHours) * 60);
-  const timelineEndHour = Math.max(timelineStart + workHours, Math.ceil(lastTaskMins / 60) + 1);
+  const timelineEndHour = Math.min(Math.max(timelineStart + workHours, Math.ceil(lastTaskMins / 60) + 1), 24);
   const hours = Array.from({ length: timelineEndHour - timelineStart + 1 }, (_, i) => timelineStart + i);
   const minsToRem = (mins) => (mins / 60) * 7.2;
   const formatTime = (mins) => `${Math.floor(mins / 60)}:${(mins % 60).toString().padStart(2, '0')}`;
