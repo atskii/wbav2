@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { analyzeMoodWithAI } from "../lib/gemini";
+import { analyzeMoodWithAI, generatePlanWithAI } from "../lib/gemini";
 import { 
   Coins, 
   Cpu, 
@@ -16,7 +16,10 @@ import {
   Wallet,
   Calculator,
   TrendingUp,
-  PiggyBank
+  PiggyBank,
+  Smile,
+  Calendar,
+  Layers
 } from "lucide-react";
 
 const USD_TO_PLN = 4.0; // Stała przeliczeniowa dla szacunkowych kosztów PLN
@@ -71,7 +74,7 @@ export default function AnalyticsDashboard() {
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
-  // Obliczenia zagregowane
+  // Obliczenia ogólne
   const totalRequests = logs.length;
   const totalTokens = logs.reduce((acc, curr) => acc + (curr.total_tokens || 0), 0);
   const totalPromptTokens = logs.reduce((acc, curr) => acc + (curr.prompt_tokens || 0), 0);
@@ -79,17 +82,53 @@ export default function AnalyticsDashboard() {
   const totalCostUsd = logs.reduce((acc, curr) => acc + Number(curr.estimated_cost_usd || 0), 0);
   const totalCostPln = totalCostUsd * USD_TO_PLN;
 
-  // Obliczenia Budżetowe & Prognoza Analiz
+  // Obliczenia Budżetowe
   const remainingBudgetPln = Math.max(0, initialBudgetPln - totalCostPln);
   const spentPercentage = initialBudgetPln > 0 
     ? Math.min(100, (totalCostPln / initialBudgetPln) * 100) 
     : 0;
 
-  // Średni koszt 1 analizy 
+  // ══════════════════════════════════════════════════════════
+  // DEDYKOWANA ANALIZA KOSZTÓW POSZCZEGÓLNYCH FUNKCJI (OST. 10)
+  // ══════════════════════════════════════════════════════════
+  
+  // 1. Analiza Nastroju
+  const moodLogs = logs.filter(l => !(l.model_name || "").includes("(plan)"));
+  const last10MoodLogs = moodLogs.slice(0, 10);
+  const avgMoodCostUsd = last10MoodLogs.length > 0
+    ? (last10MoodLogs.reduce((acc, curr) => acc + Number(curr.estimated_cost_usd || 0), 0) / last10MoodLogs.length)
+    : 0.0000525;
+  const avgMoodCostPln = avgMoodCostUsd * USD_TO_PLN;
+  const avgMoodPromptTokens = last10MoodLogs.length > 0
+    ? Math.round(last10MoodLogs.reduce((acc, curr) => acc + Number(curr.prompt_tokens || 0), 0) / last10MoodLogs.length)
+    : 0;
+  const avgMoodCandidateTokens = last10MoodLogs.length > 0
+    ? Math.round(last10MoodLogs.reduce((acc, curr) => acc + Number(curr.candidate_tokens || 0), 0) / last10MoodLogs.length)
+    : 0;
+  const avgMoodTotalTokens = avgMoodPromptTokens + avgMoodCandidateTokens;
+  const remainingMoodAnalyses = avgMoodCostPln > 0 ? Math.floor(remainingBudgetPln / avgMoodCostPln) : 0;
+
+  // 2. Generowanie Planu Dnia
+  const planLogs = logs.filter(l => (l.model_name || "").includes("(plan)"));
+  const last10PlanLogs = planLogs.slice(0, 10);
+  const avgPlanCostUsd = last10PlanLogs.length > 0
+    ? (last10PlanLogs.reduce((acc, curr) => acc + Number(curr.estimated_cost_usd || 0), 0) / last10PlanLogs.length)
+    : 0.000085;
+  const avgPlanCostPln = avgPlanCostUsd * USD_TO_PLN;
+  const avgPlanPromptTokens = last10PlanLogs.length > 0
+    ? Math.round(last10PlanLogs.reduce((acc, curr) => acc + Number(curr.prompt_tokens || 0), 0) / last10PlanLogs.length)
+    : 0;
+  const avgPlanCandidateTokens = last10PlanLogs.length > 0
+    ? Math.round(last10PlanLogs.reduce((acc, curr) => acc + Number(curr.candidate_tokens || 0), 0) / last10PlanLogs.length)
+    : 0;
+  const avgPlanTotalTokens = avgPlanPromptTokens + avgPlanCandidateTokens;
+  const remainingPlanGenerations = avgPlanCostPln > 0 ? Math.floor(remainingBudgetPln / avgPlanCostPln) : 0;
+
+  // Średni łączny koszt 1 zapytania (dla kalkulatora ogólnego)
   let autoAvgCostPln = 0.00021;
   let autoAvgCostUsd = 0.0000525;
   if (logs.length > 0) {
-    const last10Logs = logs.slice(0, 10); // logs are ordered descending
+    const last10Logs = logs.slice(0, 10);
     const last10CostUsd = last10Logs.reduce((acc, curr) => acc + Number(curr.estimated_cost_usd || 0), 0);
     autoAvgCostUsd = last10CostUsd / last10Logs.length;
     autoAvgCostPln = autoAvgCostUsd * USD_TO_PLN;
@@ -99,11 +138,6 @@ export default function AnalyticsDashboard() {
     ? autoAvgCostPln 
     : (manualCurrency === "PLN" ? manualAvgCost : manualAvgCost * USD_TO_PLN);
   const avgCostPerRequestUsd = avgCostPerRequestPln / USD_TO_PLN;
-
-  // Prognozowana liczba pozostałych analiz
-  const remainingAnalyses = avgCostPerRequestPln > 0 
-    ? Math.floor(remainingBudgetPln / avgCostPerRequestPln) 
-    : 0;
 
   // Grupowanie per konto (email)
   const userStatsMap = {};
@@ -138,7 +172,7 @@ export default function AnalyticsDashboard() {
     (l.model_name || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSimulateRequest = async () => {
+  const handleSimulateMoodRequest = async () => {
     setSimulating(true);
     setSimMessage(null);
     try {
@@ -148,10 +182,29 @@ export default function AnalyticsDashboard() {
         { d: "2026-07-26", v: 6, note: "Wszystko śmiga!" }
       ];
       await analyzeMoodWithAI(dummyMoods, "TestUser Analytics", "testuser@testuser");
-      setSimMessage({ type: "success", text: "Zapytanie wysłane! Tokeny zostały zarejestrowane w bazie." });
+      setSimMessage({ type: "success", text: "Zapytanie testowe Analizy Nastroju wysłane! Tokeny zarejestrowane." });
       await fetchTokenLogs();
     } catch (err) {
-      setSimMessage({ type: "error", text: `Błąd symulacji: ${err.message}` });
+      setSimMessage({ type: "error", text: `Błąd symulacji nastroju: ${err.message}` });
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  const handleSimulatePlanRequest = async () => {
+    setSimulating(true);
+    setSimMessage(null);
+    try {
+      const dummyTasks = [
+        { id: 101, title: "Projekt prezentacji", duration: "60m", p: "h", isLocked: false },
+        { id: 102, title: "Przegląd kodu", duration: "30m", p: "m", isLocked: false },
+        { id: 103, title: "Odpisanie na maile", duration: "45m", p: "l", isLocked: false }
+      ];
+      await generatePlanWithAI(dummyTasks, { startTime: "08:00", hours: 8 }, new Date(), 4, "testuser@testuser");
+      setSimMessage({ type: "success", text: "Zapytanie testowe Generowania Planu AI wysłane! Tokeny zarejestrowane." });
+      await fetchTokenLogs();
+    } catch (err) {
+      setSimMessage({ type: "error", text: `Błąd symulacji planu: ${err.message}` });
     } finally {
       setSimulating(false);
     }
@@ -180,7 +233,7 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 border transition-all ${
@@ -190,7 +243,7 @@ export default function AnalyticsDashboard() {
             }`}
           >
             <span className={`w-2 h-2 rounded-full ${autoRefresh ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`} />
-            Auto-odświeżanie {autoRefresh ? "(Włączone)" : "(Wyłączone)"}
+            Auto-odświeżanie {autoRefresh ? "(Wł)" : "(Wył)"}
           </button>
 
           <button
@@ -203,12 +256,23 @@ export default function AnalyticsDashboard() {
           </button>
 
           <button
-            onClick={handleSimulateRequest}
+            onClick={handleSimulateMoodRequest}
             disabled={simulating}
-            className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-cyan-500/20 flex items-center gap-2 transition-all disabled:opacity-50"
+            className="px-3.5 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50"
+            title="Wyślij testowe zapytanie analizy nastroju"
+          >
+            <Smile size={14} className={simulating ? "animate-spin" : ""} />
+            {simulating ? "..." : "Test: Nastrój"}
+          </button>
+
+          <button
+            onClick={handleSimulatePlanRequest}
+            disabled={simulating}
+            className="px-3.5 py-2 bg-gradient-to-r from-amber-600/30 to-orange-600/30 hover:from-amber-600/40 hover:to-orange-600/40 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50"
+            title="Wyślij testowe zapytanie generowania planu"
           >
             <Sparkles size={14} className={simulating ? "animate-spin" : ""} />
-            {simulating ? "Generowanie..." : "Testowe zapytanie AI"}
+            {simulating ? "..." : "Test: Plan AI"}
           </button>
         </div>
       </div>
@@ -226,8 +290,135 @@ export default function AnalyticsDashboard() {
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto space-y-6 mt-6">
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* SEKCJA: PORÓWNANIE KOSZTÓW FUNKCJI (ŚREDNIA Z OST. 10 PROMPTÓW) */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* KARTA 1: Analiza Nastroju */}
+          <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-cyan-950/30 border border-cyan-500/40 rounded-3xl p-6 shadow-xl relative overflow-hidden group hover:border-cyan-400 transition-all">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-cyan-500/20 text-cyan-300 rounded-2xl border border-cyan-500/30">
+                  <Smile size={22} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base flex items-center gap-2">
+                    Analiza Nastroju
+                    <span className="text-[10px] px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded-full font-mono font-semibold">
+                      Wellbeing Coach
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Średnia z {Math.min(10, moodLogs.length)} ostatnich promptów nastroju</p>
+                </div>
+              </div>
+              <span className="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                Próbek: {moodLogs.length}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 my-5">
+              <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800/80">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">
+                  Średni Koszt / Zapytanie
+                </span>
+                <div className="text-2xl font-black text-cyan-300 font-mono">
+                  {avgMoodCostPln < 0.00001 ? "< 0.00001" : avgMoodCostPln.toFixed(5)} <span className="text-xs font-normal text-slate-400">PLN</span>
+                </div>
+                <div className="text-[11px] text-slate-400 font-mono mt-1">
+                  ≈ ${avgMoodCostUsd.toFixed(6)} USD
+                </div>
+              </div>
+
+              <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800/80">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">
+                  Średnie Zużycie Tokenów
+                </span>
+                <div className="text-2xl font-black text-white font-mono">
+                  ~{avgMoodTotalTokens} <span className="text-xs font-normal text-slate-400">tok</span>
+                </div>
+                <div className="text-[11px] text-slate-400 font-mono mt-1 flex gap-2">
+                  <span>In: {avgMoodPromptTokens}</span>
+                  <span>•</span>
+                  <span>Out: {avgMoodCandidateTokens}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-950/40 p-3.5 rounded-xl border border-cyan-500/20 flex items-center justify-between text-xs">
+              <span className="text-slate-300 flex items-center gap-1.5">
+                <CheckCircle2 size={14} className="text-cyan-400" />
+                Pozostałe analizy w budżecie:
+              </span>
+              <strong className="text-cyan-300 font-mono text-sm font-bold">
+                ~{remainingMoodAnalyses.toLocaleString("pl-PL")}
+              </strong>
+            </div>
+          </div>
+
+          {/* KARTA 2: Generowanie Planu Dnia */}
+          <div className="bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-amber-950/30 border border-amber-500/40 rounded-3xl p-6 shadow-xl relative overflow-hidden group hover:border-amber-400 transition-all">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-amber-500/20 text-amber-300 rounded-2xl border border-amber-500/30">
+                  <Calendar size={22} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base flex items-center gap-2">
+                    Generowanie Planu Dnia
+                    <span className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded-full font-mono font-semibold">
+                      Schedule AI
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">Średnia z {Math.min(10, planLogs.length)} ostatnich promptów planu</p>
+                </div>
+              </div>
+              <span className="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                Próbek: {planLogs.length}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 my-5">
+              <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800/80">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">
+                  Średni Koszt / Zapytanie
+                </span>
+                <div className="text-2xl font-black text-amber-300 font-mono">
+                  {avgPlanCostPln < 0.00001 ? "< 0.00001" : avgPlanCostPln.toFixed(5)} <span className="text-xs font-normal text-slate-400">PLN</span>
+                </div>
+                <div className="text-[11px] text-slate-400 font-mono mt-1">
+                  ≈ ${avgPlanCostUsd.toFixed(6)} USD
+                </div>
+              </div>
+
+              <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800/80">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block mb-1">
+                  Średnie Zużycie Tokenów
+                </span>
+                <div className="text-2xl font-black text-white font-mono">
+                  ~{avgPlanTotalTokens} <span className="text-xs font-normal text-slate-400">tok</span>
+                </div>
+                <div className="text-[11px] text-slate-400 font-mono mt-1 flex gap-2">
+                  <span>In: {avgPlanPromptTokens}</span>
+                  <span>•</span>
+                  <span>Out: {avgPlanCandidateTokens}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-950/40 p-3.5 rounded-xl border border-amber-500/20 flex items-center justify-between text-xs">
+              <span className="text-slate-300 flex items-center gap-1.5">
+                <CheckCircle2 size={14} className="text-amber-400" />
+                Pozostałe plany w budżecie:
+              </span>
+              <strong className="text-amber-300 font-mono text-sm font-bold">
+                ~{remainingPlanGenerations.toLocaleString("pl-PL")}
+              </strong>
+            </div>
+          </div>
+        </div>
         
-        {/* NEW: Dedykowany Banner Budżetu i Kalkulatora Pozostałych Analiz */}
+        {/* Banner Budżetu i Ogólnego Kalkulatora */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40 border border-cyan-500/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             {/* Lewa sekcja: Budżet i Pozostała kwota */}
@@ -264,27 +455,11 @@ export default function AnalyticsDashboard() {
               </div>
             </div>
 
-            {/* Prawa sekcja: Glówny KPI - Liczba pozostałych analiz */}
+            {/* Prawa sekcja: Glówny KPI */}
             <div className="flex flex-col sm:flex-row items-stretch gap-4">
-              {/* Główna karta z dużą liczbą pozostałych analiz */}
-              <div className="bg-slate-950/80 border border-cyan-500/40 p-5 rounded-2xl flex-1 flex flex-col justify-center shadow-inner relative group hover:border-cyan-400 transition-all">
-                <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-                  <span>Szacowane Analizy</span>
-                  <Sparkles size={16} className="text-cyan-400 animate-pulse" />
-                </div>
-                <div className="text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-teal-200 to-emerald-400 tracking-tight font-mono">
-                  ~{remainingAnalyses.toLocaleString("pl-PL")}
-                </div>
-                <div className="text-[11px] text-emerald-400 font-medium mt-1 flex items-center gap-1">
-                  <CheckCircle2 size={12} />
-                  Pozostałe analizy nastroju do wyczerpania {initialBudgetPln} zł
-                </div>
-              </div>
-
-              {/* Karta pomocnicza: Średni koszt per zapytanie */}
               <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl flex-1 flex flex-col justify-center relative">
                 <div className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center justify-between">
-                  <span>Średni Koszt / Analiza</span>
+                  <span>Średni Koszt Ogólny</span>
                   <div className="flex bg-slate-900 rounded-lg p-0.5 border border-slate-800">
                     <button 
                       onClick={() => setCostMode("auto")}
@@ -604,8 +779,16 @@ export default function AnalyticsDashboard() {
                         <td className="py-3 px-4 font-mono text-cyan-300">
                           {log.user_email}
                         </td>
-                        <td className="py-3 px-4 font-mono text-[11px] text-slate-400">
-                          {log.model_name}
+                        <td className="py-3 px-4 font-mono text-[11px]">
+                          {(log.model_name || "").includes("(plan)") ? (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] font-semibold flex items-center gap-1 w-fit">
+                              <Sparkles size={10} /> Plan AI
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 text-[10px] font-semibold flex items-center gap-1 w-fit">
+                              <Smile size={10} /> Nastrój
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-right font-mono text-slate-400">
                           {log.prompt_tokens}

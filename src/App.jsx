@@ -9,6 +9,7 @@ import { checkIsDate } from "./lib/dateHelpers";
 import { analyzeMoodAlerts } from "./lib/analyzeMoodAlerts";
 import { calculateStreak, calculateTaskXP } from "./lib/xpHelpers";
 import { fetchGoogleCalendarEvents, mapGoogleEventsToTasks } from "./lib/googleCalendar";
+import { generatePlanWithAI } from "./lib/gemini";
 
 // Hooks
 import usePersist from "./hooks/usePersist";
@@ -34,6 +35,8 @@ import MoodView from "./components/MoodView";
 import WarningView from "./components/WarningView";
 import SettingsView from "./components/SettingsView";
 import DebugModal from "./components/DebugModal";
+import AiPlanModal from "./components/AiPlanModal";
+import AiPromptModal from "./components/AiPromptModal";
 import AdminPanel from "./components/AdminPanel";
 import StreakPlant from "./components/StreakPlant";
 import PrivacyPolicy from "./components/PrivacyPolicy";
@@ -53,6 +56,12 @@ export default function App() {
   const [user, setUser] = usePersist("wba_user", null);
 
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isAiPlanning, setIsAiPlanning] = useState(false);
+  const [aiCoachMessage, setAiCoachMessage] = useState(null);
+  const [isAiPromptModalOpen, setIsAiPromptModalOpen] = useState(false);
+
+  const [dateRefreshTrigger, setDateRefreshTrigger] = useState(0);
+
   const [isLoading, setIsLoading] = useState(false);
   const [showMoodModal, setShowMoodModal] = useState(false);
   const [focusedTask, setFocusedTask] = useState(null);
@@ -887,6 +896,85 @@ export default function App() {
     } catch (err) {
       console.error(err);
       add("Nie udało się zapisać planu w bazie danych.", "warn");
+    }
+  };
+
+  const handleAIGeneratePlan = async (userContext = "") => {
+    const currentTokens = user.aiTokens !== undefined ? user.aiTokens : (user.prefs?.ai_tokens ?? 10);
+    if (currentTokens < 1) {
+      add("Brak monet AI. Nie można ułożyć inteligentnego planu.", "warn");
+      return;
+    }
+    
+    setIsAiPlanning(true);
+    // Pobierz 1 token natychmiast (optymistycznie)
+    const tokenSpent = await spendAiTokens(1);
+    if (!tokenSpent) {
+      setIsAiPlanning(false);
+      add("Błąd podczas pobierania monety.", "warn");
+      return;
+    }
+
+    try {
+      const lastMood = moods.length > 0 ? moods[moods.length - 1].v : 2;
+      const result = await generatePlanWithAI(tasks, user?.prefs, selectedDate, lastMood, user?.email, userContext);
+      
+      const aiMappedTasks = Array.isArray(result?.mappedTasks) ? result.mappedTasks : [];
+      
+      const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+      
+      const updatedTasks = [...tasks];
+      let hasChanges = false;
+      const tasksToSync = [];
+      
+      // Kasujemy najpierw flex taski z tego dnia
+      updatedTasks.forEach((t, idx) => {
+        if (!t.isLocked && t.pDate === dateStr) {
+          updatedTasks[idx] = { ...t, sMins: null, eMins: null, pDate: null };
+        }
+      });
+      
+      aiMappedTasks.forEach(mt => {
+        const idx = updatedTasks.findIndex(t => t.id === mt.id);
+        if (idx !== -1) {
+          const t = updatedTasks[idx];
+          updatedTasks[idx] = { ...t, sMins: mt.sMins, eMins: mt.eMins, pDate: dateStr };
+          tasksToSync.push(updatedTasks[idx]);
+          hasChanges = true;
+        }
+      });
+      
+      if (hasChanges) {
+        setTasks(sortSmartQueue(updatedTasks));
+        
+        // Zapis do Supabase
+        await Promise.all(
+          tasksToSync.map(async (task) => {
+            const { id, ...taskDataWithoutId } = task;
+            const { error } = await supabase
+              .from('tasks')
+              .update(taskDataWithoutId)
+              .eq('id', id)
+              .eq('user_email', user.email);
+            if (error) throw error;
+          })
+        );
+      } else {
+        add("AI nie znalazło miejsca na nowe zadania.", "info");
+      }
+      
+      if (result?.coachMessage) {
+        setAiCoachMessage({
+          coachMessage: result.coachMessage
+        });
+      }
+    } catch (err) {
+      console.error("Błąd AI:", err);
+      add("Zbyt duże obciążenie mózgu AI, spróbuj ponownie za chwilę.", "warn");
+      // Zwróć monetę
+      await debugActions.setAiTokens(currentTokens); 
+    } finally {
+      setIsAiPlanning(false);
     }
   };
 
@@ -1743,6 +1831,8 @@ export default function App() {
                   }}
                   loading={isLoading}
                   onGeneratePlan={generatePlan}
+                  onGeneratePlanAI={() => setIsAiPromptModalOpen(true)}
+                  isAiPlanning={isAiPlanning}
                   userPrefs={user?.prefs}
                   userEmail={user?.email}
                 />
@@ -1829,6 +1919,21 @@ export default function App() {
               userEmail={user?.email}
             />
           )}
+
+          <AiPromptModal
+            isOpen={isAiPromptModalOpen}
+            onClose={() => setIsAiPromptModalOpen(false)}
+            onSubmit={(prompt) => {
+              setIsAiPromptModalOpen(false);
+              handleAIGeneratePlan(prompt);
+            }}
+          />
+
+          <AiPlanModal
+            isOpen={!!aiCoachMessage}
+            onClose={() => setAiCoachMessage(null)}
+            data={aiCoachMessage}
+          />
 
           {showMoodModal && <MoodModal onClose={() => setShowMoodModal(false)} onAdd={addMood} />}
           {showDebugModal && <DebugModal onClose={() => setShowDebugModal(false)} actions={debugActions} />}
