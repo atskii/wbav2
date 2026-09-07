@@ -817,16 +817,24 @@ export default function App() {
     const flexData = flexTasks.map(t => {
       const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;
       const duration = durMatch ? parseInt(durMatch[1]) : 45;
-      const visualDuration = Math.max(duration, 45);
-      let breakTime = 0;
-      if (duration >= 50) {
-        breakTime = 17;
-      } else if (duration >= 25) {
-        breakTime = Math.round((duration / 52) * 17);
+      
+      // Proporcjonalna przerwa dopasowana do długości i wagi zadania:
+      // - Krótkie (<30m): 5 min (szybki oddech, bez sztucznej 33-minutowej luki)
+      // - Średnie (30-59m): 10 min (standardowa przerwa Pomodoro, widoczna od 10 min)
+      // - Długie (60-89m): 15 min (wysoki priorytet: 15 min, normalny: 12 min)
+      // - Bardzo długie (>=90m): 20-25 min (pełna regeneracja po intensywnej pracy)
+      let breakTime = 5;
+      if (duration >= 90) {
+        breakTime = t.p === "wysoki" ? 25 : 20;
+      } else if (duration >= 60) {
+        breakTime = t.p === "wysoki" ? 15 : 12;
+      } else if (duration >= 30) {
+        breakTime = 10;
       } else {
-        breakTime = 3;
+        breakTime = 5;
       }
-      return { ...t, duration, visualDuration, breakTime };
+
+      return { ...t, duration, breakTime };
     });
 
     const placed = new Set(); // ID zadań już umieszczonych w planie
@@ -856,21 +864,39 @@ export default function App() {
     }
 
     // Dla każdej luki próbujemy wypełnić ją zadaniami z kolejki
+    let cumulativeWorkWithoutBreak = 0;
     for (const gap of gaps) {
       let pointer = gap.start;
+      cumulativeWorkWithoutBreak = 0; // resetujemy przy każdej nowej luce (np. po zablokowanym zadaniu)
+
       // Iterujemy po zadaniach w kolejności priorytetu
       for (const ft of flexData) {
         if (placed.has(ft.id)) continue; // już umieszczone
 
-        const neededSpace = ft.visualDuration;
+        const neededSpace = ft.duration;
         // Sprawdź czy zadanie mieści się w pozostałej części luki
         if (pointer + neededSpace <= gap.end) {
+          
+          let dynamicBreak = ft.breakTime;
+          cumulativeWorkWithoutBreak += ft.duration;
+          
+          // Jeśli skumulowany czas pracy z krótkich zadań przekroczy 45 min, wymuszamy przerwę >= 10 min
+          if (cumulativeWorkWithoutBreak >= 45 && dynamicBreak < 10) {
+            dynamicBreak = 10;
+          }
+
           const idx = updatedTasks.findIndex(ut => ut.id === ft.id);
           if (idx !== -1) {
             updatedTasks[idx] = { ...updatedTasks[idx], sMins: pointer, eMins: pointer + ft.duration, pDate: dateStr };
           }
           placed.add(ft.id);
-          pointer += neededSpace + ft.breakTime;
+          pointer += neededSpace + dynamicBreak;
+          
+          // Resetujemy licznik jeśli wystąpiła porządna przerwa
+          if (dynamicBreak >= 10) {
+            cumulativeWorkWithoutBreak = 0;
+          }
+
           // Jeśli pointer po przerwie wykroczył poza lukę, przerywamy tę lukę
           if (pointer >= gap.end) break;
         }

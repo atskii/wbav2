@@ -117,16 +117,16 @@ const TaskCard = ({
       className={`absolute rounded-[14px] ${pClass} shadow-sm border-2 z-20 hover:z-50 cursor-pointer group flex flex-col justify-center ${draggedTaskId === t.id.toString() || draggedTaskId === t.id ? "opacity-30 border-dashed border-gray-400 scale-95" : ""} ${t.done ? 'opacity-60 grayscale hover:opacity-80' : 'hover:shadow-md hover:border-[#D4C9BC]'}`} 
     >
       <div className={`flex flex-col h-full relative`}>
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start shrink-0">
           <h4 className={`${titleSize} font-bold transition-colors truncate pr-2 flex-1 ${t.done ? 'line-through text-gray-500' : 'text-[#1A2F22]'}`} title={t.title}>{t.title}</h4>
           <div className={`flex items-center gap-2 flex-shrink-0 relative z-30 transition-opacity duration-200 ${isTapped ? 'opacity-0' : 'group-hover:opacity-0'}`}>
-            <PBadge p={t.p} />
+            <PBadge p={t.p} small={minH !== '4.8rem'} />
             {t.isLocked && <Lock size={12} strokeWidth={2.5} className="text-[#909090]" />}
           </div>
         </div>
-        <div className="mt-auto">
+        <div className="mt-auto shrink-0 truncate">
           {showTime && (
-            <p className={`text-[13px] mt-1 ${t.done ? 'text-gray-400' : 'text-[#5A5A5A]'}`}>{formatTime(t.sMins)} — {formatTime(t.eMins)}</p>
+            <p className={`text-[11px] md:text-xs mt-0.5 ${t.done ? 'text-gray-400' : 'text-[#5A5A5A]'}`}>{formatTime(t.sMins)} — {formatTime(t.eMins)}</p>
           )}
         </div>
 
