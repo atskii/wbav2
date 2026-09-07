@@ -1934,8 +1934,8 @@ export default function App() {
                 />
               )}
               {activeTab === "plant" && (
-                <div className="flex-1 overflow-y-auto bg-white flex flex-col min-h-0 pb-16">
-                  <div className="w-full h-full max-w-md mx-auto">
+                <div className="flex-1 overflow-y-auto bg-white flex flex-col items-center justify-center min-h-0 p-4 pb-20">
+                  <div className="w-full max-w-md">
                     <StreakPlant 
                       tasks={tasks.filter(t => checkIsDate(t.pDate, new Date()) || (!t.pDate && (checkIsDate(t.t, new Date()) || checkIsDate(t.deadline, new Date()))))} 
                       userEmail={user?.email} 

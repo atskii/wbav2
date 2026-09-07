@@ -119,75 +119,78 @@ export default function StreakPlant({ tasks = [], userEmail = null }) {
   }, [xpProgress, hasFlowered, total]);
 
   return (
-    <div className="bg-white md:bg-white/90 backdrop-blur-sm md:rounded-3xl p-6 md:border md:border-[#E8DDD0] md:shadow-sm md:hover:shadow-md transition-all relative overflow-visible h-full flex flex-col justify-center">
-      <h3 className="font-lora text-xl font-bold text-[#1A2F22] mb-1">Twoja roślinka streaku</h3>
-      <p className="text-xs text-[#5A7368] mb-5 leading-relaxed">
-        Twoja roślinka rośnie razem z Twoją konsekwencją. Każde ukończone zadanie daje punkty XP i zasila roślinę.
-      </p>
+    <div className="bg-white md:bg-white/90 backdrop-blur-sm md:rounded-3xl p-5 md:p-6 md:border md:border-[#E8DDD0] md:shadow-sm md:hover:shadow-md transition-all relative overflow-visible flex flex-col">
+      {/* 1. TYTUŁ: Odstęp od dołu regulowany klasą mb-2 (np. mb-1, mb-2, mb-3, mb-4) */}
+      <h3 className="font-lora text-xl font-bold text-[#1A2F22] text-center mb-3">Roślinka Streaku</h3>
 
-      <div className="relative h-72 mb-4">
-        {plantType === 'cactus' ? (
-          <>
-            {/* Doniczka - na samym dole */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 h-16 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
-              <div className="w-40 h-5 bg-[#3E5249] rounded-sm -mt-1.5 shadow-md" />
+      <div className="flex flex-col items-center w-full">
+        {/* 2. KONTENER ROŚLINKY: Wysokość regulowana klasą h-64 (np. h-60, h-64, h-72) i odstęp mb-3 */}
+        <div className="relative h-100 w-full mb-2">
+          {plantType === 'cactus' ? (
+            <>
+              {/* Doniczka - na samym dole */}
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 h-16 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
+                <div className="w-40 h-5 bg-[#3E5249] rounded-sm -mt-1.5 shadow-md" />
+              </div>
+              {/* Kaktus - rośnie z góry doniczki */}
+              <div
+                className="absolute left-1/2 -translate-x-1/2 w-20 bg-[#2D9E6B] rounded-t-[3rem] transition-all duration-1000 ease-out z-10 shadow-inner"
+                style={{ bottom: '64px', height: `${Math.round(30 + (plantHeight / 100) * 160)}px` }}
+              >
+                <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[3rem]" />
+              </div>
+              {/* Kwiatek - pojawia się przy 100% */}
+              <AnimatePresence>
+                {xpProgress === 100 && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0, rotate: -45 }}
+                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ duration: 0.5, type: "spring" }}
+                    className="absolute left-1/2 -translate-x-1/2 z-30"
+                    style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 10}px` }}
+                  >
+                    <Sparkles className="w-8 h-8 text-[#FFB7B2] animate-pulse drop-shadow-md" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          ) : (
+            /* Roślina ze zdjęć - doniczka w stałym rozmiarze zakotwiczona na dole */
+            <div className="relative w-full h-full flex justify-center items-end pb-2">
+              <AnimatePresence>
+                <motion.img
+                  key={currentStep}
+                  src={`/plant/step ${currentStep}.png`}
+                  alt={`Etap wzrostu ${currentStep}`}
+                  initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                  animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                  exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  style={{ transformOrigin: "bottom center" }}
+                  className="absolute bottom-0 w-48 sm:w-52 h-auto object-contain object-bottom pointer-events-none"
+                />
+              </AnimatePresence>
             </div>
-            {/* Kaktus - rośnie z góry doniczki */}
-            <div
-              className="absolute left-1/2 -translate-x-1/2 w-20 bg-[#2D9E6B] rounded-t-[3rem] transition-all duration-1000 ease-out z-10 shadow-inner"
-              style={{ bottom: '64px', height: `${Math.round(30 + (plantHeight / 100) * 160)}px` }}
-            >
-              <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[3rem]" />
-            </div>
-            {/* Kwiatek - pojawia się przy 100% */}
-            <AnimatePresence>
-              {xpProgress === 100 && (
-                <motion.div
-                  initial={{ scale: 0, opacity: 0, rotate: -45 }}
-                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ duration: 0.5, type: "spring" }}
-                  className="absolute left-1/2 -translate-x-1/2 z-30"
-                  style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 10}px` }}
-                >
-                  <Sparkles className="w-8 h-8 text-[#FFB7B2] animate-pulse drop-shadow-md" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </>
-        ) : (
-          /* Roślina ze zdjęć - doniczka w stałym rozmiarze zakotwiczona na dole */
-          <div className="relative w-full h-full flex justify-center items-end pb-2">
-            <AnimatePresence>
-              <motion.img
-                key={currentStep}
-                src={`/plant/step ${currentStep}.png`}
-                alt={`Etap wzrostu ${currentStep}`}
-                initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
-                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-                exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                style={{ transformOrigin: "bottom center" }}
-                className="absolute bottom-0 w-48 sm:w-52 h-auto object-contain object-bottom pointer-events-none"
-              />
-            </AnimatePresence>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* 3. PRZYCISK ZMIANY ROŚLINKI: Odstęp od paska postępu regulowany klasą mb-3 (np. mb-2, mb-3, mb-4) */}
+        <div className="flex justify-center mb-3">
+          <button
+            onClick={() => setPlantType(prev => prev === 'cactus' ? 'image' : 'cactus')}
+            className="flex items-center gap-1.5 bg-[#078B83] hover:bg-[#06736D] text-white px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors cursor-pointer"
+          >
+            Zmień roślinkę <RefreshCw size={14} />
+          </button>
+        </div>
       </div>
 
-      <div className="flex justify-center mb-6">
-        <button
-          onClick={() => setPlantType(prev => prev === 'cactus' ? 'image' : 'cactus')}
-          className="flex items-center gap-1.5 bg-[#078B83] hover:bg-[#06736D] text-white px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors cursor-pointer"
-        >
-          Zmień roślinkę <RefreshCw size={14} />
-        </button>
-      </div>
-
-      <div>
+      {/* 4. PASEK POSTĘPU DNIA */}
+      <div className="w-full pt-1">
         <div className="flex justify-between mb-2">
           <span className="text-xs font-semibold text-[#5A7368]">Postęp dnia</span>
-          <span translate="no" className="text-xs font-bold text-[#1E5C36]">{earnedXP} XP ({done}/{total})</span>
+          <span translate="no" className="text-xs font-bold text-[#1E5C36]">{done}/{total}</span>
         </div>
         <div className="h-2.5 bg-[#F5EFE6] rounded-full overflow-hidden">
           <motion.div
@@ -197,45 +200,10 @@ export default function StreakPlant({ tasks = [], userEmail = null }) {
             transition={{ type: "spring", stiffness: 50, damping: 15 }}
           />
         </div>
-        <AnimatePresence>
-          {xpProgress === 100 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="bg-[#E8F4ED] rounded-2xl px-3 py-2 mt-4 flex items-start gap-2"
-            >
-              <CheckCircle size={14} className="text-[#2D9E6B] flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-[#1E5C36] font-medium leading-relaxed">
-                Świetna robota! Roślinka zakwitła. Odpocznij!
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
       </div>
 
-      {/* Dymek samouczka pod całym prostokątem karty roślinki */}
-      {showStreakPlantTutorial && (
-        <div className="absolute top-[calc(100%+14px)] left-2 right-2 sm:left-4 sm:right-4 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowStreakPlantTutorial(false);
-              markTooltipSeen("dashboard_streak_plant");
-            }}
-            className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-            title="Zamknij podpowiedź"
-          >
-            <X size={13} />
-          </button>
-          <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Roślinka streaku 🌱:</strong>
-          <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-            Rośnie wraz z wykonywaniem kolejnych zadań! Możesz kliknąć „Zmień roślinkę”, aby wybrać swoją ulubioną odmianę.
-          </p>
-          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
-        </div>
-      )}
+
     </div>
   );
 }
