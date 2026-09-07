@@ -149,23 +149,22 @@ export async function generatePlanWithAI(tasks, userPrefs, selectedDate, lastMoo
     return { ...t, sMins, eMins };
   }).sort((a, b) => a.sMins - b.sMins);
 
-  const flexTasks = tasks.filter(t => !t.isLocked && (t.pDate === dateStr || !t.pDate));
+  const flexTasks = tasks.filter(t => !t.isLocked && !t.done && (t.pDate === dateStr || !t.pDate));
 
   let userInstructions = "";
   if (userContext && userContext.trim() !== "") {
-    userInstructions = `\n### UWAGI UŻYTKOWNIKA DO DZISIEJSZEGO PLANU:\n"${userContext.trim()}"\nZwróć na to SZCZEGÓLNĄ uwagę przy wyborze i układaniu priorytetów.\n`;
+    userInstructions = `\n### UWAGI UŻYTKOWNIKA DO DZISIEJSZEGO PLANU:\n"${userContext.trim()}"\nZwróć na to SZCZEGÓLNĄ uwagę przy wyborze i układaniu priorytetów oraz uwzględnij sztywne ramy czasowe, jeśli użytkownik o nie prosi.\n`;
   }
 
-  // Uproszczony prompt - prosimy tylko o wybór i posortowanie zadań
-  const prompt = `Jesteś bystrym asystentem AI ds. produktywności. Twoim zadaniem JEST JEDYNIE ocena priorytetów i nastroju, a następnie wybranie i posortowanie zadań z backlogu do wykonania na dziś.
+  // Uproszczony prompt - prosimy o timeConstraints i posortowanie zadań
+  const prompt = `Jesteś bystrym asystentem AI ds. produktywności. Twoim zadaniem JEST JEDYNIE zrozumienie intencji czasowych użytkownika z notatki oraz nadanie priorytetów zadaniom z backlogu.
 
 ### KONTEKST
-Ostatni nastrój użytkownika (0-6): ${lastMood} (im niżej, tym gorzej. Jeśli jest zły, wybierz mniej trudnych zadań na dziś).
-Dostępny czas (orientacyjnie): ${workHours} godzin w ciągu dnia.
+Ostatni nastrój użytkownika (0-6): ${lastMood} (Jeśli jest niski, faworyzuj lżejsze zadania przy układaniu rankingu).
 ${userInstructions}
 
 ### ZADANIA W BACKLOGU (ELASTYCZNE)
-Wybierz z poniższej listy te zadania, które użytkownik powinien dzisiaj wykonać i ułóż je w odpowiedniej kolejności (od najważniejszego/najpilniejszego do wykonania jako pierwsze).
+Oto lista elastycznych zadań, które czekają na wykonanie. Uporządkuj je od najważniejszego (najpilniejszego) do najmniej ważnego, tworząc spójny ranking.
 ${JSON.stringify(flexTasks.map(t => {
     const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;
     const durationMins = durMatch ? parseInt(durMatch[1]) : 45;
@@ -174,10 +173,23 @@ ${JSON.stringify(flexTasks.map(t => {
 
 Zwróć odpowiedź WYŁĄCZNIE w formacie JSON o następującej strukturze:
 {
-  "selectedTaskIds": [123, 456, 789], 
-  "coachMessage": "Jedna, spójna, spersonalizowana i przyjacielska wypowiedź (ok 2-3 zdania). Zwróć się bezpośrednio do użytkownika. Powiedz dlaczego wybrałeś te zadania (i ewentualnie odrzuciłeś inne) w oparciu o jego dzisiejszy nastrój i notatkę. Podrzuć jedno krótkie zdanie motywacyjne."
+  "timeConstraints": [
+    // TYLKO JEŚLI użytkownik WPROST wskazał w uwagach konkretną godzinę dla jakiegoś zadania, np:
+    // { "id": 123, "time": "12:00" } 
+    // Jeśli brak takich uwag, zostaw pustą tablicę: []
+  ],
+  "rankedTaskIds": [ 
+    // ID wszystkich (lub większości) zadań z backlogu, posortowane od najważniejszego do wykonania jako pierwsze. 
+    // Algorytm zaplanuje je w dostępnych wolnych oknach w tej właśnie kolejności.
+  ], 
+  "suggestedBreakDurations": [
+    // Lista liczb (w minutach) określająca proponowane przez Ciebie dłuższe przerwy regeneracyjne (np. [15, 30]). 
+    // Wybierz ile przerw i jak długich (min 15) potrzebuje użytkownik dziś na podstawie nastroju i liczby zadań. 
+    // Jeśli nie potrzebuje długich przerw, zwróć pustą tablicę [].
+  ],
+  "coachMessage": "Jedna, spójna, spersonalizowana i przyjacielska wypowiedź (ok 2-3 zdania). Zwróć się bezpośrednio do użytkownika. Powiedz dlaczego ustawiłeś taki priorytet, czy spełniłeś prośby czasowe i podrzuć zdanie motywacyjne."
 }
-UWAGA: Zwróć tylko wybrane ID zadań w "selectedTaskIds" w takiej kolejności, w jakiej powinny zostać matematycznie zaplanowane. Nie podawaj żadnych czasów startu ani końca (system zrobi to sam). Nie dołączaj znaczników Markdown, zwróć tylko czysty obiekt JSON.`;
+UWAGA: Zwróć tylko czysty obiekt JSON. Nie dołączaj znaczników Markdown.`;
 
   const response = await fetch(GEMINI_URL_PLAN, {
     method: "POST",
@@ -240,11 +252,45 @@ UWAGA: Zwróć tylko wybrane ID zadań w "selectedTaskIds" w takiej kolejności,
 
   // --- ALGORYTM MATEMATYCZNY (TETRIS) ---
   const mappedTasks = [];
-  const BREAK_MINS = 10; // sztywna 10-minutowa przerwa po każdym zadaniu elastycznym
+  const BREAK_MINS = 5; // standardowa minimalna przerwa techniczna między zadaniami
   let currentMins = timelineStart * 60; // zaczynamy od początku doby
+  let continuousWorkMins = 0; // śledzi ciągły czas pracy
+  const aiBreakDurations = (parsedResponse && Array.isArray(parsedResponse.suggestedBreakDurations)) 
+    ? [...parsedResponse.suggestedBreakDurations] 
+    : [];
 
-  if (parsedResponse && Array.isArray(parsedResponse.selectedTaskIds)) {
-    for (const taskId of parsedResponse.selectedTaskIds) {
+  // Krok 1: Przetwarzanie kotwic czasowych z AI (timeConstraints)
+  const aiLocks = [];
+  if (parsedResponse && Array.isArray(parsedResponse.timeConstraints)) {
+    for (const constraint of parsedResponse.timeConstraints) {
+      const task = flexTasks.find(t => String(t.id) === String(constraint.id));
+      if (task && constraint.time) {
+        const match = constraint.time.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          const sMins = parseInt(match[1]) * 60 + parseInt(match[2]);
+          let duration = 45;
+          if (task.duration) {
+            const dMatch = task.duration.match(/(\d+)/);
+            if (dMatch) duration = parseInt(dMatch[1]);
+          }
+          const eMins = sMins + duration;
+          
+          mappedTasks.push({ id: task.id, sMins, eMins });
+          aiLocks.push({ id: task.id, sMins, eMins });
+        }
+      }
+    }
+  }
+
+  // Połączone sztywne zadania (z kalendarza + kotwice AI)
+  const allLocked = [...lockedTasks, ...aiLocks].sort((a, b) => a.sMins - b.sMins);
+
+  // Krok 2: Uzupełnianie wolnych okienek zadaniami (Tetris)
+  if (parsedResponse && Array.isArray(parsedResponse.rankedTaskIds)) {
+    for (const taskId of parsedResponse.rankedTaskIds) {
+      // Jeśli zadanie zostało "zakotwiczone", nie planujemy go podwójnie
+      if (aiLocks.some(lock => String(lock.id) === String(taskId))) continue;
+
       const task = flexTasks.find(t => String(t.id) === String(taskId));
       if (!task) continue;
 
@@ -262,7 +308,7 @@ UWAGA: Zwróć tylko wybrane ID zadań w "selectedTaskIds" w takiej kolejności,
         const potentialEnd = potentialStart + duration;
 
         // Sprawdzamy czy okienko [potentialStart, potentialEnd] nie nakłada się na sztywne zadania
-        const overlappingLock = lockedTasks.find(lt =>
+        const overlappingLock = allLocked.find(lt =>
           Math.max(potentialStart, lt.sMins) < Math.min(potentialEnd, lt.eMins)
         );
 
@@ -276,8 +322,20 @@ UWAGA: Zwróć tylko wybrane ID zadań w "selectedTaskIds" w takiej kolejności,
             sMins: potentialStart,
             eMins: potentialEnd
           });
+          
+          continuousWorkMins += duration;
+          
+          let nextGap = BREAK_MINS;
+          // Jeśli pracowaliśmy 90 minut lub więcej, wrzucamy dłuższą przerwę od AI
+          if (continuousWorkMins >= 90 && aiBreakDurations.length > 0) {
+            const suggestedGap = aiBreakDurations.shift();
+            // Upewniamy się, że przerwa od AI ma co najmniej 15 minut (by DashboardView ją wyświetlił jako visualGap)
+            nextGap = Math.max(suggestedGap, 15);
+            continuousWorkMins = 0; // resetujemy licznik po długiej przerwie
+          }
+
           // Przesuwamy kursor czasu z uwzględnieniem przerwy
-          currentMins = potentialEnd + BREAK_MINS;
+          currentMins = potentialEnd + nextGap;
           scheduled = true;
           break;
         }

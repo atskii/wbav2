@@ -80,22 +80,6 @@ Sekcja ta zawiera precyzyjny opis technologii bazowych stanowiących fundament a
 * **`lucide-react`**: Lekki, spójny zestaw wektorowych ikon dostarczanych jako komponenty React. Wspiera tree-shaking, dzięki czemu do wynikowego buildu trafiają wyłącznie ikony rzeczywiście wyrenderowane na ekranie.
 * **`framer-motion`**: Deklaratywna biblioteka do zaawansowanych animacji i mikrointerakcji (animacje otwierania modali, płynne przejścia zakładek, animacje paska postępu).
 * **`canvas-confetti`**: Wysokowydajna biblioteka renderująca efekty cząsteczkowe na elemencie `<canvas>`, wykorzystywana w mechanizmach grywalizacji (nagradzanie za realizację celów i podbijanie serii/streak).
-
----
-
-### 1.6. Kluczowe Rozróżnienie: Technologie a Platformy i Usługi Zewnętrzne
-
-W architekturze oprogramowania należy ściśle oddzielać **technologie** (języki, biblioteki, frameworki, narzędzia kompilacji) od **platform, usług chmurowych i infrastruktury wdrożeniowej**:
-
-| Kategoria | Pozycja | Klasyfikacja architektoniczna | Rola w projekcie |
-|---|---|---|---|
-| **Technologia** | **React** | Framework / Biblioteka UI | Silnik renderowania widoków i logiki frontendowej |
-| **Technologia** | **TypeScript** | Język programowania | Statyczna kontrola typów i kontrakt struktur danych |
-| **Technologia** | **Vite** | Bundler & Dev Tooling | Kompilacja, optymalizacja i serwowanie kodu |
-| **Technologia** | **Tailwind CSS** | Framework CSS | System stylizacji i tokenów wizualnych |
-| **Usługa / Platforma** | **Supabase** | *Backend-as-a-Service (BaaS)* | Zewnętrzna platforma bazodanowa (PostgreSQL), autentykacja użytkowników i API chmurowe |
-| **Usługa / Platforma** | **Vercel** | *Hosting & CI/CD Platform* | Infrastruktura serwerowa (Edge/CDN) i automatyczny pipeline wdrożeniowy |
-
 ---
 
 ## 2. Architektura Modułowa Systemu
@@ -112,7 +96,7 @@ Serce aplikacji odpowiadające za zarządzanie cyklem życia zadań. Obsługuje 
 ### 2.2. Moduł Kalendarza (Calendar & Timeline View)
 Odpowiada za wizualizację zadań i wydarzeń w kontekście czasu.
 * **Widok osi czasu (Timeline):** Główne narzędzie operacyjne. Filtruje zmaterializowane zadania na podstawie przypisanej do nich daty wykonania (`pDate`). Zapewnia to bezbłędne przyporządkowanie wpisów do konkretnych dni.
-* **Widoki rozszerzone:** Możliwość podglądu zadań w układzie miesięcznym lub kaskadowym, co ułatwia planowanie długoterminowe.
+* **Widoki rozszerzone:** Możliwość podglądu zadań w układzie miesięcznym lub tygodniowym, co ułatwia planowanie długoterminowe.
 
 ### 2.3. Moduł Rejestracji Nastroju (Mood Tracking)
 Narzędzie do monitorowania stanu psychofizycznego użytkownika.
@@ -122,34 +106,38 @@ Narzędzie do monitorowania stanu psychofizycznego użytkownika.
 ### 2.4. System Ostrzeżeń (Early Warning System)
 Mechanizm prewencyjny i wspierający, bazujący na analizie nawyków i nastroju:
 * **Alerty przemęczenia i wypalenia:** System wykrywa wzorce negatywne, np. utrzymujący się niski nastrój skorelowany z dużą liczbą niewykonanych lub przeterminowanych zadań.
-* **Inteligentne interwencje:** W momencie zarejestrowania ryzyka wypalenia, aplikacja może zasugerować przerwę, zmniejszenie liczby planowanych zadań lub wykonanie ćwiczeń relaksacyjnych.
+* **Inteligentne interwencje:** W momencie zarejestrowania ryzyka wypalenia, aplikacja pełni rolę "mostu" pomiędzy użytkownikiem a organizacjami specjalizującymi się w pomocy psychologiczne..
 
 ### 2.5. Wirtualna Roślinka (Streak Plant)
 System motywacyjny bazujący na utrzymywaniu ciągłości (streak).
-* **Wizualizacja postępów:** W miarę regularnego logowania się i wykonywania zadań, użytkownik wizualnie "podlewa" i rozwija swoją wirtualną roślinkę.
-* **Etapy wzrostu:** Roślinka rośnie, odzwierciedlając utrzymywaną passę. Stanowi lekki element grywalizacyjny, budujący nawyk codziennego korzystania z aplikacji bez przytłaczania skomplikowanymi systemami punktowymi.
+* **Wizualizacja postępów:** W miarę regularnego wykonywania zadań, użytkownik wizualnie "podlewa" i rozwija swoją wirtualną roślinkę.
+* **Motywacja do dalszego logowania:** Wraz z kolejną liczbą logowań do aplikacji, uzytkownik odblokowuje nowe rodzaje roślinek co motywuje go do dalszego korzystania z aplikacji.
 
-### 2.6. Moduł Analityki i Raportowania (Analytics & Insights)
-Przetwarza zebrane dane historyczne na czytelne wnioski dla użytkownika.
-* **Wykresy i dane historyczne:** Graficzne przedstawienie produktywności na przestrzeni czasu (np. zadania ukończone w minionym tygodniu, miesiącu).
-* **Pulpit analityczny:** Centralne miejsce agregujące statystyki, pomagające zidentyfikować wzorce efektywności oraz śledzić postępy na podstawie twardych danych.
 
-### 2.7. Integracja Organizacyjna (User-Organization Bridge)
-Moduł pełniący funkcję platformy pośredniczącej między użytkownikiem końcowym (np. pracownikiem, studentem) a organizacją (np. korporacją, uczelnią):
-* **Przepływ informacji i zadań:** Organizacje mogą anonimowo badać zagregowany poziom dobrostanu w zespołach lub "wpychać" odgórne zadania i komunikaty (np. obowiązkowe szkolenia, ankiety HR) bezpośrednio do kalendarzy użytkowników.
-* **Prywatność i anonimizacja:** Dane o samopoczuciu przesyłane do organizacji są rygorystycznie anonimizowane, tak aby chronić tożsamość jednostki i zapobiegać mikrozarządzaniu, służąc wyłącznie poprawie globalnego środowiska pracy.
+### 2.6. Moduł AI (Sztuczna Inteligencja - Prompty i Plany)
+Wykorzystuje potencjał sztucznej inteligencji do wspierania użytkownika i optymalizacji jego planów. 
+* **AI Task Planner:** Tworzy spersonalizowane plany dnia zgodnie z uwagami użytkownika, preferencjami oraz zadaniami do wykonania.
+* **AI Coach:** Analizuje nastrój uzytkownika a potem na jego podstawie daje opinie majaca pomoc uzytkownik w uswiadomieniu mu jego nastroju oraz daje mu porady jak sobie z nimi poradzic bazujac jak i rekomendujac sprawdzone artykuly naukowe.
 
-### 2.8. Moduł AI (Sztuczna Inteligencja)
-Wykorzystuje modele językowe (np. Google Gemini) do inteligentnej analizy zachowań i wsparcia użytkownika.
-* Analizuje wpisy użytkownika, jego historię zadań oraz nawyki i na ich podstawie potrafi wyciągnąć wnioski, doradzić w organizacji czasu lub zasugerować optymalizację planu dnia.
+### 2.9. Moduł Logowania, Onboardingu i Autoryzacji (Auth Module)
+Zapewnia bezpieczeństwo i płynne wejście w aplikację.
+* **Logowanie tradycyjne i Google (OAuth):** Klasyczna rejestracja oraz logowanie przez zewnętrzne dostawców jak np. konta Google.
+* **Onboarding (`Onboarding` & `Landing`):** Kompleksowy system oprowadzający nowego użytkownika po systemie już od strony głównej (landing page).
+* **Wymogi prawne:** Zintegrowane widoki regulaminów i polityk prywatności (`TermsOfService`, `PrivacyPolicy`).
 
-### 2.9. Moduł Logowania i Autoryzacji (Auth Module)
-Zapewnia bezpieczeństwo i dostęp do własnej przestrzeni w systemie.
-* **Logowanie tradycyjne (Email/Hasło):** Klasyczna rejestracja i uwierzytelnianie.
-* **Logowanie Google (OAuth):** Logowanie za pomocą konta Google (SSO), co znacząco obniża barierę wejścia i przyspiesza rozpoczęcie korzystania z aplikacji bez konieczności zapamiętywania kolejnych haseł.
-
-### 2.10. Panele Dodatkowe: Koszty, Diagnostyka i Komendy Zdalne
+### 2.10. Panele Dodatkowe: Koszty (AI Tokens), Diagnostyka i Komendy Zdalne
 Zestaw zaawansowanych narzędzi serwisowych i monitorujących.
-* **Panel kosztów:** Moduł pozwalający monitorować zużycie zasobów (np. API modeli AI) oraz wyliczać i kontrolować potencjalne opłaty z tym związane.
+* **Panel kosztów i Limitów (AI Tokens):** Mechanizm (realizowany poprzez bazę np. `supabase_ai_tokens.sql`) kontrolujący zużycie zasobów (zapytań do modeli AI) oraz wyliczający lub ograniczający ich użycie na użytkownika, aby zapobiegać nadużyciom.
 * **Diagnostyka (Debug Mode):** Umożliwia inspekcję stanu aplikacji (np. poprawność materializacji dat), przegląd błędów i weryfikację komunikacji z backendem.
 * **Zdalne komendy:** Zaawansowana funkcjonalność pozwalająca na wyzwalanie procesów, zmian konfiguracji lub narzędzi diagnostycznych z poziomu wysyłanych, specjalnych instrukcji "na odległość".
+
+### 2.11. Moduł Ustawień i Preferencji (Settings)
+Centralne miejsce personalizacji doświadczenia użytkownika.
+* **Konfiguracja planu dnia (`SettingsView`):** Definiowanie m.in. liczby godzin pracy czy optymalnej pory rozpoczęcia działania (Start Hour, Start Minute).
+* **Ulubione aktywności (Picks):** Zapisywanie szybkich przerw (np. "Krótki spacer", "Dobra kawa"), które aplikacja może automatycznie podpowiadać.
+* **Zarządzanie kontem:** Dostęp do FAQ i zarządzanie uprawnieniami (np. integracja z kalendarzem).
+
+### 2.12. Tryb Skupienia (Focus Mode)
+Dedykowane narzędzie wspomagające głęboką pracę (deep work) nad pojedynczym zadaniem.
+* **Zarządzanie czasem (`FocusModeView`):** Zintegrowany minutnik (bazujący np. na technice Pomodoro, domyślnie 25 minut) aktywowany bezpośrednio z poziomu zadania.
+* **Ograniczanie rozpraszaczy:** Umożliwia użytkownikowi śledzenie rzeczywistego czasu poświęconego na konkretne działanie i nagradzanie punktami skupienia po jego upłynięciu.

@@ -58,6 +58,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAiPlanning, setIsAiPlanning] = useState(false);
   const [aiCoachMessage, setAiCoachMessage] = useState(null);
+  const [aiCoachOpinions, setAiCoachOpinions] = useState(() => {
+    try {
+      const saved = localStorage.getItem("wba_ai_coach_opinions");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [isAiPromptModalOpen, setIsAiPromptModalOpen] = useState(false);
 
   const [dateRefreshTrigger, setDateRefreshTrigger] = useState(0);
@@ -151,6 +159,8 @@ export default function App() {
     localStorage.removeItem("wba_test_tasks");
     localStorage.removeItem("wba_test_moods");
     localStorage.removeItem("wba_test_profile");
+    localStorage.removeItem("wba_ai_coach_opinions");
+    setAiCoachOpinions({});
     setUser(null);
     setView("landing");
     setIsLoading(false);
@@ -925,12 +935,14 @@ export default function App() {
       
       const updatedTasks = [...tasks];
       let hasChanges = false;
-      const tasksToSync = [];
+      const tasksToSyncMap = new Map();
       
-      // Kasujemy najpierw flex taski z tego dnia
+      // Kasujemy najpierw flex taski z tego dnia (przywracamy do backlogu)
       updatedTasks.forEach((t, idx) => {
         if (!t.isLocked && t.pDate === dateStr) {
           updatedTasks[idx] = { ...t, sMins: null, eMins: null, pDate: null };
+          tasksToSyncMap.set(updatedTasks[idx].id, updatedTasks[idx]);
+          hasChanges = true;
         }
       });
       
@@ -939,7 +951,7 @@ export default function App() {
         if (idx !== -1) {
           const t = updatedTasks[idx];
           updatedTasks[idx] = { ...t, sMins: mt.sMins, eMins: mt.eMins, pDate: dateStr };
-          tasksToSync.push(updatedTasks[idx]);
+          tasksToSyncMap.set(updatedTasks[idx].id, updatedTasks[idx]);
           hasChanges = true;
         }
       });
@@ -947,25 +959,39 @@ export default function App() {
       if (hasChanges) {
         setTasks(sortSmartQueue(updatedTasks));
         
+        const tasksToSync = Array.from(tasksToSyncMap.values());
         // Zapis do Supabase
-        await Promise.all(
-          tasksToSync.map(async (task) => {
-            const { id, ...taskDataWithoutId } = task;
-            const { error } = await supabase
-              .from('tasks')
-              .update(taskDataWithoutId)
-              .eq('id', id)
-              .eq('user_email', user.email);
-            if (error) throw error;
-          })
-        );
+        if (user && user.email && tasksToSync.length > 0) {
+          await Promise.all(
+            tasksToSync.map(async (task) => {
+              const { id, ...taskDataWithoutId } = task;
+              const { error } = await supabase
+                .from('tasks')
+                .update(taskDataWithoutId)
+                .eq('id', id)
+                .eq('user_email', user.email);
+              if (error) throw error;
+            })
+          );
+        }
       } else {
         add("AI nie znalazło miejsca na nowe zadania.", "info");
       }
       
       if (result?.coachMessage) {
+        const msg = result.coachMessage;
         setAiCoachMessage({
-          coachMessage: result.coachMessage
+          coachMessage: msg,
+          dateStr
+        });
+        setAiCoachOpinions(prev => {
+          const next = { ...prev, [dateStr]: msg };
+          try {
+            localStorage.setItem("wba_ai_coach_opinions", JSON.stringify(next));
+          } catch (e) {
+            console.error("Error saving coach opinions:", e);
+          }
+          return next;
         });
       }
     } catch (err) {
@@ -975,6 +1001,20 @@ export default function App() {
       await debugActions.setAiTokens(currentTokens); 
     } finally {
       setIsAiPlanning(false);
+    }
+  };
+
+  const handleOpenAiPlan = () => {
+    const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+    const existingOpinion = aiCoachOpinions[dateStr];
+
+    if (existingOpinion) {
+      setAiCoachMessage({
+        coachMessage: existingOpinion,
+        dateStr
+      });
+    } else {
+      setIsAiPromptModalOpen(true);
     }
   };
 
@@ -1831,7 +1871,8 @@ export default function App() {
                   }}
                   loading={isLoading}
                   onGeneratePlan={generatePlan}
-                  onGeneratePlanAI={() => setIsAiPromptModalOpen(true)}
+                  onGeneratePlanAI={handleOpenAiPlan}
+                  hasAiOpinion={!!aiCoachOpinions[`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`]}
                   isAiPlanning={isAiPlanning}
                   userPrefs={user?.prefs}
                   userEmail={user?.email}
@@ -1933,6 +1974,10 @@ export default function App() {
             isOpen={!!aiCoachMessage}
             onClose={() => setAiCoachMessage(null)}
             data={aiCoachMessage}
+            onRegenerate={() => {
+              setAiCoachMessage(null);
+              setIsAiPromptModalOpen(true);
+            }}
           />
 
           {showMoodModal && <MoodModal onClose={() => setShowMoodModal(false)} onAdd={addMood} />}

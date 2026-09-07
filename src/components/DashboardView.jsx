@@ -246,7 +246,7 @@ const BacklogCard = ({
 // ═══════════════════════════════════════════════════
 //  DASHBOARD VIEW (ZAMROŻONY PLAN Z GUZIKIEM GENERUJ)
 // ═══════════════════════════════════════════════════
-export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onMoveTask, onAlert, onFocusTask, loading, onGeneratePlan, onGeneratePlanAI, isAiPlanning, userPrefs, userEmail }) {
+export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onMoveTask, onAlert, onFocusTask, loading, onGeneratePlan, onGeneratePlanAI, hasAiOpinion, isAiPlanning, userPrefs, userEmail }) {
 
   const [showBacklog, setShowBacklog] = useState(false);
 
@@ -325,10 +325,10 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
       const nextStart = scheduled[i + 1].sMins;
       const gap = nextStart - currEnd;
       if (gap >= 15) {
-        // Losowa propozycja przerwy z odpowiedzi z pytania 3 onboardingu
+        // Propozycja przerwy deterministycznie dobierana na podstawie godziny (unikamy migania przy re-renderach)
         const breakPicks = userPrefs?.picks || [];
         const breakTitle = breakPicks.length > 0
-          ? breakPicks[Math.floor(Math.random() * breakPicks.length)]
+          ? breakPicks[currEnd % breakPicks.length]
           : "Czas na regenerację";
         timelineWithGaps.push({ id: `gap-${i}`, isVisualGap: true, title: breakTitle, duration: `${gap} min`, sMins: currEnd, eMins: nextStart });
       }
@@ -358,9 +358,12 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                 <button onClick={onOpenTaskModal} className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">
                   Dodaj zadanie <Plus size={16} />
                 </button>
-                <button onClick={onGeneratePlanAI} disabled={isAiPlanning} title="AI" className="flex items-center justify-center gap-1.5 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm active:scale-95 disabled:opacity-50">
+                <button onClick={onGeneratePlanAI} disabled={isAiPlanning} title={hasAiOpinion ? "Opinia AI / Wygeneruj ponownie" : "AI"} className="flex items-center justify-center gap-1.5 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 relative">
                   {isAiPlanning ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
                   <span>AI</span>
+                  {hasAiOpinion && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full animate-pulse" />
+                  )}
                 </button>
                 <button onClick={onGeneratePlan} title="Generuj plan" className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] transition-all shadow-sm active:scale-95">
                   <RefreshCw size={16} />
@@ -428,11 +431,14 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                   <button 
                     onClick={onGeneratePlanAI} 
                     disabled={isAiPlanning} 
-                    title="Inteligentny plan AI" 
-                    className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold hover:from-amber-600 hover:to-orange-600 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    title={hasAiOpinion ? "Opinia AI / Wygeneruj ponownie" : "Inteligentny plan AI"} 
+                    className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold hover:from-amber-600 hover:to-orange-600 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 relative"
                   >
                     {isAiPlanning ? <RefreshCw size={15} className="animate-spin" /> : <Sparkles size={15} />}
                     <span>AI</span>
+                    {hasAiOpinion && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full animate-pulse" />
+                    )}
                   </button>
                   <button 
                     onClick={onGeneratePlan} 

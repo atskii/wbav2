@@ -1,7 +1,7 @@
 import React from "react";
-import { X, Sparkles, Check } from "lucide-react";
+import { X, Sparkles, Check, RefreshCw } from "lucide-react";
 
-export default function AiPlanModal({ isOpen, onClose, data }) {
+export default function AiPlanModal({ isOpen, onClose, data, onRegenerate }) {
   if (!isOpen) return null;
 
   // Obsługa sytuacji, gdy przekazano obiekt lub zwykły string
@@ -49,11 +49,25 @@ export default function AiPlanModal({ isOpen, onClose, data }) {
             </div>
         </div>
 
-        {/* Przycisk akceptacji */}
-        <div className="px-6 sm:px-7 pb-6 sm:pb-7 pt-2">
+        {/* Przyciski akcji */}
+        <div className="px-6 sm:px-7 pb-6 sm:pb-7 pt-2 flex flex-col sm:flex-row gap-3">
+          {onRegenerate && (
+            <button 
+              type="button"
+              onClick={() => {
+                onClose();
+                onRegenerate();
+              }} 
+              className="flex-1 py-3.5 px-4 bg-white hover:bg-[#FAF8F5] border-2 border-[#E8DDD0] hover:border-[#2D9E6B] text-[#1A2F22] rounded-2xl font-bold text-sm transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <RefreshCw size={17} className="text-[#2D9E6B]" />
+              Wygeneruj ponownie
+            </button>
+          )}
           <button 
+            type="button"
             onClick={onClose} 
-            className="w-full py-3.5 px-4 bg-[#1E5C36] hover:bg-[#164628] text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-[#1E5C36]/20 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+            className="flex-1 py-3.5 px-4 bg-[#1E5C36] hover:bg-[#164628] text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-[#1E5C36]/20 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
           >
             <Check size={18} />
             Rozumiem, zaczynamy!
