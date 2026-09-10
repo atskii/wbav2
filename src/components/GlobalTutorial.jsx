@@ -3,13 +3,62 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTutorials } from "../hooks/useTutorials";
 
 const TUTORIAL_STEPS = [
+  // --- SAMOUCZEK MENU GŁÓWNEGO (NAWIGACJA) ---
+  {
+    id: "nav_dashboard",
+    title: "Strona główna (Plan dnia)",
+    desc: "Twój główny panel z harmonogramem dnia, roślinką postępu i listą zaplanowanych zadań.",
+    targetIdDesktop: "tutorial-nav-dashboard",
+    targetIdMobile: "tutorial-mobile-nav-dashboard",
+    placement: "right",
+    screen: "dashboard"
+  },
+  {
+    id: "nav_calendar",
+    title: "Kalendarz",
+    desc: "Przejrzysty widok miesięczny i tygodniowy. Pozwala planować zadania w przód i kontrolować obciążenie.",
+    targetIdDesktop: "tutorial-nav-calendar",
+    targetIdMobile: "tutorial-mobile-nav-calendar",
+    placement: "right",
+    screen: "dashboard"
+  },
+  {
+    id: "nav_mood",
+    title: "Monitor nastroju",
+    desc: "Codzienne rejestrowanie samopoczucia i energii. Pomaga aplikacji lepiej dopasowywać tempo pracy do Twojego stanu.",
+    targetIdDesktop: "tutorial-nav-mood",
+    targetIdMobile: "tutorial-mobile-nav-mood",
+    placement: "right",
+    screen: "dashboard"
+  },
+  {
+    id: "nav_warning",
+    title: "Centrum pomocy i alerty",
+    desc: "Wsparcie w momentach przeciążenia lub spadku motywacji oraz przydatne wskazówki wellbeingowe.",
+    targetIdDesktop: "tutorial-nav-warning",
+    targetIdMobile: "tutorial-mobile-nav-warning",
+    placement: "right",
+    screen: "dashboard"
+  },
+  {
+    id: "nav_settings",
+    title: "Ustawienia",
+    desc: "Dostosuj preferencje aplikacji, godziny pracy, integrację z Kalendarzem Google i swoje konto.",
+    targetIdDesktop: "tutorial-nav-settings",
+    targetIdMobile: "tutorial-mobile-nav-settings",
+    placement: "right",
+    screen: "dashboard"
+  },
+
+  // --- SAMOUCZEK EKRANU GŁÓWNEGO (DASHBOARD) ---
   {
     id: "dashboard_date_nav",
     title: "Nawigacja po dniach",
     desc: "Służy po to, aby dokładnie ustawić sobie plan i wprowadzić zmiany w poszczególne dni.",
     targetIdDesktop: "tutorial-date-nav",
     targetIdMobile: "tutorial-date-nav",
-    placement: "bottom"
+    placement: "bottom",
+    screen: "dashboard"
   },
   {
     id: "dashboard_generate_plan",
@@ -17,7 +66,8 @@ const TUTORIAL_STEPS = [
     desc: "Nasz algorytm ułoży optymalny plan dnia, biorąc pod uwagę parametry zadań: ich ważność, deadline oraz Twoje aktualne samopoczucie.",
     targetIdDesktop: "tutorial-generate-plan",
     targetIdMobile: "tutorial-mobile-generate-plan",
-    placement: "bottom"
+    placement: "bottom",
+    screen: "dashboard"
   },
   {
     id: "dashboard_generate_plan_ai",
@@ -25,7 +75,8 @@ const TUTORIAL_STEPS = [
     desc: "Dla maksymalnej personalizacji użyj AI. Sztuczna inteligencja przeanalizuje Twój dzień i inteligentnie dostosuje harmonogram zadań (koszt: 1 moneta).",
     targetIdDesktop: "tutorial-desktop-generate-plan-ai",
     targetIdMobile: "tutorial-mobile-generate-plan-ai",
-    placement: "bottom"
+    placement: "bottom",
+    screen: "dashboard"
   },
   {
     id: "dashboard_add_task",
@@ -33,7 +84,8 @@ const TUTORIAL_STEPS = [
     desc: "Tutaj szybko dodasz nowe zadania do swojego planu.",
     targetIdDesktop: "tutorial-add-task",
     targetIdMobile: "tutorial-mobile-add-task",
-    placement: "bottom"
+    placement: "bottom",
+    screen: "dashboard"
   },
   {
     id: "dashboard_backlog",
@@ -41,7 +93,8 @@ const TUTORIAL_STEPS = [
     desc: "Tutaj trafiają zadania dodane bez określonej godziny. Możesz je w każdej chwili podejrzeć, a kliknięcie 'Generuj plan' automatycznie wpasuje je w Twój dzień.",
     targetIdDesktop: "tutorial-backlog",
     targetIdMobile: "tutorial-backlog",
-    placement: "top"
+    placement: "top",
+    screen: "dashboard"
   },
   {
     id: "dashboard_streak_plant",
@@ -49,7 +102,8 @@ const TUTORIAL_STEPS = [
     desc: "Wykonuj zadania, aby ją rozwijać! Zdobywaj XP za każde zrealizowane zadanie, a po osiągnięciu 100% roślinka zakwitnie.",
     targetIdDesktop: "tutorial-streak-plant",
     targetIdMobile: "tutorial-streak-plant",
-    placement: "top"
+    placement: "top",
+    screen: "dashboard"
   },
   {
     id: "header_help",
@@ -57,7 +111,8 @@ const TUTORIAL_STEPS = [
     desc: "Jeśli chciałbyś sobie kiedyś przypomnieć działanie aplikacji, kliknij tutaj, aby ponownie odtworzyć samouczek na danym ekranie.",
     targetIdDesktop: "tutorial-header-help",
     targetIdMobile: "tutorial-mobile-header-help",
-    placement: "bottom"
+    placement: "bottom",
+    screen: "dashboard"
   },
   {
     id: "header_streak",
@@ -65,7 +120,8 @@ const TUTORIAL_STEPS = [
     desc: "Każdy dzień z rzędu, w którym wykonasz przynajmniej jedno zadanie, zwiększa Twoją serię. Utrzymuj ogień!",
     targetIdDesktop: "tutorial-header-streak",
     targetIdMobile: "tutorial-mobile-header-streak",
-    placement: "bottom"
+    placement: "bottom",
+    screen: "dashboard"
   },
   {
     id: "header_ai_tokens",
@@ -73,7 +129,8 @@ const TUTORIAL_STEPS = [
     desc: "Waluta do funkcji AI, którą zdobywasz m.in. za codzienne logowanie i utrzymywanie serii. Wykorzystuj ją do inteligentnego planowania!",
     targetIdDesktop: "tutorial-header-ai-tokens",
     targetIdMobile: "tutorial-mobile-header-ai-tokens",
-    placement: "bottom"
+    placement: "bottom",
+    screen: "dashboard"
   },
   {
     id: "header_profile",
@@ -81,11 +138,12 @@ const TUTORIAL_STEPS = [
     desc: "Możesz się tu wylogować, połączyć z Kalendarzem Google oraz przejść do Ustawień konta.",
     targetIdDesktop: "tutorial-header-profile",
     targetIdMobile: "tutorial-mobile-header-profile",
-    placement: "bottom-left"
+    placement: "bottom-left",
+    screen: "dashboard"
   }
 ];
 
-export default function GlobalTutorial({ userEmail }) {
+export default function GlobalTutorial({ userEmail, activeTab = "dashboard" }) {
   const { isTooltipSeen, markTooltipSeen } = useTutorials(userEmail);
   const [sequence, setSequence] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -94,13 +152,15 @@ export default function GlobalTutorial({ userEmail }) {
 
   // Aktualizacja sekwencji, reaguje również na reset (gdy isTooltipSeen zmieni referencję)
   useEffect(() => {
-    const unseen = TUTORIAL_STEPS.filter(step => !isTooltipSeen(step.id));
+    // Samouczek menu i pulpitu odpalamy tylko wtedy, gdy użytkownik jest na pulpicie ("dashboard")
+    const relevantSteps = TUTORIAL_STEPS.filter(step => !step.screen || step.screen === activeTab);
+    const unseen = relevantSteps.filter(step => !isTooltipSeen(step.id));
     // Resetujemy do nowej sekwencji tylko jeśli aktualnie nic nie wyświetlamy
     if (unseen.length > 0 && (sequence.length === 0 || currentIndex >= sequence.length)) {
       setSequence(unseen);
       setCurrentIndex(0);
     }
-  }, [isTooltipSeen, sequence.length, currentIndex]);
+  }, [isTooltipSeen, sequence.length, currentIndex, activeTab]);
 
   const currentStep = sequence[currentIndex];
 
@@ -130,6 +190,11 @@ export default function GlobalTutorial({ userEmail }) {
 
       let actualPlacement = currentStep.placement;
 
+      // Dla wersji mobilnej elementy menu są na dole ekranu, więc dymek ma być nad nimi (top)
+      if (isMobile && actualPlacement === 'right') {
+        actualPlacement = 'top';
+      }
+
       // Sprawdzenie czy tooltip ucieknie za górną krawędź ekranu
       if (actualPlacement === 'top' && (rect.top - tooltipRect.height - space < 16)) {
         actualPlacement = 'bottom';
@@ -137,7 +202,17 @@ export default function GlobalTutorial({ userEmail }) {
         actualPlacement = 'top';
       }
 
-      if (actualPlacement === 'bottom') {
+      if (actualPlacement === 'right') {
+        left = rect.right + space;
+        top = targetCenterY - tooltipRect.height / 2;
+        top = Math.max(16, Math.min(top, window.innerHeight - tooltipRect.height - 16));
+        left = Math.max(16, Math.min(left, window.innerWidth - tooltipRect.width - 16));
+
+        arrowProps = {
+          direction: 'left',
+          y: targetCenterY - top - 10
+        };
+      } else if (actualPlacement === 'bottom') {
         top = rect.bottom + space;
         left = targetCenterX - tooltipRect.width / 2;
         left = Math.max(16, Math.min(left, window.innerWidth - tooltipRect.width - 16));
@@ -252,6 +327,12 @@ export default function GlobalTutorial({ userEmail }) {
                 <>
                   <div className="absolute -bottom-2.5 w-0 h-0 border-x-[8px] border-x-transparent border-t-[10px] border-t-white" style={{ left: position.arrowProps.x }}></div>
                   <div className="absolute -bottom-3 w-0 h-0 border-x-[9px] border-x-transparent border-t-[11px] border-t-[#2D9E6B] -z-10" style={{ left: position.arrowProps.x - 1 }}></div>
+                </>
+              )}
+              {position.arrowProps.direction === 'left' && (
+                <>
+                  <div className="absolute -left-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-r-[10px] border-r-white" style={{ top: position.arrowProps.y }}></div>
+                  <div className="absolute -left-3 w-0 h-0 border-y-[9px] border-y-transparent border-r-[11px] border-r-[#2D9E6B] -z-10" style={{ top: position.arrowProps.y - 1 }}></div>
                 </>
               )}
             </>

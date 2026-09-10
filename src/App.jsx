@@ -1920,6 +1920,7 @@ export default function App() {
                 return (
                   <button
                     key={item.id}
+                    id={`tutorial-mobile-nav-${item.id}`}
                     onClick={() => handleNav(item.id)}
                     className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200 ${isActive ? 'text-[#1E5C36] bg-[#1E5C36]/10' : 'text-[#9FB5AD] hover:text-[#5A7368] hover:bg-gray-50'}`}
                     aria-label={item.label}
@@ -1961,7 +1962,7 @@ export default function App() {
             }}
           />
 
-          <GlobalTutorial userEmail={user?.email} />
+          <GlobalTutorial userEmail={user?.email} activeTab={activeTab} />
 
           {showMoodModal && <MoodModal onClose={() => setShowMoodModal(false)} onAdd={addMood} />}
           {showDebugModal && <DebugModal onClose={() => setShowDebugModal(false)} actions={debugActions} />}

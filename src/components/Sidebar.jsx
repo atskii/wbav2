@@ -60,7 +60,7 @@ export default function Sidebar({ active, onNav, user, onLogout, selectedDate, s
                 </div>
               )}
 
-              <button onClick={() => { if (hasAlert) onDismissAlert(); onNav(n.id); setIsMobileOpen && setIsMobileOpen(false); }} className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-bold transition-all relative overflow-hidden ${active === n.id ? (hasAlert ? "bg-[#1e3a2b] text-white shadow-md" : "bg-[#1E5C36] text-white shadow-lg shadow-green-900/20") : (hasAlert ? "bg-[#1e3a2b] text-white shadow-md hover:bg-[#162c20]" : "text-[#5A7368] hover:bg-[#F5EFE6]")}`}>
+              <button id={`tutorial-nav-${n.id}`} onClick={() => { if (hasAlert) onDismissAlert(); onNav(n.id); setIsMobileOpen && setIsMobileOpen(false); }} className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13px] font-bold transition-all relative overflow-hidden ${active === n.id ? (hasAlert ? "bg-[#1e3a2b] text-white shadow-md" : "bg-[#1E5C36] text-white shadow-lg shadow-green-900/20") : (hasAlert ? "bg-[#1e3a2b] text-white shadow-md hover:bg-[#162c20]" : "text-[#5A7368] hover:bg-[#F5EFE6]")}`}>
 
                 {hasAlert && (
                   <div className="absolute left-0 top-0 bottom-0 w-2 bg-[#D32F2F]"></div>
