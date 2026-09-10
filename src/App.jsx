@@ -317,6 +317,7 @@ export default function App() {
 
   const [showDebugModal, setShowDebugModal] = useState(false);
   const [showStreakAnimation, setShowStreakAnimation] = useState(false);
+  const [streakAnimationMode, setStreakAnimationMode] = useState('auto'); // 'auto' | 'dashboard'
   const [isTokenBouncing, setIsTokenBouncing] = useState(false);
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
@@ -1141,17 +1142,20 @@ export default function App() {
   const streakCount = user?.prefs?.loginStreak || 0;
   const aiTokens = user?.aiTokens !== undefined ? user.aiTokens : (user?.prefs?.ai_tokens ?? 10);
 
-  const handleClaimStreakReward = async (amount) => {
+  const handleClaimStreakReward = async (dayNumber, amount) => {
     const cur = user?.aiTokens ?? (user?.prefs?.ai_tokens ?? 10);
-    await setAiTokensDebug(cur + amount);
-    // Zapis w Supabase (optymistycznie zaktualizowane na lokalnym userze powyżej)
-    // useEffect z animatedAiTokens zajmie się resztą animacji
+    const claimedDays = user?.prefs?.claimedStreakDays || [];
     
-    // add(`Zdobyto +${amount} Monet AI za serię!`, 'success'); - user chce ukryc
+    if (claimedDays.includes(dayNumber)) return;
+    
+    const newPrefs = { ...(user?.prefs || {}), claimedStreakDays: [...claimedDays, dayNumber] };
+
+    await setAiTokensDebug(cur + amount);
+    setUser(prev => ({ ...prev, prefs: newPrefs }));
+    await supabase.from('profiles').update({ prefs: newPrefs }).eq('email', user?.email);
   };
 
-    // add(`Zdobyto +${amount} Monet AI za serię!`, 'success'); - user chce ukryc
-  };
+
 
   const toggleTask = async (id, e) => {
     const task = tasks.find(t => t.id === id);
@@ -1163,6 +1167,7 @@ export default function App() {
       const todayStr = getNow().toISOString().split('T')[0];
       const doneToday = tasks.filter(t => t.done && (t.pDate === todayStr || t.t === todayStr)).length;
       if (doneToday === 0 && streakCount > 0) {
+        setStreakAnimationMode('auto');
         setShowStreakAnimation(true);
       }
 
@@ -1580,17 +1585,30 @@ export default function App() {
                   </AnimatePresence>
                 </motion.div>
 
-                {/* 2. Streak badge */}
-                <motion.div 
-                  id="tutorial-header-streak"
-                  layout
-                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex items-center justify-center gap-1.5 px-4 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-sm flex-shrink-0 shadow-sm" 
-                  title={`${streakCount} dni serii`}
-                >
-                  <img src="/icons/fire.svg" alt="Flame Streak" className="w-5 h-5 object-contain drop-shadow-sm" />
-                  <span>{streakCount}</span>
-                </motion.div>
+                {/* 2. Streak Ognia */}
+                <div className="relative">
+                  <motion.div 
+                    id="tutorial-header-streak"
+                    layout
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex items-center justify-center gap-1.5 px-4 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-sm flex-shrink-0 shadow-sm cursor-pointer hover:bg-amber-500/20 transition-colors" 
+                    title={`${streakCount} dni serii - kliknij, by zobaczyć nagrody`}
+                    onClick={() => { setStreakAnimationMode('dashboard'); setShowStreakAnimation(true); }}
+                  >
+                    <img src="/icons/fire.svg" alt="Flame Streak" className="w-5 h-5 object-contain drop-shadow-sm" />
+                    <span>{streakCount}</span>
+                  </motion.div>
+                  {(() => {
+                    const claimedDays = user?.prefs?.claimedStreakDays || [];
+                    const unclaimed = streakCount > 0 ? Array.from({ length: streakCount }, (_, i) => i + 1).filter(d => !claimedDays.includes(d)).length : 0;
+                    if (unclaimed > 0) {
+                      return (
+                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white animate-pulse" title={`Masz ${unclaimed} nieodebrane nagrody!`} />
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
 
                 {/* 3. Monety / Tokeny AI */}
                 <motion.div 
@@ -1769,13 +1787,26 @@ export default function App() {
                 {/* Grupa elementów po prawej stronie */}
                 <div className="flex items-center gap-3.5 sm:gap-5">
                   {/* 2. Streak badge */}
-                  <div 
-                    id="tutorial-mobile-header-streak"
-                    className="flex items-center justify-center gap-1 px-1 h-10 text-amber-700 font-extrabold text-base flex-shrink-0" 
-                    title={`${streakCount} dni serii`}
-                  >
-                    <img src="/icons/fire.svg" alt="Flame Streak" className="w-6 h-6 object-contain drop-shadow-sm" />
-                    <span>{streakCount}</span>
+                  <div className="relative">
+                    <div 
+                      id="tutorial-mobile-header-streak"
+                      className="flex items-center justify-center gap-1 px-1 h-10 text-amber-700 font-extrabold text-base flex-shrink-0 cursor-pointer active:opacity-70 transition-opacity" 
+                      title={`${streakCount} dni serii - kliknij, by zobaczyć nagrody`}
+                      onClick={() => { setStreakAnimationMode('dashboard'); setShowStreakAnimation(true); }}
+                    >
+                      <img src="/icons/fire.svg" alt="Flame Streak" className="w-6 h-6 object-contain drop-shadow-sm" />
+                      <span>{streakCount}</span>
+                    </div>
+                    {(() => {
+                      const claimedDays = user?.prefs?.claimedStreakDays || [];
+                      const unclaimed = streakCount > 0 ? Array.from({ length: streakCount }, (_, i) => i + 1).filter(d => !claimedDays.includes(d)).length : 0;
+                      if (unclaimed > 0) {
+                        return (
+                          <div className="absolute top-1 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
 
                   <AnimatedAICounter
@@ -1998,6 +2029,8 @@ export default function App() {
               streakCount={streakCount}
               onClose={() => setShowStreakAnimation(false)}
               onClaimReward={handleClaimStreakReward}
+              mode={streakAnimationMode}
+              claimedDays={user?.prefs?.claimedStreakDays || []}
             />
           )}
         </>
