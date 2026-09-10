@@ -44,6 +44,7 @@ import StreakPlant from "./components/StreakPlant";
 import GlobalTutorial from "./components/GlobalTutorial";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsOfService from "./components/TermsOfService";
+import TokenStoreScreen from "./components/TokenStoreScreen";
 
 const ADMIN_EMAILS = ["admin@wellbeing.app", "admin@wba.com"];
 const TEST_EMAIL = "testuser@testuser";
@@ -83,6 +84,7 @@ export default function App() {
   const [helpMenuOpen, setHelpMenuOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+  const [showTokenStore, setShowTokenStore] = useState(false);
 
   const { isTooltipSeen, markTooltipSeen, isFirstScreenVisit, markScreenVisited, resetAllTutorials, resetScreen } = useTutorials(user?.email);
 
@@ -111,23 +113,23 @@ export default function App() {
             const mappedTasks = mapGoogleEventsToTasks(events);
             const { data: existing } = await supabase.from('tasks').select('desc').eq('user_email', user.email).like('desc', '%[GCal:%');
             const existingIds = (existing || []).map(t => {
-                const m = t.desc ? t.desc.match(/\[GCal:(.+?)\]/) : null;
-                return m ? m[1] : null;
+              const m = t.desc ? t.desc.match(/\[GCal:(.+?)\]/) : null;
+              return m ? m[1] : null;
             }).filter(Boolean);
             const newTasks = mappedTasks.filter(t => {
-                const m = t.desc.match(/\[GCal:(.+?)\]/);
-                return !existingIds.includes(m ? m[1] : null);
-            }).map(t => ({...t, user_email: user.email}));
+              const m = t.desc.match(/\[GCal:(.+?)\]/);
+              return !existingIds.includes(m ? m[1] : null);
+            }).map(t => ({ ...t, user_email: user.email }));
 
             if (newTasks.length > 0) {
-                const { error } = await supabase.from('tasks').insert(newTasks);
-                if (error) throw error;
-                add(`Zsynchronizowano ${newTasks.length} nowych wydarzeń!`);
-                setTimeout(() => window.location.reload(), 1500);
+              const { error } = await supabase.from('tasks').insert(newTasks);
+              if (error) throw error;
+              add(`Zsynchronizowano ${newTasks.length} nowych wydarzeń!`);
+              setTimeout(() => window.location.reload(), 1500);
             } else {
-                add(`Brak nowych wydarzeń do synchronizacji.`, "info");
+              add(`Brak nowych wydarzeń do synchronizacji.`, "info");
             }
-          } catch(e) {
+          } catch (e) {
             console.error(e);
             add("Błąd podczas synchronizacji Kalendarza Google.", "warn");
           }
@@ -238,27 +240,27 @@ export default function App() {
             const initialAiTokens = (profileData.ai_tokens !== null && profileData.ai_tokens !== undefined)
               ? profileData.ai_tokens
               : (currentPrefs.ai_tokens ?? 10);
-            
+
             // LOGIKA STREAKU LOGOWANIA
             const now = new Date();
             const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const lastLogin = currentPrefs.lastLoginDate;
             let currentStreak = currentPrefs.loginStreak || 0;
-            
+
             let prefsChanged = false;
             if (lastLogin !== todayStr) {
               if (lastLogin) {
-                 const yesterday = new Date(now);
-                 yesterday.setDate(yesterday.getDate() - 1);
-                 const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-                 
-                 if (lastLogin === yesterdayStr) {
-                    currentStreak += 1;
-                 } else {
-                    currentStreak = 1; // reset streaku
-                 }
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+                if (lastLogin === yesterdayStr) {
+                  currentStreak += 1;
+                } else {
+                  currentStreak = 1; // reset streaku
+                }
               } else {
-                 currentStreak = 1; // pierwsze logowanie
+                currentStreak = 1; // pierwsze logowanie
               }
               currentPrefs.lastLoginDate = todayStr;
               currentPrefs.loginStreak = currentStreak;
@@ -273,8 +275,8 @@ export default function App() {
             }
 
             // Użytkownik ma już profil - pomiń onboarding i wejdź do apki
-            setUser(prev => ({ 
-              ...prev, 
+            setUser(prev => ({
+              ...prev,
               name: currentPrefs?.name || prev?.name || user.email.split('@')[0],
               prefs: currentPrefs,
               aiTokens: initialAiTokens
@@ -399,7 +401,7 @@ export default function App() {
     if (currentTokens < amount) return false;
 
     const newTokens = Math.max(0, currentTokens - amount);
-    
+
     // Natychmiastowa optymistyczna zmiana w stanie React
     setUser(prev => ({
       ...prev,
@@ -410,18 +412,18 @@ export default function App() {
     try {
       // Prosty odczyt bieżących statystyk dla bezpieczeństwa (lub zakładamy, że mamy je w profilu, 
       // dla uproszczenia robimy po prostu update, który powiększy wydatki jeśli śledzimy stan w pamięci).
-      
+
       // Ponieważ nie mamy "spent" w pamięci aplikacji, aby było to 100% bezpieczne, po prostu aktualizujemy bilans.
       // Aby w pełni zrealizować statystyki "spent", musimy najpierw pobrać aktualny stan z bazy (lub polegać na wbudowanej inkrementacji).
       // Zrobimy inkrementację w Supabase (gdybyśmy mieli włączone uprawnienia). Dla pewności najpierw zapytamy.
       const { data: profile } = await supabase.from('profiles').select('ai_tokens_spent').eq('email', user.email).single();
       const currentSpent = profile?.ai_tokens_spent || 0;
-      
+
       await supabase
         .from('profiles')
-        .update({ 
-            ai_tokens: newTokens,
-            ai_tokens_spent: currentSpent + amount
+        .update({
+          ai_tokens: newTokens,
+          ai_tokens_spent: currentSpent + amount
         })
         .eq('email', user.email);
 
@@ -448,10 +450,10 @@ export default function App() {
     try {
       const { data: profile } = await supabase.from('profiles').select('ai_tokens_gained').eq('email', user.email).single();
       const currentGained = profile?.ai_tokens_gained || 10;
-      
+
       const updatePayload = { ai_tokens: validAmount };
       if (diff > 0) {
-          updatePayload.ai_tokens_gained = currentGained + diff;
+        updatePayload.ai_tokens_gained = currentGained + diff;
       }
 
       const { error } = await supabase
@@ -582,7 +584,7 @@ export default function App() {
           .from('moods')
           .upsert(fakeMoods, { onConflict: 'user_email,d' })
           .select();
-        
+
         if (error) throw error;
 
         setMoods(prev => {
@@ -743,7 +745,7 @@ export default function App() {
 
       const match = task.duration ? task.duration.match(/(\d+)/) : null;
       const mins = match ? Math.max(1, parseInt(match[1])) : 60;
-      
+
       // Gęstość = Waga / Czas trwania. Mnożymy przez 100 dla spójności z resztą punktacji.
       score += (weight / mins) * 100;
 
@@ -752,7 +754,7 @@ export default function App() {
         const deadlineDate = new Date(task.deadline);
         if (!isNaN(deadlineDate.getTime())) {
           const diffHours = (deadlineDate - nowLocal) / (1000 * 60 * 60);
-          
+
           if (diffHours < 0) {
             // Po terminie - bazowo duży bonus, rośnie z czasem opóźnienia (capped do +100 dodatkowych pkt)
             score += 150 + Math.min(Math.abs(diffHours), 100);
@@ -773,7 +775,7 @@ export default function App() {
       } else {
         score += (task.difficulty || 0) * 6;
       }
-      
+
       return score;
     };
 
@@ -828,7 +830,7 @@ export default function App() {
     const flexData = flexTasks.map(t => {
       const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;
       const duration = durMatch ? parseInt(durMatch[1]) : 45;
-      
+
       // Proporcjonalna przerwa dopasowana do długości i wagi zadania:
       // - Krótkie (<30m): 5 min (szybki oddech, bez sztucznej 33-minutowej luki)
       // - Średnie (30-59m): 10 min (standardowa przerwa Pomodoro, widoczna od 10 min)
@@ -853,14 +855,14 @@ export default function App() {
     // Budujemy listę slotów (luk) między zablokowanymi blokami
     const gaps = [];
     let gapStart = timelineStart * 60;
-    
+
     // Zabezpieczenie przed układaniem zadań w przeszłości (jeśli planujemy dzisiejszy dzień)
     const nowL = new Date();
     if (selectedDate.toDateString() === nowL.toDateString()) {
-       const currentMins = nowL.getHours() * 60 + nowL.getMinutes();
-       // Zaokrąglamy obecny czas w górę do pełnych 15 minut dla zachowania siatki
-       const roundedCurrentMins = Math.ceil(currentMins / 15) * 15;
-       gapStart = Math.max(gapStart, roundedCurrentMins);
+      const currentMins = nowL.getHours() * 60 + nowL.getMinutes();
+      // Zaokrąglamy obecny czas w górę do pełnych 15 minut dla zachowania siatki
+      const roundedCurrentMins = Math.ceil(currentMins / 15) * 15;
+      gapStart = Math.max(gapStart, roundedCurrentMins);
     }
 
     for (const block of lockedBlocks) {
@@ -887,10 +889,10 @@ export default function App() {
         const neededSpace = ft.duration;
         // Sprawdź czy zadanie mieści się w pozostałej części luki
         if (pointer + neededSpace <= gap.end) {
-          
+
           let dynamicBreak = ft.breakTime;
           cumulativeWorkWithoutBreak += ft.duration;
-          
+
           // Jeśli skumulowany czas pracy z krótkich zadań przekroczy 45 min, wymuszamy przerwę >= 10 min
           if (cumulativeWorkWithoutBreak >= 45 && dynamicBreak < 10) {
             dynamicBreak = 10;
@@ -902,7 +904,7 @@ export default function App() {
           }
           placed.add(ft.id);
           pointer += neededSpace + dynamicBreak;
-          
+
           // Resetujemy licznik jeśli wystąpiła porządna przerwa
           if (dynamicBreak >= 10) {
             cumulativeWorkWithoutBreak = 0;
@@ -952,7 +954,7 @@ export default function App() {
       add("Brak monet AI. Nie można ułożyć inteligentnego planu.", "warn");
       return;
     }
-    
+
     setIsAiPlanning(true);
     // Pobierz 1 token natychmiast (optymistycznie)
     const tokenSpent = await spendAiTokens(1);
@@ -965,15 +967,15 @@ export default function App() {
     try {
       const lastMood = moods.length > 0 ? moods[moods.length - 1].v : 2;
       const result = await generatePlanWithAI(tasks, user?.prefs, selectedDate, lastMood, user?.email, userContext);
-      
+
       const aiMappedTasks = Array.isArray(result?.mappedTasks) ? result.mappedTasks : [];
-      
+
       const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-      
+
       const updatedTasks = [...tasks];
       let hasChanges = false;
       const tasksToSyncMap = new Map();
-      
+
       // Kasujemy najpierw flex taski z tego dnia (przywracamy do backlogu)
       updatedTasks.forEach((t, idx) => {
         if (!t.isLocked && t.pDate === dateStr) {
@@ -982,7 +984,7 @@ export default function App() {
           hasChanges = true;
         }
       });
-      
+
       aiMappedTasks.forEach(mt => {
         const idx = updatedTasks.findIndex(t => t.id === mt.id);
         if (idx !== -1) {
@@ -992,10 +994,10 @@ export default function App() {
           hasChanges = true;
         }
       });
-      
+
       if (hasChanges) {
         setTasks(sortSmartQueue(updatedTasks));
-        
+
         const tasksToSync = Array.from(tasksToSyncMap.values());
         // Zapis do Supabase
         if (user && user.email && tasksToSync.length > 0) {
@@ -1014,7 +1016,7 @@ export default function App() {
       } else {
         add("AI nie znalazło miejsca na nowe zadania.", "info");
       }
-      
+
       if (result?.coachMessage) {
         const msg = result.coachMessage;
         setAiCoachMessage({
@@ -1035,7 +1037,7 @@ export default function App() {
       console.error("Błąd AI:", err);
       add("Zbyt duże obciążenie mózgu AI, spróbuj ponownie za chwilę.", "warn");
       // Zwróć monetę
-      await debugActions.setAiTokens(currentTokens); 
+      await debugActions.setAiTokens(currentTokens);
     } finally {
       setIsAiPlanning(false);
     }
@@ -1145,9 +1147,9 @@ export default function App() {
   const handleClaimStreakReward = async (dayNumber, amount) => {
     const cur = user?.aiTokens ?? (user?.prefs?.ai_tokens ?? 10);
     const claimedDays = user?.prefs?.claimedStreakDays || [];
-    
+
     if (claimedDays.includes(dayNumber)) return;
-    
+
     const newPrefs = { ...(user?.prefs || {}), claimedStreakDays: [...claimedDays, dayNumber] };
 
     await setAiTokensDebug(cur + amount);
@@ -1529,15 +1531,15 @@ export default function App() {
               {/* WERSJA DESKTOP (md:flex) - Pełne, osobne pigułki z nazwą użytkownika */}
               <div className="hidden md:flex items-center justify-end gap-3 md:gap-4 flex-shrink-0 min-w-0">
                 {/* 1. Przycisk pomocy i samouczków (?) */}
-                <motion.div 
+                <motion.div
                   layout
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className="relative z-[100]"
                 >
                   {helpMenuOpen && (
-                    <div 
-                      className="fixed inset-0 z-[90]" 
-                      onClick={() => setHelpMenuOpen(false)} 
+                    <div
+                      className="fixed inset-0 z-[90]"
+                      onClick={() => setHelpMenuOpen(false)}
                     />
                   )}
 
@@ -1587,11 +1589,11 @@ export default function App() {
 
                 {/* 2. Streak Ognia */}
                 <div className="relative">
-                  <motion.div 
+                  <motion.div
                     id="tutorial-header-streak"
                     layout
                     transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex items-center justify-center gap-1.5 px-4 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-sm flex-shrink-0 shadow-sm cursor-pointer hover:bg-amber-500/20 transition-colors" 
+                    className="flex items-center justify-center gap-1.5 px-4 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-sm flex-shrink-0 shadow-sm cursor-pointer hover:bg-amber-500/20 transition-colors"
                     title={`${streakCount} dni serii - kliknij, by zobaczyć nagrody`}
                     onClick={() => { setStreakAnimationMode('dashboard'); setShowStreakAnimation(true); }}
                   >
@@ -1611,33 +1613,34 @@ export default function App() {
                 </div>
 
                 {/* 3. Monety / Tokeny AI */}
-                <motion.div 
+                <motion.div
                   id="tutorial-header-ai-tokens"
                   layout
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <AnimatedAICounter
                     aiTokens={aiTokens}
-                    className={`flex items-center justify-center gap-1.5 px-4 h-10 rounded-full font-extrabold text-sm flex-shrink-0 shadow-sm transition-all ${
-                      aiTokens > 2
+                    className={`flex items-center justify-center gap-1.5 px-4 h-10 rounded-full font-extrabold text-sm flex-shrink-0 shadow-sm transition-all ${aiTokens > 2
                         ? "bg-[#E5F2F3] border border-[#1A949A]/30 text-[#02848C]"
                         : aiTokens > 0
-                        ? "bg-amber-500/10 border border-amber-500/20 text-amber-700"
-                        : "bg-rose-500/10 border border-rose-500/20 text-rose-600 opacity-80"
-                    }`}
+                          ? "bg-amber-500/10 border border-amber-500/20 text-amber-700"
+                          : "bg-rose-500/10 border border-rose-500/20 text-rose-600 opacity-80"
+                      }`}
                     iconClassName={`w-5 h-5 object-contain drop-shadow-sm ${aiTokens === 0 ? "opacity-40 grayscale" : ""}`}
+                    onClick={() => setShowTokenStore(true)}
+                    showPlus={true}
                   />
                 </motion.div>
 
                 {/* 4. Profil z dynamiczną szerokością i pełną nazwą użytkownika */}
-                <motion.div 
+                <motion.div
                   layout
                   initial={false}
-                  animate={{ 
+                  animate={{
                     width: profileMenuOpen ? 250 : "auto",
                   }}
-                  transition={{ 
-                    duration: 0.2, 
+                  transition={{
+                    duration: 0.2,
                     ease: [0.22, 1, 0.36, 1],
                   }}
                   className="relative h-10 z-[100] flex-shrink-0"
@@ -1653,28 +1656,27 @@ export default function App() {
                   </div>
 
                   {profileMenuOpen && (
-                    <div 
-                      className="fixed inset-0 z-[90]" 
-                      onClick={() => setProfileMenuOpen(false)} 
+                    <div
+                      className="fixed inset-0 z-[90]"
+                      onClick={() => setProfileMenuOpen(false)}
                     />
                   )}
 
-                  <motion.div 
+                  <motion.div
                     initial={false}
-                    animate={{ 
+                    animate={{
                       width: profileMenuOpen ? 250 : "100%",
                     }}
-                    transition={{ 
-                      duration: 0.2, 
+                    transition={{
+                      duration: 0.2,
                       ease: [0.22, 1, 0.36, 1],
                     }}
-                    className={`absolute top-0 right-0 z-[100] bg-white border shadow-sm rounded-2xl md:rounded-3xl overflow-hidden transition-colors duration-200 ${
-                      profileMenuOpen ? 'shadow-xl border-[#2D9E6B]/50' : 'border-[#E8DDD0] hover:shadow-md hover:border-[#2D9E6B]'
-                    }`}
+                    className={`absolute top-0 right-0 z-[100] bg-white border shadow-sm rounded-2xl md:rounded-3xl overflow-hidden transition-colors duration-200 ${profileMenuOpen ? 'shadow-xl border-[#2D9E6B]/50' : 'border-[#E8DDD0] hover:shadow-md hover:border-[#2D9E6B]'
+                      }`}
                   >
-                    <button 
+                    <button
                       id="tutorial-header-profile"
-                      onClick={() => setProfileMenuOpen(!profileMenuOpen)} 
+                      onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                       className="w-full h-10 flex items-center justify-between gap-2.5 px-3.5 hover:bg-[#F9FAFB] transition-colors text-left select-none whitespace-nowrap cursor-pointer"
                     >
                       <div className="flex items-center gap-2 min-w-0">
@@ -1690,15 +1692,15 @@ export default function App() {
 
                     <AnimatePresence>
                       {profileMenuOpen && (
-                        <motion.div 
+                        <motion.div
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          transition={{ 
+                          transition={{
                             height: {
-                              duration: 0.2, 
+                              duration: 0.2,
                               delay: profileMenuOpen ? 0.18 : 0,
-                              ease: [0.22, 1, 0.36, 1] 
+                              ease: [0.22, 1, 0.36, 1]
                             },
                             opacity: {
                               duration: 0.15,
@@ -1788,9 +1790,9 @@ export default function App() {
                 <div className="flex items-center gap-3.5 sm:gap-5">
                   {/* 2. Streak badge */}
                   <div className="relative">
-                    <div 
+                    <div
                       id="tutorial-mobile-header-streak"
-                      className="flex items-center justify-center gap-1 px-1 h-10 text-amber-700 font-extrabold text-base flex-shrink-0 cursor-pointer active:opacity-70 transition-opacity" 
+                      className="flex items-center justify-center gap-1 px-1 h-10 text-amber-700 font-extrabold text-base flex-shrink-0 cursor-pointer active:opacity-70 transition-opacity"
                       title={`${streakCount} dni serii - kliknij, by zobaczyć nagrody`}
                       onClick={() => { setStreakAnimationMode('dashboard'); setShowStreakAnimation(true); }}
                     >
@@ -1812,14 +1814,15 @@ export default function App() {
                   <AnimatedAICounter
                     id="tutorial-mobile-header-ai-tokens"
                     aiTokens={aiTokens}
-                    className={`flex items-center justify-center gap-1 px-1 h-10 font-extrabold text-base flex-shrink-0 transition-all ${
-                      aiTokens > 2
+                    className={`flex items-center justify-center gap-1 px-1 h-10 font-extrabold text-base flex-shrink-0 transition-all ${aiTokens > 2
                         ? "text-[#02848C]"
                         : aiTokens > 0
-                        ? "text-amber-700"
-                        : "text-rose-600 opacity-80"
-                    }`}
+                          ? "text-amber-700"
+                          : "text-rose-600 opacity-80"
+                      }`}
                     iconClassName={`w-6 h-6 object-contain drop-shadow-sm ${aiTokens === 0 ? "opacity-40 grayscale" : ""}`}
+                    onClick={() => setShowTokenStore(true)}
+                    showPlus={true}
                   />
 
                   {/* 4. Profil z ikonką awatara */}
@@ -1948,9 +1951,9 @@ export default function App() {
               {activeTab === "plant" && (
                 <div className="flex-1 overflow-y-auto bg-white flex flex-col items-center justify-center min-h-0 p-4 pb-20">
                   <div className="w-full max-w-md">
-                    <StreakPlant 
-                      tasks={tasks.filter(t => checkIsDate(t.pDate, new Date()) || (!t.pDate && (checkIsDate(t.t, new Date()) || checkIsDate(t.deadline, new Date()))))} 
-                      userEmail={user?.email} 
+                    <StreakPlant
+                      tasks={tasks.filter(t => checkIsDate(t.pDate, new Date()) || (!t.pDate && (checkIsDate(t.t, new Date()) || checkIsDate(t.deadline, new Date()))))}
+                      userEmail={user?.email}
                     />
                   </div>
                 </div>
@@ -1964,10 +1967,10 @@ export default function App() {
               {[
                 { id: "dashboard", icon: <Home size={22} />, label: "Główna" },
                 { id: "calendar", icon: <Calendar size={22} />, label: "Kalendarz" },
-                { 
-                  id: "plant", 
-                  icon: <img src="/plant.png" alt="Roślina" className={`w-[22px] h-[22px] object-contain transition-all ${activeTab === 'plant' ? '' : 'grayscale opacity-70'}`} />, 
-                  label: "Roślina" 
+                {
+                  id: "plant",
+                  icon: <img src="/plant.png" alt="Roślina" className={`w-[22px] h-[22px] object-contain transition-all ${activeTab === 'plant' ? '' : 'grayscale opacity-70'}`} />,
+                  label: "Roślina"
                 },
                 { id: "mood", icon: <Smile size={22} />, label: "Nastrój" },
                 { id: "warning", icon: <div className="relative"><LifeBuoy size={22} />{activeAlert && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />}</div>, label: "Pomoc" },
@@ -2023,7 +2026,7 @@ export default function App() {
 
           {showMoodModal && <MoodModal onClose={() => setShowMoodModal(false)} onAdd={addMood} />}
           {showDebugModal && <DebugModal onClose={() => setShowDebugModal(false)} actions={debugActions} />}
-          
+
           {showStreakAnimation && (
             <StreakAnimation
               streakCount={streakCount}
@@ -2033,6 +2036,15 @@ export default function App() {
               claimedDays={user?.prefs?.claimedStreakDays || []}
             />
           )}
+
+          <AnimatePresence>
+            {showTokenStore && (
+              <TokenStoreScreen
+                onClose={() => setShowTokenStore(false)}
+                userEmail={user?.email}
+              />
+            )}
+          </AnimatePresence>
         </>
       )}
     </div>
