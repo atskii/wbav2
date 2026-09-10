@@ -106,12 +106,14 @@ export default function StreakPlant({
 
   const claimedDays = userPrefs?.claimedStreakDays || [];
   const isCactusUnlocked = streakCount >= 3 || claimedDays.includes(3);
+  const isBonsaiUnlocked = streakCount >= 7 || claimedDays.includes(7);
   const isBambooUnlocked = streakCount >= 14 || claimedDays.includes(14);
 
   const [hasFlowered, setHasFlowered] = useState(false);
   const [plantType, setPlantType] = useState(() => {
     const saved = userPrefs?.selectedPlant || localStorage.getItem('selected_plant_type') || 'image';
     if (saved === 'cactus' && !isCactusUnlocked) return 'image';
+    if (saved === 'bonsai' && !isBonsaiUnlocked) return 'image';
     if (saved === 'bamboo' && !isBambooUnlocked) return 'image';
     return saved;
   });
@@ -122,16 +124,22 @@ export default function StreakPlant({
       const sel = userPrefs.selectedPlant;
       if (sel === 'cactus' && !isCactusUnlocked) {
         setPlantType('image');
+      } else if (sel === 'bonsai' && !isBonsaiUnlocked) {
+        setPlantType('image');
       } else if (sel === 'bamboo' && !isBambooUnlocked) {
         setPlantType('image');
       } else {
         setPlantType(sel);
       }
     }
-  }, [userPrefs?.selectedPlant, isCactusUnlocked, isBambooUnlocked]);
+  }, [userPrefs?.selectedPlant, isCactusUnlocked, isBonsaiUnlocked, isBambooUnlocked]);
 
   useEffect(() => {
     if (plantType === 'cactus' && !isCactusUnlocked) {
+      setPlantType('image');
+      localStorage.setItem('selected_plant_type', 'image');
+    }
+    if (plantType === 'bonsai' && !isBonsaiUnlocked) {
       setPlantType('image');
       localStorage.setItem('selected_plant_type', 'image');
     }
@@ -139,7 +147,7 @@ export default function StreakPlant({
       setPlantType('image');
       localStorage.setItem('selected_plant_type', 'image');
     }
-  }, [plantType, isCactusUnlocked, isBambooUnlocked]);
+  }, [plantType, isCactusUnlocked, isBonsaiUnlocked, isBambooUnlocked]);
 
   const currentStep = xpProgress === 0 ? 1 : Math.ceil(xpProgress / 10);
 
@@ -173,7 +181,10 @@ export default function StreakPlant({
     }
   };
 
-  const plantNameLabel = plantType === 'cactus' ? 'Kaktus Pustynny' : plantType === 'bamboo' ? 'Bambus Szczęścia' : 'Monstera Deliciosa';
+  const plantNameLabel = plantType === 'cactus' ? 'Kaktus Pustynny' 
+    : plantType === 'bonsai' ? 'Bonsai Zen'
+    : plantType === 'bamboo' ? 'Bambus Szczęścia' 
+    : 'Monstera Deliciosa';
 
   return (
     <div id="tutorial-streak-plant" className="bg-white md:bg-white/90 backdrop-blur-sm md:rounded-3xl p-5 md:p-6 md:border md:border-[#E8DDD0] md:shadow-sm md:hover:shadow-md transition-all relative overflow-visible flex flex-col">
@@ -250,18 +261,19 @@ export default function StreakPlant({
                 {/* Łodygi bambusa - rosną dynamicznie */}
                 {(() => {
                   const progress = plantHeight / 100;
-                  const maxH = 200;
-                  // 3 łodygi, każda z własnymi proporcjami
+                  const maxH = 190;
+                  // 3 łodygi, każda z własnymi proporcjami, wpuszczone w głąb doniczki
                   const stalks = [
                     { x: -18, w: 7, hFrac: 0.85, color: '#43A047', segColor: '#2E7D32', leafDir: 'left' },
                     { x: 0, w: 8, hFrac: 1.0, color: '#66BB6A', segColor: '#388E3C', leafDir: 'right' },
                     { x: 16, w: 6, hFrac: 0.7, color: '#43A047', segColor: '#2E7D32', leafDir: 'right' },
                   ];
                   return stalks.map((s, i) => {
-                    const stalkH = Math.round(20 + progress * maxH * s.hFrac);
+                    // +20px zapasu, aby łodygi wychodziły z ziemi wewnątrz doniczki
+                    const stalkH = Math.round(30 + progress * maxH * s.hFrac);
                     const segCount = Math.floor(stalkH / 30);
                     return (
-                      <div key={i} className="absolute z-10" style={{ bottom: '64px', left: `calc(50% + ${s.x}px)`, transform: 'translateX(-50%)' }}>
+                      <div key={i} className="absolute z-10" style={{ bottom: '48px', left: `calc(50% + ${s.x}px)`, transform: 'translateX(-50%)' }}>
                         {/* Łodyga */}
                         <div
                           className="transition-all duration-1000 ease-out rounded-t-sm relative"
@@ -276,12 +288,12 @@ export default function StreakPlant({
                             />
                           ))}
                         </div>
-                        {/* Liście - pojawiają się przy postępie > 30% */}
-                        {progress > 0.3 && segCount > 0 && (
+                        {/* Liście - naturalnie rosną wzdłuż łodygi */}
+                        {progress > 0.3 && (
                           <svg
-                            className="absolute transition-opacity duration-500"
+                            className="absolute transition-all duration-500"
                             style={{
-                              bottom: `${Math.min(stalkH - 15, 60)}px`,
+                              bottom: `${Math.round(stalkH * 0.55)}px`,
                               [s.leafDir === 'left' ? 'right' : 'left']: `${s.w}px`,
                               opacity: Math.min(1, (progress - 0.3) * 3),
                             }}
@@ -297,11 +309,11 @@ export default function StreakPlant({
                           </svg>
                         )}
                         {/* Dodatkowy liść wyżej przy > 60% */}
-                        {progress > 0.6 && stalkH > 80 && (
+                        {progress > 0.6 && stalkH > 70 && (
                           <svg
-                            className="absolute transition-opacity duration-500"
+                            className="absolute transition-all duration-500"
                             style={{
-                              bottom: `${Math.min(stalkH - 15, stalkH * 0.7)}px`,
+                              bottom: `${Math.round(stalkH * 0.82)}px`,
                               [s.leafDir === 'left' ? 'left' : 'right']: `${s.w}px`,
                               opacity: Math.min(1, (progress - 0.6) * 3),
                             }}
@@ -329,10 +341,48 @@ export default function StreakPlant({
                       animate={{ scale: 1, opacity: 1, rotate: 0 }}
                       exit={{ scale: 0, opacity: 0 }}
                       transition={{ duration: 0.5, type: "spring" }}
-                      className="absolute left-1/2 -translate-x-1/2 z-30"
-                      style={{ bottom: `${64 + Math.round(20 + 200) + 5}px` }}
+                      className="absolute left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+                      style={{ bottom: `${48 + Math.round(30 + 190) + 5}px` }}
                     >
                       <Sparkles className="w-8 h-8 text-[#FFD54F] animate-pulse drop-shadow-md" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ) : plantType === 'bonsai' ? (
+              <motion.div
+                key="bonsai"
+                initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                style={{ transformOrigin: "bottom center" }}
+                className="absolute inset-0 flex justify-center items-end pb-2"
+              >
+                <AnimatePresence>
+                  <motion.img
+                    key={`bonsai-${currentStep}`}
+                    src={`/bonsai/bonsai${currentStep}.png`}
+                    alt={`Bonsai etap wzrostu`}
+                    initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                    exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    style={{ transformOrigin: "bottom center" }}
+                    className="absolute bottom-0 w-48 sm:w-56 h-auto object-contain object-bottom pointer-events-none"
+                  />
+                </AnimatePresence>
+                <AnimatePresence>
+                  {xpProgress === 100 && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.5, type: "spring" }}
+                      className="absolute left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+                      style={{ bottom: '150px' }}
+                    >
+                      <Sparkles className="w-7 h-7 text-[#FFD54F] animate-pulse drop-shadow-md" />
                     </motion.div>
                   )}
                 </AnimatePresence>

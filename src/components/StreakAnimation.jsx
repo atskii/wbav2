@@ -253,9 +253,11 @@ export default function StreakAnimation({ streakCount, onClose, onClaimReward, m
                                 <div className="w-8 h-8 rounded-full bg-[#2D9E6B]/10 flex items-center justify-center text-[#2D9E6B]">
                                   <Check size={20} />
                                 </div>
-                              ) : isLocked && (displayDay === 3 || displayDay === 14) ? (
+                              ) : isLocked && (displayDay === 3 || displayDay === 7 || displayDay === 14) ? (
                                 <div className="relative flex flex-col items-center grayscale opacity-40">
-                                  <span className="text-2xl drop-shadow-sm leading-none select-none">{displayDay === 3 ? '🌵' : '🎋'}</span>
+                                  <span className="text-2xl drop-shadow-sm leading-none select-none">
+                                    {displayDay === 3 ? '🌵' : displayDay === 7 ? '🪴' : '🎋'}
+                                  </span>
                                   <div className="absolute -bottom-1 -right-2 bg-gray-400 text-white text-[8px] font-extrabold px-1 rounded-sm shadow-xs">
                                     ROŚLINA
                                   </div>
@@ -267,9 +269,11 @@ export default function StreakAnimation({ streakCount, onClose, onClaimReward, m
                                     +{rewardValue}
                                   </div>
                                 </div>
-                              ) : (displayDay === 3 || displayDay === 14) ? (
+                              ) : (displayDay === 3 || displayDay === 7 || displayDay === 14) ? (
                                 <div className="relative flex flex-col items-center">
-                                  <span className="text-2xl drop-shadow-sm leading-none select-none">{displayDay === 3 ? '🌵' : '🎋'}</span>
+                                  <span className="text-2xl drop-shadow-sm leading-none select-none">
+                                    {displayDay === 3 ? '🌵' : displayDay === 7 ? '🪴' : '🎋'}
+                                  </span>
                                   <div className="absolute -bottom-1 -right-2 bg-[#078B83] text-white text-[8px] font-extrabold px-1 rounded-sm shadow-xs">
                                     ROŚLINA
                                   </div>

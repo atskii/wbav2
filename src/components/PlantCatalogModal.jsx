@@ -13,7 +13,10 @@ export default function PlantCatalogModal({
   if (!isOpen) return null;
 
   // Normalized current ID
-  const activePlantId = currentPlant === 'cactus' ? 'cactus' : currentPlant === 'bamboo' ? 'bamboo' : 'monstera';
+  const activePlantId = currentPlant === 'cactus' ? 'cactus' 
+    : currentPlant === 'bamboo' ? 'bamboo' 
+    : currentPlant === 'bonsai' ? 'bonsai' 
+    : 'monstera';
 
   const plants = [
     {
@@ -57,18 +60,14 @@ export default function PlantCatalogModal({
       rawId: "bonsai",
       name: "Bonsai Zen",
       requiredStreak: 7,
-      isUnlocked: false,
+      isUnlocked: streakCount >= 7 || claimedDays.includes(7),
       renderPreview: () => (
         <div className="w-full h-20 flex items-center justify-center">
-          <svg className="w-18 h-18 object-contain drop-shadow-xs" viewBox="0 0 100 100" fill="none">
-            <ellipse cx="40" cy="35" rx="18" ry="11" fill="#2E7D32" opacity="0.9" />
-            <ellipse cx="65" cy="30" rx="16" ry="9" fill="#388E3C" opacity="0.95" />
-            <ellipse cx="50" cy="22" rx="14" ry="8" fill="#4CAF50" />
-            <path d="M48 40 C 45 55, 38 65, 52 80 L 46 80 C 34 65, 40 52, 44 40 Z" fill="#5D4037" />
-            <path d="M50 48 C 60 52, 64 45, 66 40" stroke="#5D4037" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M30 80 L70 80 L65 92 L35 92 Z" fill="#263238" />
-            <rect x="26" y="77" width="48" height="4" rx="1.5" fill="#37474F" />
-          </svg>
+          <img
+            src="/bonsai/bonsai10.png"
+            alt="Bonsai Zen"
+            className="h-24 w-auto object-contain drop-shadow-sm pb-1"
+          />
         </div>
       ),
     },
@@ -79,21 +78,21 @@ export default function PlantCatalogModal({
       requiredStreak: 14,
       isUnlocked: streakCount >= 14 || claimedDays.includes(14),
       renderPreview: () => (
-        <div className="w-full h-20 flex items-center justify-center">
-          <svg className="w-18 h-18 object-contain drop-shadow-xs" viewBox="0 0 100 100" fill="none">
-            <rect x="37" y="18" width="6" height="60" rx="1.5" fill="#43A047" />
-            <line x1="37" y1="36" x2="43" y2="36" stroke="#2E7D32" strokeWidth="1.2" />
-            <line x1="37" y1="54" x2="43" y2="54" stroke="#2E7D32" strokeWidth="1.2" />
-            <rect x="47" y="26" width="6" height="52" rx="1.5" fill="#66BB6A" />
-            <line x1="47" y1="44" x2="53" y2="44" stroke="#388E3C" strokeWidth="1.2" />
-            <line x1="47" y1="62" x2="53" y2="62" stroke="#388E3C" strokeWidth="1.2" />
-            <rect x="57" y="22" width="5" height="56" rx="1.5" fill="#43A047" />
-            <line x1="57" y1="40" x2="62" y2="40" stroke="#2E7D32" strokeWidth="1.2" />
-            <path d="M43 26 C 53 20, 56 12, 56 12 C 56 12, 47 19, 43 26 Z" fill="#81C784" />
-            <path d="M53 36 C 65 30, 68 22, 68 22 C 68 22, 58 31, 53 36 Z" fill="#81C784" />
-            <path d="M37 45 C 26 39, 23 32, 23 32 C 23 32, 32 41, 37 45 Z" fill="#66BB6A" />
-            <path d="M30 78 L70 78 L66 92 L34 92 Z" fill="#FFF8E1" stroke="#FFE082" strokeWidth="1.5" />
+        <div className="w-full h-20 flex flex-col items-center justify-center pt-1">
+          <svg className="w-12 h-16 object-contain drop-shadow-sm -mb-2 z-10" viewBox="0 0 100 100" fill="none">
+            <rect x="37" y="40" width="6" height="60" rx="1.5" fill="#43A047" />
+            <line x1="37" y1="60" x2="43" y2="60" stroke="#2E7D32" strokeWidth="1.2" />
+            <line x1="37" y1="80" x2="43" y2="80" stroke="#2E7D32" strokeWidth="1.2" />
+            <rect x="47" y="50" width="6" height="50" rx="1.5" fill="#66BB6A" />
+            <line x1="47" y1="70" x2="53" y2="70" stroke="#388E3C" strokeWidth="1.2" />
+            <rect x="57" y="45" width="5" height="55" rx="1.5" fill="#43A047" />
+            <line x1="57" y1="65" x2="62" y2="65" stroke="#2E7D32" strokeWidth="1.2" />
+            <path d="M43 50 C 53 44, 56 36, 56 36 C 56 36, 47 43, 43 50 Z" fill="#81C784" />
+            <path d="M53 60 C 65 54, 68 46, 68 46 C 68 46, 58 55, 53 60 Z" fill="#81C784" />
           </svg>
+          <div className="relative w-16 h-3.5 bg-gradient-to-b from-[#FFF8E1] to-[#FFE082] rounded-b-xl rounded-t-sm overflow-hidden border border-[#FFD54F]/50 z-20">
+            <div className="absolute top-0 w-18 h-1 bg-[#F9A825] rounded-sm -ml-1" />
+          </div>
         </div>
       ),
     },

@@ -1226,6 +1226,10 @@ export default function App() {
       setTimeout(() => {
         setShowPlantUnlock('cactus');
       }, 300);
+    } else if (dayNumber === 7) {
+      setTimeout(() => {
+        setShowPlantUnlock('bonsai');
+      }, 300);
     } else if (dayNumber === 14) {
       setTimeout(() => {
         setShowPlantUnlock('bamboo');
