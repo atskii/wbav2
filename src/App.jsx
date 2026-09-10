@@ -1223,9 +1223,12 @@ export default function App() {
     await supabase.from('profiles').update({ prefs: newPrefs }).eq('email', user?.email);
 
     if (dayNumber === 3) {
-      // Show plant unlock animation quickly after streak modal closes
       setTimeout(() => {
         setShowPlantUnlock('cactus');
+      }, 300);
+    } else if (dayNumber === 14) {
+      setTimeout(() => {
+        setShowPlantUnlock('bamboo');
       }, 300);
     } else {
       add(`Odebrano nagrodę za ${dayNumber} dzień serii! (+${amount} monet AI)`, "success");

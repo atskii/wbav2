@@ -12,8 +12,8 @@ export default function PlantCatalogModal({
 }) {
   if (!isOpen) return null;
 
-  // Normalized current ID ('image' or 'monstera' -> 'monstera', 'cactus' -> 'cactus')
-  const activePlantId = currentPlant === "cactus" ? "cactus" : "monstera";
+  // Normalized current ID
+  const activePlantId = currentPlant === 'cactus' ? 'cactus' : currentPlant === 'bamboo' ? 'bamboo' : 'monstera';
 
   const plants = [
     {
@@ -77,7 +77,7 @@ export default function PlantCatalogModal({
       rawId: "bamboo",
       name: "Bambus Szczęścia",
       requiredStreak: 14,
-      isUnlocked: false,
+      isUnlocked: streakCount >= 14 || claimedDays.includes(14),
       renderPreview: () => (
         <div className="w-full h-20 flex items-center justify-center">
           <svg className="w-18 h-18 object-contain drop-shadow-xs" viewBox="0 0 100 100" fill="none">

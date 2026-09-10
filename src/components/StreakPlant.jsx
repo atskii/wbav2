@@ -106,33 +106,40 @@ export default function StreakPlant({
 
   const claimedDays = userPrefs?.claimedStreakDays || [];
   const isCactusUnlocked = streakCount >= 3 || claimedDays.includes(3);
+  const isBambooUnlocked = streakCount >= 14 || claimedDays.includes(14);
 
   const [hasFlowered, setHasFlowered] = useState(false);
   const [plantType, setPlantType] = useState(() => {
     const saved = userPrefs?.selectedPlant || localStorage.getItem('selected_plant_type') || 'image';
     if (saved === 'cactus' && !isCactusUnlocked) return 'image';
+    if (saved === 'bamboo' && !isBambooUnlocked) return 'image';
     return saved;
   });
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
-  // Sync if userPrefs changes
   useEffect(() => {
     if (userPrefs?.selectedPlant) {
-      if (userPrefs.selectedPlant === 'cactus' && !isCactusUnlocked) {
+      const sel = userPrefs.selectedPlant;
+      if (sel === 'cactus' && !isCactusUnlocked) {
+        setPlantType('image');
+      } else if (sel === 'bamboo' && !isBambooUnlocked) {
         setPlantType('image');
       } else {
-        setPlantType(userPrefs.selectedPlant);
+        setPlantType(sel);
       }
     }
-  }, [userPrefs?.selectedPlant, isCactusUnlocked]);
+  }, [userPrefs?.selectedPlant, isCactusUnlocked, isBambooUnlocked]);
 
-  // If cactus is currently active but becomes locked, safely revert to 'image'
   useEffect(() => {
     if (plantType === 'cactus' && !isCactusUnlocked) {
       setPlantType('image');
       localStorage.setItem('selected_plant_type', 'image');
     }
-  }, [plantType, isCactusUnlocked]);
+    if (plantType === 'bamboo' && !isBambooUnlocked) {
+      setPlantType('image');
+      localStorage.setItem('selected_plant_type', 'image');
+    }
+  }, [plantType, isCactusUnlocked, isBambooUnlocked]);
 
   const currentStep = xpProgress === 0 ? 1 : Math.ceil(xpProgress / 10);
 
@@ -166,7 +173,7 @@ export default function StreakPlant({
     }
   };
 
-  const plantNameLabel = plantType === 'cactus' ? 'Kaktus Pustynny' : 'Monstera Deliciosa';
+  const plantNameLabel = plantType === 'cactus' ? 'Kaktus Pustynny' : plantType === 'bamboo' ? 'Bambus Szczęścia' : 'Monstera Deliciosa';
 
   return (
     <div id="tutorial-streak-plant" className="bg-white md:bg-white/90 backdrop-blur-sm md:rounded-3xl p-5 md:p-6 md:border md:border-[#E8DDD0] md:shadow-sm md:hover:shadow-md transition-all relative overflow-visible flex flex-col">
@@ -213,6 +220,119 @@ export default function StreakPlant({
                       style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 10}px` }}
                     >
                       <Sparkles className="w-8 h-8 text-[#FFB7B2] animate-pulse drop-shadow-md" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ) : plantType === 'bamboo' ? (
+              <motion.div
+                key="bamboo"
+                initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                style={{ transformOrigin: "bottom center" }}
+                className="absolute inset-0 flex justify-center items-end pb-2"
+              >
+                {/* Doniczka - kremowa ceramiczna w stylu Monstery */}
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-20">
+                  {/* Podstawka / cień */}
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-40 h-3 bg-[#E8DDD0] rounded-full opacity-60" />
+                  {/* Doniczka */}
+                  <div className="relative w-36 h-16 bg-gradient-to-b from-[#FFF8E1] to-[#FFE082] rounded-b-3xl rounded-t-sm overflow-hidden border border-[#FFD54F]/50">
+                    <div className="absolute top-0 w-40 h-4 bg-[#F9A825] rounded-sm -ml-2" />
+                    {/* Dekoracyjne paski */}
+                    <div className="absolute bottom-3 left-3 right-3 h-[1px] bg-[#FFD54F]/60" />
+                    <div className="absolute bottom-6 left-5 right-5 h-[1px] bg-[#FFD54F]/40" />
+                  </div>
+                </div>
+
+                {/* Łodygi bambusa - rosną dynamicznie */}
+                {(() => {
+                  const progress = plantHeight / 100;
+                  const maxH = 200;
+                  // 3 łodygi, każda z własnymi proporcjami
+                  const stalks = [
+                    { x: -18, w: 7, hFrac: 0.85, color: '#43A047', segColor: '#2E7D32', leafDir: 'left' },
+                    { x: 0, w: 8, hFrac: 1.0, color: '#66BB6A', segColor: '#388E3C', leafDir: 'right' },
+                    { x: 16, w: 6, hFrac: 0.7, color: '#43A047', segColor: '#2E7D32', leafDir: 'right' },
+                  ];
+                  return stalks.map((s, i) => {
+                    const stalkH = Math.round(20 + progress * maxH * s.hFrac);
+                    const segCount = Math.floor(stalkH / 30);
+                    return (
+                      <div key={i} className="absolute z-10" style={{ bottom: '64px', left: `calc(50% + ${s.x}px)`, transform: 'translateX(-50%)' }}>
+                        {/* Łodyga */}
+                        <div
+                          className="transition-all duration-1000 ease-out rounded-t-sm relative"
+                          style={{ width: `${s.w}px`, height: `${stalkH}px`, backgroundColor: s.color }}
+                        >
+                          {/* Segmenty / kolanka */}
+                          {Array.from({ length: segCount }).map((_, si) => (
+                            <div
+                              key={si}
+                              className="absolute w-full"
+                              style={{ bottom: `${(si + 1) * 30}px`, height: '2px', backgroundColor: s.segColor }}
+                            />
+                          ))}
+                        </div>
+                        {/* Liście - pojawiają się przy postępie > 30% */}
+                        {progress > 0.3 && segCount > 0 && (
+                          <svg
+                            className="absolute transition-opacity duration-500"
+                            style={{
+                              bottom: `${Math.min(stalkH - 15, 60)}px`,
+                              [s.leafDir === 'left' ? 'right' : 'left']: `${s.w}px`,
+                              opacity: Math.min(1, (progress - 0.3) * 3),
+                            }}
+                            width="28" height="16" viewBox="0 0 28 16"
+                          >
+                            <path
+                              d={s.leafDir === 'left'
+                                ? "M28 14 C 20 12, 8 6, 0 0 C 4 8, 16 14, 28 14 Z"
+                                : "M0 14 C 8 12, 20 6, 28 0 C 24 8, 12 14, 0 14 Z"
+                              }
+                              fill="#81C784"
+                            />
+                          </svg>
+                        )}
+                        {/* Dodatkowy liść wyżej przy > 60% */}
+                        {progress > 0.6 && stalkH > 80 && (
+                          <svg
+                            className="absolute transition-opacity duration-500"
+                            style={{
+                              bottom: `${Math.min(stalkH - 15, stalkH * 0.7)}px`,
+                              [s.leafDir === 'left' ? 'left' : 'right']: `${s.w}px`,
+                              opacity: Math.min(1, (progress - 0.6) * 3),
+                            }}
+                            width="24" height="14" viewBox="0 0 24 14"
+                          >
+                            <path
+                              d={s.leafDir === 'left'
+                                ? "M0 12 C 8 10, 16 5, 24 0 C 20 7, 10 12, 0 12 Z"
+                                : "M24 12 C 16 10, 8 5, 0 0 C 4 7, 14 12, 24 12 Z"
+                              }
+                              fill="#A5D6A7"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+
+                {/* Kwiatek / iskry przy 100% */}
+                <AnimatePresence>
+                  {xpProgress === 100 && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0, rotate: -45 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.5, type: "spring" }}
+                      className="absolute left-1/2 -translate-x-1/2 z-30"
+                      style={{ bottom: `${64 + Math.round(20 + 200) + 5}px` }}
+                    >
+                      <Sparkles className="w-8 h-8 text-[#FFD54F] animate-pulse drop-shadow-md" />
                     </motion.div>
                   )}
                 </AnimatePresence>
