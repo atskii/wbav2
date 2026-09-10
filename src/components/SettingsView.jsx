@@ -122,7 +122,7 @@ export default function SettingsView({ user, setUser, add }) {
       
       {/* Podstawowe ustawienia */}
       <div className="bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
-        <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
+        <div id="tutorial-settings-name" className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
           <div className="flex-1">
             <h3 className="text-lg font-bold text-[#1A2F22] mb-1">Nazwa użytkownika</h3>
             <p className="text-sm text-[#5A7368]">Jak mamy się do Ciebie zwracać w aplikacji?</p>
@@ -138,31 +138,33 @@ export default function SettingsView({ user, setUser, add }) {
             />
           </div>
         </div>
-        <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
-          <div><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Czas pracy</h3><p className="text-sm text-[#5A7368]">Ile godzin dziennie chcesz poświęcić na realizacje swoich zadań?</p></div>
-          <div className="flex items-center gap-4 bg-[#F5EFE6] p-2 rounded-2xl w-fit">
-            <button onClick={() => setHours(h => Math.max(1, h - 1))} className="w-10 h-10 rounded-xl bg-white border border-[#E8DDD0] flex items-center justify-center text-lg font-bold text-[#5A7368] hover:border-[#1E5C36] hover:text-[#1E5C36] transition-all shadow-sm">−</button>
-            <span className="text-2xl font-bold text-[#1A2F22] w-12 text-center">{hours}</span>
-            <button onClick={() => setHours(h => Math.min(24, h + 1))} className="w-10 h-10 rounded-xl bg-white border border-[#E8DDD0] flex items-center justify-center text-lg font-bold text-[#5A7368] hover:border-[#1E5C36] hover:text-[#1E5C36] transition-all shadow-sm">+</button>
-          </div>
-        </div>
-        <div className="p-6 md:p-8 border-b border-[#E8DDD0] flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
-          <div><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Początek dnia</h3><p className="text-sm text-[#5A7368]">Od której godziny chcesz rozpoczynać zadania?</p></div>
-          <div className="flex items-center gap-2 bg-[#F5EFE6] p-2 rounded-2xl w-fit">
-            <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-[#E8DDD0] shadow-sm">
-              <button onClick={() => handleHourChange(-1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronUp size={20} strokeWidth={3} /></button>
-              <input type="text" value={startHour} onChange={e => setStartHour(e.target.value.replace(/\D/g, ''))} onBlur={handleHourInputBlur} className="w-12 text-center text-2xl font-bold text-[#1A2F22] bg-transparent outline-none focus:text-[#2D9E6B] transition-colors" maxLength={2} />
-              <button onClick={() => handleHourChange(1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronDown size={20} strokeWidth={3} /></button>
-            </div>
-            <div className="text-2xl font-bold text-[#1A2F22] pb-1">:</div>
-            <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-[#E8DDD0] shadow-sm">
-              <button onClick={() => handleMinuteChange(1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronUp size={20} strokeWidth={3} /></button>
-              <input type="text" value={startMinute} onChange={e => setStartMinute(e.target.value.replace(/\D/g, ''))} onBlur={handleMinuteInputBlur} className="w-12 text-center text-2xl font-bold text-[#1A2F22] bg-transparent outline-none focus:text-[#2D9E6B] transition-colors" maxLength={2} />
-              <button onClick={() => handleMinuteChange(-1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronDown size={20} strokeWidth={3} /></button>
+        <div id="tutorial-settings-worktime" className="divide-y divide-[#E8DDD0]">
+          <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
+            <div><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Czas pracy</h3><p className="text-sm text-[#5A7368]">Ile godzin dziennie chcesz poświęcić na realizacje swoich zadań?</p></div>
+            <div className="flex items-center gap-4 bg-[#F5EFE6] p-2 rounded-2xl w-fit">
+              <button onClick={() => setHours(h => Math.max(1, h - 1))} className="w-10 h-10 rounded-xl bg-white border border-[#E8DDD0] flex items-center justify-center text-lg font-bold text-[#5A7368] hover:border-[#1E5C36] hover:text-[#1E5C36] transition-all shadow-sm">−</button>
+              <span className="text-2xl font-bold text-[#1A2F22] w-12 text-center">{hours}</span>
+              <button onClick={() => setHours(h => Math.min(24, h + 1))} className="w-10 h-10 rounded-xl bg-white border border-[#E8DDD0] flex items-center justify-center text-lg font-bold text-[#5A7368] hover:border-[#1E5C36] hover:text-[#1E5C36] transition-all shadow-sm">+</button>
             </div>
           </div>
+          <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-[#FAFAFA] transition-colors">
+            <div><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Początek dnia</h3><p className="text-sm text-[#5A7368]">Od której godziny chcesz rozpoczynać zadania?</p></div>
+            <div className="flex items-center gap-2 bg-[#F5EFE6] p-2 rounded-2xl w-fit">
+              <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-[#E8DDD0] shadow-sm">
+                <button onClick={() => handleHourChange(-1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronUp size={20} strokeWidth={3} /></button>
+                <input type="text" value={startHour} onChange={e => setStartHour(e.target.value.replace(/\D/g, ''))} onBlur={handleHourInputBlur} className="w-12 text-center text-2xl font-bold text-[#1A2F22] bg-transparent outline-none focus:text-[#2D9E6B] transition-colors" maxLength={2} />
+                <button onClick={() => handleHourChange(1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronDown size={20} strokeWidth={3} /></button>
+              </div>
+              <div className="text-2xl font-bold text-[#1A2F22] pb-1">:</div>
+              <div className="flex flex-col items-center bg-white p-2 rounded-xl border border-[#E8DDD0] shadow-sm">
+                <button onClick={() => handleMinuteChange(1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronUp size={20} strokeWidth={3} /></button>
+                <input type="text" value={startMinute} onChange={e => setStartMinute(e.target.value.replace(/\D/g, ''))} onBlur={handleMinuteInputBlur} className="w-12 text-center text-2xl font-bold text-[#1A2F22] bg-transparent outline-none focus:text-[#2D9E6B] transition-colors" maxLength={2} />
+                <button onClick={() => handleMinuteChange(-1)} className="p-1 text-[#5A7368] hover:text-[#1E5C36] transition-colors"><ChevronDown size={20} strokeWidth={3} /></button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors">
+        <div id="tutorial-settings-boosters" className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors">
           <div className="mb-4"><h3 className="text-lg font-bold text-[#1A2F22] mb-1">Poprawiacze nastroju</h3><p className="text-sm text-[#5A7368]">Co najszybciej poprawia Ci nastrój podczas kryzysu?</p></div>
           <div className="flex flex-wrap gap-2 mt-4">
             {OPTS.map(b => (
@@ -184,7 +186,7 @@ export default function SettingsView({ user, setUser, add }) {
       </div>
 
       {/* Integracje i Połączenia */}
-      <div className="mt-16 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
+      <div id="tutorial-settings-google" className="mt-16 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
         <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
@@ -209,7 +211,7 @@ export default function SettingsView({ user, setUser, add }) {
       </div>
 
       {/* FAQ Section */}
-      <div className="mt-8 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
+      <div id="tutorial-settings-faq" className="mt-8 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
         <div 
           className="p-6 md:p-8 flex items-center justify-between cursor-pointer hover:bg-[#FAFAFA] transition-colors"
           onClick={() => setIsFaqSectionOpen(!isFaqSectionOpen)}
@@ -245,7 +247,7 @@ export default function SettingsView({ user, setUser, add }) {
 
       {/* Legal Section */}
       <div className="mt-8 bg-white rounded-3xl shadow-sm border border-[#E8DDD0] overflow-hidden">
-        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors border-b border-[#E8DDD0]">
+        <div id="tutorial-settings-privacy" className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors border-b border-[#E8DDD0]">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
               <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
@@ -265,7 +267,7 @@ export default function SettingsView({ user, setUser, add }) {
           </div>
         </div>
 
-        <div className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors">
+        <div id="tutorial-settings-terms" className="p-6 md:p-8 hover:bg-[#FAFAFA] transition-colors">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
               <h3 className="text-lg font-bold text-[#1A2F22] mb-1 flex items-center gap-2">
@@ -287,7 +289,7 @@ export default function SettingsView({ user, setUser, add }) {
       </div>
 
       {/* Danger Zone */}
-      <div className="mt-16 bg-red-50/50 rounded-3xl border border-red-100 overflow-hidden">
+      <div id="tutorial-settings-danger" className="mt-16 bg-red-50/50 rounded-3xl border border-red-100 overflow-hidden">
         <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h3 className="text-lg font-bold text-red-700 mb-1 flex items-center gap-2">

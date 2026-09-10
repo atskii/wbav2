@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { LogOut, Menu, ChevronDown, Settings, Flame, Calendar, RefreshCw, X, Coins, Home, Smile, LifeBuoy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,6 +18,7 @@ import { useTutorials } from "./hooks/useTutorials";
 
 // UI
 import Font from "./components/ui/Font";
+import AnimatedAICounter from "./components/ui/AnimatedAICounter";
 import Toasts from "./components/ui/Toasts";
 import XpFloat from "./components/ui/XpFloat";
 
@@ -35,6 +36,7 @@ import MoodView from "./components/MoodView";
 import WarningView from "./components/WarningView";
 import SettingsView from "./components/SettingsView";
 import DebugModal from "./components/DebugModal";
+import StreakAnimation from "./components/StreakAnimation";
 import AiPlanModal from "./components/AiPlanModal";
 import AiPromptModal from "./components/AiPromptModal";
 import AdminPanel from "./components/AdminPanel";
@@ -314,6 +316,8 @@ export default function App() {
   const activeAlert = (rawActiveAlert && currentAlertKey !== dismissedAlertKey) ? rawActiveAlert : null;
 
   const [showDebugModal, setShowDebugModal] = useState(false);
+  const [showStreakAnimation, setShowStreakAnimation] = useState(false);
+  const [isTokenBouncing, setIsTokenBouncing] = useState(false);
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
@@ -543,6 +547,20 @@ export default function App() {
       }
     },
 
+    testStreakAnimation: () => {
+      setShowStreakAnimation(true);
+      setShowDebugModal(false);
+    },
+
+    setStreakDay: async (newStreak) => {
+      if (!user || !user.email) return;
+      const currentPrefs = user.prefs || {};
+      const updatedPrefs = { ...currentPrefs, loginStreak: newStreak };
+      await supabase.from('profiles').update({ prefs: updatedPrefs }).eq('email', user.email);
+      setUser(prev => ({ ...prev, prefs: updatedPrefs }));
+      add(`Ustawiono streak na ${newStreak} dni (Test)`, 'info');
+    },
+
     generateFakeMoods: async () => {
       const fakeMoods = [];
       const datesToReplace = [];
@@ -643,14 +661,14 @@ export default function App() {
               .update({ status: 'done' })
               .eq('id', cmd.id);
 
-            add(`Zdalna komenda "${cmd.command_name}" wykonana.`, 'info');
+            add(`Zdalna komenda "${cmd.command_name}" wykonana.`, 'info', true);
           } catch (err) {
             console.error('[RemoteCommand] Error:', err);
             await supabase
               .from('remote_commands')
               .update({ status: 'error' })
               .eq('id', cmd.id);
-            add(`Błąd zdalnej komendy: ${cmd.command_name}`, 'warn');
+            add(`Błąd zdalnej komendy: ${cmd.command_name}`, 'warn', true);
           }
         }
       )
@@ -1123,6 +1141,18 @@ export default function App() {
   const streakCount = user?.prefs?.loginStreak || 0;
   const aiTokens = user?.aiTokens !== undefined ? user.aiTokens : (user?.prefs?.ai_tokens ?? 10);
 
+  const handleClaimStreakReward = async (amount) => {
+    const cur = user?.aiTokens ?? (user?.prefs?.ai_tokens ?? 10);
+    await setAiTokensDebug(cur + amount);
+    // Zapis w Supabase (optymistycznie zaktualizowane na lokalnym userze powyżej)
+    // useEffect z animatedAiTokens zajmie się resztą animacji
+    
+    // add(`Zdobyto +${amount} Monet AI za serię!`, 'success'); - user chce ukryc
+  };
+
+    // add(`Zdobyto +${amount} Monet AI za serię!`, 'success'); - user chce ukryc
+  };
+
   const toggleTask = async (id, e) => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
@@ -1130,6 +1160,12 @@ export default function App() {
     const isNowDone = !task.done;
 
     if (isNowDone) {
+      const todayStr = getNow().toISOString().split('T')[0];
+      const doneToday = tasks.filter(t => t.done && (t.pDate === todayStr || t.t === todayStr)).length;
+      if (doneToday === 0 && streakCount > 0) {
+        setShowStreakAnimation(true);
+      }
+
       const earnedXP = calculateTaskXP(task);
       const xPos = e && e.clientX ? e.clientX : (typeof window !== 'undefined' ? window.innerWidth / 2 : 500);
       const yPos = e && e.clientY ? e.clientY : (typeof window !== 'undefined' ? window.innerHeight / 2 : 400);
@@ -1449,7 +1485,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#F5EFE6] font-sans selection:bg-[#2D9E6B] selection:text-white overflow-hidden">
       <Font />
-      <Toasts ts={ts} rm={rm} />
+      <Toasts ts={ts.filter(t => isAdmin || t.forceShow)} rm={rm} />
       <XpFloat xpItems={xpItems} />
 
       {focusedTask ? (
@@ -1561,21 +1597,18 @@ export default function App() {
                   id="tutorial-header-ai-tokens"
                   layout
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className={`flex items-center justify-center gap-1.5 px-4 h-10 rounded-full font-extrabold text-sm flex-shrink-0 shadow-sm transition-all ${
-                    aiTokens > 2
-                      ? "bg-[#E5F2F3] border border-[#1A949A]/30 text-[#02848C]"
-                      : aiTokens > 0
-                      ? "bg-amber-500/10 border border-amber-500/20 text-amber-700"
-                      : "bg-rose-500/10 border border-rose-500/20 text-rose-600 opacity-80"
-                  }`} 
-                  title={`${aiTokens} monet AI`}
                 >
-                  <img 
-                    src="/icons/AI Coin.svg" 
-                    alt="AI Coin" 
-                    className={`w-5 h-5 object-contain drop-shadow-sm ${aiTokens === 0 ? "opacity-40 grayscale" : ""}`} 
+                  <AnimatedAICounter
+                    aiTokens={aiTokens}
+                    className={`flex items-center justify-center gap-1.5 px-4 h-10 rounded-full font-extrabold text-sm flex-shrink-0 shadow-sm transition-all ${
+                      aiTokens > 2
+                        ? "bg-[#E5F2F3] border border-[#1A949A]/30 text-[#02848C]"
+                        : aiTokens > 0
+                        ? "bg-amber-500/10 border border-amber-500/20 text-amber-700"
+                        : "bg-rose-500/10 border border-rose-500/20 text-rose-600 opacity-80"
+                    }`}
+                    iconClassName={`w-5 h-5 object-contain drop-shadow-sm ${aiTokens === 0 ? "opacity-40 grayscale" : ""}`}
                   />
-                  <span>{aiTokens}</span>
                 </motion.div>
 
                 {/* 4. Profil z dynamiczną szerokością i pełną nazwą użytkownika */}
@@ -1745,25 +1778,18 @@ export default function App() {
                     <span>{streakCount}</span>
                   </div>
 
-                  {/* 3. Monety / Tokeny AI */}
-                  <div 
+                  <AnimatedAICounter
                     id="tutorial-mobile-header-ai-tokens"
+                    aiTokens={aiTokens}
                     className={`flex items-center justify-center gap-1 px-1 h-10 font-extrabold text-base flex-shrink-0 transition-all ${
                       aiTokens > 2
                         ? "text-[#02848C]"
                         : aiTokens > 0
                         ? "text-amber-700"
                         : "text-rose-600 opacity-80"
-                    }`} 
-                    title={`${aiTokens} monet AI`}
-                  >
-                    <img 
-                      src="/icons/AI Coin.svg" 
-                      alt="AI Coin" 
-                      className={`w-6 h-6 object-contain drop-shadow-sm ${aiTokens === 0 ? "opacity-40 grayscale" : ""}`} 
-                    />
-                    <span>{aiTokens}</span>
-                  </div>
+                    }`}
+                    iconClassName={`w-6 h-6 object-contain drop-shadow-sm ${aiTokens === 0 ? "opacity-40 grayscale" : ""}`}
+                  />
 
                   {/* 4. Profil z ikonką awatara */}
                   <div className="relative flex-shrink-0">
@@ -1962,10 +1988,18 @@ export default function App() {
             }}
           />
 
-          <GlobalTutorial userEmail={user?.email} activeTab={activeTab} />
+          <GlobalTutorial userEmail={user?.email} activeTab={isTaskModalOpen ? "task_modal" : activeTab} />
 
           {showMoodModal && <MoodModal onClose={() => setShowMoodModal(false)} onAdd={addMood} />}
           {showDebugModal && <DebugModal onClose={() => setShowDebugModal(false)} actions={debugActions} />}
+          
+          {showStreakAnimation && (
+            <StreakAnimation
+              streakCount={streakCount}
+              onClose={() => setShowStreakAnimation(false)}
+              onClaimReward={handleClaimStreakReward}
+            />
+          )}
         </>
       )}
     </div>

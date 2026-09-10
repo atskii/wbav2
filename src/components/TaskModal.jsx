@@ -8,14 +8,7 @@ import { useTutorials } from "../hooks/useTutorials";
 // ═══════════════════════════════════════════════════
 export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
   const [title, setTitle] = useState(taskToEdit?.title || "");
-  const { isTooltipSeen, markTooltipSeen, resetTooltipGroup, loading } = useTutorials(userEmail);
-  
-  const showDurationTutorial = !loading && !isTooltipSeen('task_duration');
-  const showDeadlineTutorial = !loading && !isTooltipSeen('task_deadline');
-  const showDifficultyTutorial = !loading && !isTooltipSeen('task_difficulty');
-  const showPriorityTutorial = !loading && !isTooltipSeen('task_priority');
-  const showRecurrenceTutorial = !loading && !isTooltipSeen('task_recurrence');
-  const showLockTutorial = !loading && !isTooltipSeen('task_lock');
+  const { resetTooltipGroup } = useTutorials(userEmail);
 
   const handleResetTooltips = () => {
     resetTooltipGroup([
@@ -94,8 +87,8 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
           <div className="flex items-center gap-2">
             <button 
               onClick={handleResetTooltips}
-              className="p-2 hover:bg-[#E8F4ED] rounded-full transition-all text-[#5A7368] hover:text-[#1E5C36]"
-              title="Przywróć samouczki"
+              className="p-2 hover:bg-[#E8F4ED] rounded-full transition-all text-[#5A7368] hover:text-[#1E5C36] cursor-pointer"
+              title="Przywróć samouczek"
             >
               <HelpCircle size={24} className="sm:w-6 sm:h-6" />
             </button>
@@ -110,58 +103,16 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="relative">
+            <div id="tutorial-task-duration" className="relative">
               <label className="text-xs font-black uppercase text-[#5A7368] mb-2 block">Szacowany czas</label>
-              {showDurationTutorial && (
-                <div className="hidden md:block absolute -top-8 right-[calc(100%+20px)] w-56 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-right-3 duration-300">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markTooltipSeen("task_duration");
-                    }}
-                    className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                    title="Zamknij podpowiedź"
-                  >
-                    <X size={13} />
-                  </button>
-                  <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Szacowany czas:</strong>
-                  <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                    Przewidywany czas na zadanie. Pomaga aplikacji idealnie rozplanować dzień i chronić Cię przed przeciążeniem.
-                  </p>
-                  {/* Strzałka w dół-prawo do pola */}
-                  <div className="absolute bottom-4 -right-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-l-[10px] border-l-white"></div>
-                  <div className="absolute bottom-4 -right-3 w-0 h-0 border-y-[9px] border-y-transparent border-l-[11px] border-l-[#2D9E6B] -z-10"></div>
-                </div>
-              )}
               <div className="relative">
                 <input type="number" value={duration} onChange={e => setDuration(e.target.value)} placeholder="Np. 45" className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 border-[#E8DDD0] text-sm pr-12 outline-none focus:border-[#2D9E6B]" />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#9FB5AD]">MIN</span>
               </div>
             </div>
 
-            <div className="relative">
+            <div id="tutorial-task-deadline" className="relative">
               <label className={`text-xs font-black uppercase mb-2 block tracking-widest transition-all ${isLocked ? 'text-gray-400 line-through' : 'text-[#1A2F22]'}`}>Deadline</label>
-              {showDeadlineTutorial && (
-                <div className="hidden md:block absolute -top-12 left-[calc(100%+20px)] w-56 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-left-3 duration-300">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markTooltipSeen("task_deadline");
-                    }}
-                    className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                    title="Zamknij podpowiedź"
-                  >
-                    <X size={13} />
-                  </button>
-                  <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Deadline:</strong>
-                  <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                    Ostateczny termin realizacji. Aplikacja automatycznie dopasuje plan tak, by ukończyć zadanie przed tą datą.
-                  </p>
-                  {/* Strzałka w dół-lewo do pola */}
-                  <div className="absolute bottom-4 -left-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-r-[10px] border-r-white"></div>
-                  <div className="absolute bottom-4 -left-3 w-0 h-0 border-y-[9px] border-y-transparent border-r-[11px] border-r-[#2D9E6B] -z-10"></div>
-                </div>
-              )}
               <input
                 type="datetime-local"
                 value={deadline}
@@ -172,31 +123,10 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
             </div>
           </div>
 
-          <div className="relative">
-            <label className="text-xs font-black uppercase text-[#5A7368] mb-2 block flex justify-between">
+          <div id="tutorial-task-difficulty" className="relative">
+            <label className="text-xs font-black uppercase text-[#5A7368] mb-2 flex justify-between">
               Wysiłek umysłowy <span>{difficulty} / 5</span>
             </label>
-            {showDifficultyTutorial && (
-              <div className="hidden md:block absolute top-5 left-[calc(100%+20px)] w-56 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-left-3 duration-300">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    markTooltipSeen("task_difficulty");
-                  }}
-                  className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                  title="Zamknij podpowiedź"
-                >
-                  <X size={13} />
-                </button>
-                <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Wysiłek umysłowy:</strong>
-                <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                  Skala 1–5 określa poziom skupienia. Pomaga rozłożyć trudniejsze zadania i dobrać odpowiednie przerwy na regenerację.
-                </p>
-                {/* Strzałka w lewo-górę do suwaka */}
-                <div className="absolute top-4 -left-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-r-[10px] border-r-white"></div>
-                <div className="absolute top-4 -left-3 w-0 h-0 border-y-[9px] border-y-transparent border-r-[11px] border-r-[#2D9E6B] -z-10"></div>
-              </div>
-            )}
             <input type="range" min="1" max="5" value={difficulty} onChange={e => setDifficulty(parseInt(e.target.value))} className="w-full h-2 bg-[#E8DDD0] rounded-lg appearance-none cursor-pointer accent-[#1E5C36]" />
             <div className="flex justify-between text-[9px] font-black text-[#9FB5AD] mt-2 px-1">
               <span>NISKI</span>
@@ -204,29 +134,8 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
             </div>
           </div>
 
-          <div className="relative">
+          <div id="tutorial-task-priority" className="relative">
             <label className="text-xs font-black uppercase text-[#5A7368] mb-3 block tracking-widest">Ważność</label>
-            {showPriorityTutorial && (
-              <div className="hidden md:block absolute top-4 right-[calc(100%+20px)] w-56 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-right-3 duration-300">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    markTooltipSeen("task_priority");
-                  }}
-                  className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                  title="Zamknij podpowiedź"
-                >
-                  <X size={13} />
-                </button>
-                <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Ważność:</strong>
-                <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                  Priorytet zadania. Decyduje o kolejności układania dnia – kluczowe zadania trafiają w godziny najwyższej energii.
-                </p>
-                {/* Strzałka w prawo-górę do przycisków */}
-                <div className="absolute top-4 -right-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-l-[10px] border-l-white"></div>
-                <div className="absolute top-4 -right-3 w-0 h-0 border-y-[9px] border-y-transparent border-l-[11px] border-l-[#2D9E6B] -z-10"></div>
-              </div>
-            )}
             <div className="flex w-full gap-1.5 sm:gap-2">
               {PRIOS.map(pr => {
                 const isActive = p === pr.id;
@@ -328,30 +237,9 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
             </div>
           )}
 
-          {/* PRZYCISKI GŁÓWNE Z OSOBNYMI DYMKAMI */}
+          {/* PRZYCISKI GŁÓWNE */}
           <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
-            <div className="relative flex-1 sm:flex-initial sm:shrink-0">
-              {showRecurrenceTutorial && (
-                <div className="absolute top-full left-0 sm:-left-10 mt-3 w-44 p-3.5 bg-white text-[#1A2F22] rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-300 border-2 border-[#2D9E6B]">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markTooltipSeen("task_recurrence");
-                    }}
-                    className="absolute top-1.5 right-1.5 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                    title="Zamknij podpowiedź"
-                  >
-                    <X size={12} />
-                  </button>
-                  <strong className="text-[#1E5C36] font-bold text-xs block mb-0.5">Cykliczność:</strong>
-                  <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                    Powtarzalność, np. co tydzień lub w dni robocze.
-                  </p>
-                  {/* Strzałka skierowana w górę na przycisk cykliczności */}
-                  <div className="absolute -top-2.5 left-8 sm:right-10 sm:left-auto w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
-                  <div className="absolute -top-3 left-8 sm:right-10 sm:left-auto w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
-                </div>
-              )}
+            <div id="tutorial-task-recurrence" className="relative flex-1 sm:flex-initial sm:shrink-0">
               <button
                 onClick={() => setActivePanel(activePanel === 'recurrence' ? null : 'recurrence')}
                 disabled={isSingleLockActive}
@@ -364,28 +252,7 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
               </button>
             </div>
 
-            <div className="relative flex-1 sm:flex-initial sm:shrink-0">
-              {showLockTutorial && (
-                <div className="absolute top-full right-0 sm:-right-10 mt-3 w-44 p-3.5 bg-white text-[#1A2F22] rounded-2xl shadow-2xl z-[9999] animate-in fade-in slide-in-from-top-2 duration-300 delay-100 border-2 border-amber-500">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markTooltipSeen("task_lock");
-                    }}
-                    className="absolute top-1.5 right-1.5 p-1 hover:bg-amber-50 text-amber-700 rounded-full transition-all cursor-pointer"
-                    title="Zamknij podpowiedź"
-                  >
-                    <X size={12} />
-                  </button>
-                  <strong className="text-amber-800 font-bold text-xs block mb-0.5">Kłódka:</strong>
-                  <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                    Sztywno rezerwuje godziny w kalendarzu.
-                  </p>
-                  {/* Strzałka skierowana w górę na przycisk kłódki */}
-                  <div className="absolute -top-2.5 right-8 sm:left-10 sm:right-auto w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
-                  <div className="absolute -top-3 right-8 sm:left-10 sm:right-auto w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-amber-500 -z-10"></div>
-                </div>
-              )}
+            <div id="tutorial-task-lock" className="relative flex-1 sm:flex-initial sm:shrink-0">
               <button
                 onClick={() => setActivePanel(activePanel === 'lock' ? null : 'lock')}
                 disabled={isRecurrenceActive}

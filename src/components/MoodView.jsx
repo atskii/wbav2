@@ -126,11 +126,12 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
       {/* DESKTOP ACTION BAR (Hidden on mobile) */}
       <div className="hidden md:flex w-full max-w-6xl justify-between items-center bg-white border-b border-[#E8E8E8] pb-4 mb-4 gap-4 shrink-0">
         <div className="flex bg-white rounded-xl overflow-hidden self-start md:self-auto">
-          <button onClick={() => setShowAvg(!showAvg)} className={`px-4 py-2 text-sm transition-all border border-[#F4F4F4] rounded-xl z-10 relative ${showAvg ? "font-bold text-[#000000] bg-white shadow-sm" : "font-semibold text-[#707070] bg-[#FAFAFA]"}`}>Średnia</button>
+          <button id="tutorial-mood-avg" onClick={() => setShowAvg(!showAvg)} className={`px-4 py-2 text-sm transition-all border border-[#F4F4F4] rounded-xl z-10 relative ${showAvg ? "font-bold text-[#000000] bg-white shadow-sm" : "font-semibold text-[#707070] bg-[#FAFAFA]"}`}>Średnia</button>
         </div>
         <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
           <button className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Calendar size={14} /><span className="text-xs font-semibold">Wybierz datę</span></button>
           <button 
+            id="tutorial-mood-ai"
             onClick={handleAIAnalysis} 
             disabled={aiState.loading} 
             className={`flex items-center gap-2 px-3 py-2 rounded-md shadow-sm transition-all ${
@@ -143,7 +144,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
             <Sparkles size={14} />
             <span className="text-xs font-semibold">Analiza AI</span>
           </button>
-          <button onClick={onOpenModal} className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Smile size={14} /><span className="text-xs font-semibold">Zarejestruj swój nastrój</span></button>
+          <button id="tutorial-mood-register" onClick={onOpenModal} className="flex items-center gap-2 px-3 py-2 bg-[#02848C] text-white rounded-md shadow-sm hover:bg-[#02747b] transition-all"><Smile size={14} /><span className="text-xs font-semibold">Zarejestruj swój nastrój</span></button>
         </div>
       </div>
 
@@ -155,6 +156,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
             <span className="text-sm font-bold">Wybierz datę</span>
           </button>
           <button 
+            id="tutorial-mobile-mood-ai"
             onClick={handleAIAnalysis} 
             disabled={aiState.loading} 
             className={`flex justify-center items-center gap-2 px-3 py-3 rounded-xl shadow-sm transition-all active:scale-[0.98] ${
@@ -176,7 +178,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
             <button onClick={() => setShowAvg(!showAvg)} className={`md:hidden px-3 py-1.5 text-xs transition-all border rounded-lg ${showAvg ? "font-bold text-[#02848C] border-[#02848C] bg-[#E5F2F3]" : "font-semibold text-[#707070] border-[#E8E8E8] bg-white"}`}>Średnia</button>
           </div>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 w-full md:w-auto">
-            <div className="flex w-full md:w-auto overflow-x-auto hide-scrollbar rounded-lg border border-[#F4F4F4]">
+            <div id="tutorial-mood-filters" className="flex w-full md:w-auto overflow-x-auto hide-scrollbar rounded-lg border border-[#F4F4F4]">
               {["Dzień", "Tydzień", "Miesiąc", "Kwartał", "Rok"].map((f, i) => {
                 const isDisabled = f === "Rok" || f === "Dzień";
                 const isFirst = i === 0; const isLast = i === 4;
@@ -221,7 +223,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
           </div>
         )}
 
-        <div className="relative w-full shrink-0 mt-4 mb-2 flex border border-[#F4F4F4] rounded-xl bg-white shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)]" style={{ height: `${height}px` }}>
+        <div id="tutorial-mood-chart" className="relative w-full shrink-0 mt-4 mb-2 flex border border-[#F4F4F4] rounded-xl bg-white shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)]" style={{ height: `${height}px` }}>
           {/* Y-AXIS (EMOJIS) - FIXED */}
           <div className="w-10 shrink-0 relative h-full bg-white z-20 border-r border-[#F4F4F4] rounded-l-xl">
             {[0,1,2,3,4,5,6].map(level => {
@@ -268,7 +270,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
 
       {/* MOBILE BOTTOM ACTION BAR */}
       <div className="md:hidden w-full max-w-6xl mt-2 px-4 pb-8 flex flex-col gap-3 shrink-0">
-        <button onClick={onOpenModal} className="w-full flex justify-center items-center gap-2 px-4 py-3.5 bg-[#02848C] text-white rounded-xl shadow-sm hover:bg-[#02747b] transition-all active:scale-[0.98]">
+        <button id="tutorial-mobile-mood-register" onClick={onOpenModal} className="w-full flex justify-center items-center gap-2 px-4 py-3.5 bg-[#02848C] text-white rounded-xl shadow-sm hover:bg-[#02747b] transition-all active:scale-[0.98]">
           <Smile size={18} />
           <span className="text-[15px] font-bold">Zarejestruj swój nastrój</span>
         </button>

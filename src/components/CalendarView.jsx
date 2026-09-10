@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   ChevronDown, ChevronLeft, ChevronRight, ArrowRight,
-  Star, Trash2, X, Calendar as CalendarIcon, Check
+  Star, Trash2, X, Calendar as CalendarIcon, Check, Search
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SkeletonScreen from "./ui/Skeleton";
@@ -28,6 +28,7 @@ export default function CalendarView({
 }) {
   const [viewType, setViewType] = useState("Miesiąc");
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [slideDirection, setSlideDirection] = useState(1);
   const calendarScrollRef = useRef(null);
   const [nowMinute, setNowMinute] = useState(new Date().getHours() * 60 + new Date().getMinutes());
@@ -576,7 +577,7 @@ export default function CalendarView({
             </div>
           ))}
         </div>
-        <div className="flex-1 h-full min-h-0">
+        <div id="tutorial-calendar-month-grid" className="flex-1 h-full min-h-0">
           <div className="grid grid-cols-7 grid-rows-6 h-full w-full">
             {days.map((item, idx) => {
               const isTodayMonth = new Date().toDateString() === item.date.toDateString();
@@ -701,6 +702,7 @@ export default function CalendarView({
                   {/* Tytuł miesiąca z rozwijaną strzałką */}
                   <div className="relative">
                     <button
+                      id="tutorial-mobile-calendar-month-picker"
                       onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
                       className="flex items-center gap-1.5 hover:bg-[#F5EFE6] px-2 py-1 -ml-1 rounded-xl text-base font-black text-[#1A2F22] capitalize transition-colors cursor-pointer active:scale-95"
                     >
@@ -746,7 +748,7 @@ export default function CalendarView({
                   </div>
 
                   {/* Przyciski przewijania miesięcy na telefonie */}
-                  <div className="flex items-center gap-1 border border-[#E8DDD0] rounded-xl overflow-hidden shadow-sm bg-white">
+                  <div id="tutorial-mobile-calendar-nav" className="flex items-center gap-1 border border-[#E8DDD0] rounded-xl overflow-hidden shadow-sm bg-white">
                     <button 
                       onClick={() => {
                         setSlideDirection(-1);
@@ -785,6 +787,7 @@ export default function CalendarView({
                 {/* Tytuł miesiąca z rozwijaną strzałką */}
                 <div className="relative">
                   <button
+                    id="tutorial-calendar-month-picker"
                     onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
                     className="flex items-center gap-1.5 hover:bg-[#F5EFE6] px-2 py-1 -ml-1 rounded-xl text-lg font-black text-[#1A2F22] capitalize transition-colors cursor-pointer active:scale-95"
                   >
@@ -807,21 +810,21 @@ export default function CalendarView({
                             </div>
                             <div className="grid grid-cols-3 gap-1">
                               {MONTH_NAMES.map((mName, mIdx) => {
-                                const isSelected = selectedDate.getFullYear() === year && selectedDate.getMonth() === mIdx;
-                                return (
-                                  <button
-                                    key={mIdx}
-                                    onClick={() => handlePickMonthYear(mIdx, year)}
-                                    className={`py-2 px-1 rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
-                                      isSelected 
-                                        ? "bg-[#1E5C36] text-white shadow-sm" 
-                                        : "text-[#1A2F22] hover:bg-[#E8F4ED] hover:text-[#1E5C36]"
-                                    }`}
-                                  >
-                                    {mName.slice(0, 3)}
-                                  </button>
-                                );
-                              })}
+                                  const isSelected = selectedDate.getFullYear() === year && selectedDate.getMonth() === mIdx;
+                                  return (
+                                    <button
+                                      key={mIdx}
+                                      onClick={() => handlePickMonthYear(mIdx, year)}
+                                      className={`py-2 px-1 rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
+                                        isSelected 
+                                          ? "bg-[#1E5C36] text-white shadow-sm" 
+                                          : "text-[#1A2F22] hover:bg-[#E8F4ED] hover:text-[#1E5C36]"
+                                      }`}
+                                    >
+                                      {mName.slice(0, 3)}
+                                    </button>
+                                  );
+                                })}
                             </div>
                           </div>
                         ))}
@@ -831,7 +834,7 @@ export default function CalendarView({
                 </div>
 
                 {/* Wybór widoku na desktopie */}
-                <div className="relative group z-[100]">
+                <div id="tutorial-calendar-view-type" className="relative group z-[100]">
                   <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 rounded-lg text-[#1A2F22] font-semibold text-sm transition-colors border border-transparent hover:border-gray-200">
                     {viewType} <ChevronDown size={16} className="text-gray-500" />
                   </button>
@@ -848,6 +851,7 @@ export default function CalendarView({
               <div className="flex items-center gap-3">
                 {/* Przycisk Dzisiaj na desktopie */}
                 <button 
+                  id="tutorial-calendar-today-btn"
                   onClick={handleGoToToday} 
                   className="px-4 py-1.5 bg-white border border-[#E8DDD0] rounded-xl text-[#1A2F22] font-bold text-sm hover:bg-[#F5EFE6] transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
                 >
@@ -855,7 +859,7 @@ export default function CalendarView({
                 </button>
 
                 {/* Przyciski nawigacji na desktopie */}
-                <div className="flex items-center gap-1 border border-[#E8DDD0] rounded-xl overflow-hidden shadow-sm bg-white">
+                <div id="tutorial-calendar-nav-arrows" className="flex items-center gap-1 border border-[#E8DDD0] rounded-xl overflow-hidden shadow-sm bg-white">
                   <button 
                     onClick={() => {
                       setSlideDirection(-1);
@@ -942,69 +946,64 @@ export default function CalendarView({
         </div>
       </div>
 
-      {/* Prawa kolumna (Backlog / Zadania) na dużych ekranach */}
-      <div className="w-[300px] bg-[#FAFAFA] border-l border-[#E8DDD0] flex flex-col hidden lg:flex shrink-0 h-full relative z-10">
-        <div className="p-6 pb-4 pt-6 shrink-0 bg-[#FAFAFA] z-20">
-          <h2 className="text-xl font-bold text-[#1A2F22] mb-2">Zadania na ten dzień</h2>
-          <p className="text-xs text-[#5A7368]">Kliknij zadanie, aby je edytować.</p>
-        </div>
-        <div 
-          className={`flex-1 overflow-y-auto px-6 pb-8 relative transition-all duration-200 ${dragTarget && dragTarget.type === 'backlog' ? "bg-emerald-50/70 border-2 border-dashed border-[#057E85] rounded-2xl shadow-inner" : ""}`}
-          onDragOver={(e) => { 
-            e.preventDefault(); 
-            e.dataTransfer.dropEffect = "move"; 
-            setDragTarget({ type: 'backlog' });
-          }}
-          onDragLeave={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-              setDragTarget(null);
-            }
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            const taskId = e.dataTransfer.getData("text/plain");
-            if(taskId && onReturnToBacklog) onReturnToBacklog(parseInt(taskId));
-            setDragTarget(null);
-            setDraggedTaskId(null);
-          }}
-        >
-          {dragTarget && dragTarget.type === 'backlog' && (
-            <div className="my-4 p-3 rounded-xl border-2 border-dashed border-[#057E85] bg-[#057E85]/10 text-center animate-bounce">
-              <span className="text-[12px] font-bold text-[#057E85]">📥 Upuść tutaj, aby cofnąć zadanie do Backlogu</span>
-            </div>
-          )}
-          <div className="space-y-3">
-            {queueTasks.map((t) => {
-              const deadlineToday = isSameDate(t.deadline, selectedDate);
-              return (
-                <div 
-                  key={t.id}
-                  onClick={() => onEditTask(t)} 
-                  draggable={!t.isLocked}
-                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", t.id); }}
-                  className={`bg-white p-3.5 rounded-2xl border border-[#E8DDD0] transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md ${!t.isLocked ? "active:opacity-80 active:scale-95" : ""} ${t.done ? "opacity-60 grayscale border-gray-200" : ""}`}
-                >
-                  <div className="flex justify-between items-start mb-1.5 pointer-events-none">
-                    <div className="flex items-center gap-1.5">
-                      <Star size={14} className={t.p === "wysoki" ? "text-red-500 fill-red-500" : (t.p === "sredni" ? "text-amber-500 fill-amber-500" : "text-emerald-500 fill-emerald-500")} />
-                    </div>
-                    {deadlineToday && !t.done && <span className="text-[10px] text-red-700 bg-red-50 px-2 py-0.5 rounded-full font-bold">dzisiaj</span>}
-                    {t.done && <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">zrobione</span>}
-                  </div>
-                  <h4 className={`text-xs font-bold mb-1 transition-colors leading-snug pointer-events-none ${t.done ? "line-through text-gray-400" : "text-[#1A2F22]"}`}>{t.title}</h4>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[10px] text-[#5A7368] font-semibold pointer-events-none">{t.duration || "60 min"}</span>
-                    <div className="ml-auto flex gap-1">
-                      <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      {/* Prawa kolumna (Wszystkie zadania do zrobienia) na dużych ekranach */}
+      <div id="tutorial-calendar-all-tasks" className="w-[300px] bg-[#FAFAFA] border-l border-[#E8DDD0] flex flex-col hidden lg:flex shrink-0 h-full relative z-10">
+        <div className="p-6 pb-3 pt-6 shrink-0 bg-[#FAFAFA] z-20">
+          <h2 className="text-xl font-bold text-[#1A2F22] mb-1">Wszystkie zadania do zrobienia</h2>
+          <p className="text-xs text-[#5A7368] mb-3">Kliknij zadanie, aby je edytować.</p>
+          
+          {/* Wyszukiwarka zadań */}
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5A7368]" />
+            <input 
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Szukaj zadania..."
+              className="w-full pl-9 pr-8 py-2 bg-white border border-[#E8DDD0] rounded-xl text-xs font-semibold text-[#1A2F22] placeholder-[#9FB5AD] focus:outline-none focus:border-[#2D9E6B] transition-colors shadow-sm"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9FB5AD] hover:text-[#1A2F22] p-0.5 rounded-full"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
-          {queueTasks.length === 0 && (
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 pb-8 relative">
+          <div className="space-y-3">
+            {tasks
+              .filter(t => !t.done && (!searchQuery || t.title.toLowerCase().includes(searchQuery.toLowerCase())))
+              .map((t) => {
+                const deadlineToday = isSameDate(t.deadline, selectedDate);
+                return (
+                  <div 
+                    key={t.id}
+                    onClick={() => onEditTask(t)} 
+                    className="bg-white p-3.5 rounded-2xl border border-[#E8DDD0] transition-all duration-200 cursor-pointer group hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="flex justify-between items-start mb-1.5 pointer-events-none">
+                      <div className="flex items-center gap-1.5">
+                        <Star size={14} className={t.p === "wysoki" ? "text-red-500 fill-red-500" : (t.p === "sredni" ? "text-amber-500 fill-amber-500" : "text-emerald-500 fill-emerald-500")} />
+                      </div>
+                      {deadlineToday && <span className="text-[10px] text-red-700 bg-red-50 px-2 py-0.5 rounded-full font-bold">dzisiaj</span>}
+                    </div>
+                    <h4 className="text-xs font-bold mb-1 transition-colors leading-snug pointer-events-none text-[#1A2F22]">{t.title}</h4>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] text-[#5A7368] font-semibold pointer-events-none">{t.duration || "60 min"}</span>
+                      <div className="ml-auto flex gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          {tasks.filter(t => !t.done && (!searchQuery || t.title.toLowerCase().includes(searchQuery.toLowerCase()))).length === 0 && (
             <div className="text-center py-16 opacity-70">
-              <p className="text-xs font-medium text-[#5A7368]">Brak zadań na ten dzień</p>
+              <p className="text-xs font-medium text-[#5A7368]">{searchQuery ? "Nie znaleziono pasujących zadań" : "Brak nieukończonych zadań"}</p>
             </div>
           )}
         </div>

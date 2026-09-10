@@ -8,6 +8,7 @@ export default function DebugModal({ onClose, actions }) {
     { id: "tasks", label: "Zadania" },
     { id: "moods", label: "Nastroje" },
     { id: "tokens", label: "Monety AI" },
+    { id: "streak", label: "Streak (Seria)" },
     { id: "time", label: "Czas" },
     { id: "account", label: "Konto" }
   ];
@@ -82,6 +83,44 @@ export default function DebugModal({ onClose, actions }) {
                 <button onClick={actions.zeroAiTokens} className="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold rounded-lg hover:bg-rose-100 transition-colors">
                   Wyzeruj (0)
                 </button>
+              </div>
+            </div>
+          )}
+          {activeTab === "streak" && (
+            <div className="space-y-4">
+              <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-[#1A2F22] mb-1">Testuj Animację Streaku</h4>
+                  <p className="text-xs text-gray-500">Odpala pełnoekranową animację płomieni i confetti.</p>
+                </div>
+                <button onClick={actions.testStreakAnimation} className="px-4 py-2 bg-orange-50 text-orange-600 border border-orange-200 text-xs font-bold rounded-lg hover:bg-orange-100 transition-colors whitespace-nowrap ml-4">
+                  Testuj
+                </button>
+              </div>
+              <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <h4 className="font-bold text-[#1A2F22] mb-1">Zmień dni streaku (Seria)</h4>
+                  <p className="text-xs text-gray-500">Umożliwia ustawienie dowolnego dnia streaku dla testów nagród.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="999" 
+                    defaultValue="5"
+                    id="debug-streak-input"
+                    className="w-16 px-2 py-1.5 border border-gray-200 rounded text-sm text-center focus:outline-none focus:border-[#2D9E6B]"
+                  />
+                  <button 
+                    onClick={() => {
+                      const val = parseInt(document.getElementById('debug-streak-input').value, 10);
+                      if (!isNaN(val)) actions.setStreakDay(val);
+                    }} 
+                    className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Ustaw
+                  </button>
+                </div>
               </div>
             </div>
           )}

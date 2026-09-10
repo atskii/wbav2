@@ -19,6 +19,14 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -37,4 +45,14 @@ code {
 .animate-ring {
   animation: ring 2s ease-in-out infinite;
   transform-origin: top center;
+}
+
+@keyframes token-bounce-grow {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-3.5px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-token-bounce {
+  animation: token-bounce-grow 0.20s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }

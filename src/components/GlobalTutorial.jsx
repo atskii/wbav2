@@ -140,6 +140,259 @@ const TUTORIAL_STEPS = [
     targetIdMobile: "tutorial-mobile-header-profile",
     placement: "bottom-left",
     screen: "dashboard"
+  },
+
+  // --- SAMOUCZEK EKRANU KALENDARZA (CALENDAR) ---
+  {
+    id: "calendar_month_picker",
+    title: "Wybór miesiąca i roku",
+    desc: "Kliknij tutaj, aby błyskawicznie przeskoczyć do dowolnego miesiąca lub roku i sprawdzić swój harmonogram.",
+    targetIdDesktop: "tutorial-calendar-month-picker",
+    targetIdMobile: "tutorial-mobile-calendar-month-picker",
+    placement: "bottom",
+    screen: "calendar"
+  },
+  {
+    id: "calendar_view_type",
+    title: "Widok: Dzień, Tydzień, Miesiąc",
+    desc: "Dostosuj perspektywę kalendarza do swoich potrzeb – szczegółowy podgląd godzinowy dnia, układ tygodniowy lub pełna siatka miesiąca.",
+    targetIdDesktop: "tutorial-calendar-view-type",
+    targetIdMobile: "tutorial-mobile-calendar-month-picker",
+    placement: "bottom",
+    screen: "calendar"
+  },
+  {
+    id: "calendar_today_btn",
+    title: "Przycisk 'Dzisiaj'",
+    desc: "Niezależnie od tego, w jak odległą datę klikniesz, ten przycisk natychmiast przeniesie Cię z powrotem do dzisiejszego dnia.",
+    targetIdDesktop: "tutorial-calendar-today-btn",
+    targetIdMobile: "tutorial-mobile-calendar-nav",
+    placement: "bottom",
+    screen: "calendar"
+  },
+  {
+    id: "calendar_nav_arrows",
+    title: "Przełączanie okresów",
+    desc: "Przechodź wygodnie do poprzedniego lub kolejnego miesiąca / tygodnia / dnia. Na telefonie możesz też po prostu przesuwać palcem w lewo lub w prawo (swipe)!",
+    targetIdDesktop: "tutorial-calendar-nav-arrows",
+    targetIdMobile: "tutorial-mobile-calendar-nav",
+    placement: "bottom-left",
+    screen: "calendar"
+  },
+  {
+    id: "calendar_month_grid",
+    title: "Siatka zadań i planowanie",
+    desc: "Kliknij dowolny dzień, aby wejść w jego szczegóły. Na komputerze możesz też przeciągać i upuszczać zadania bezpośrednio między dniami!",
+    targetIdDesktop: "tutorial-calendar-month-grid",
+    targetIdMobile: "tutorial-calendar-month-grid",
+    placement: "top",
+    screen: "calendar"
+  },
+  {
+    id: "calendar_all_tasks",
+    title: "Wszystkie zadania do zrobienia",
+    desc: "Podgląd wszystkich Twoich nieukończonych zadań wraz z wygodną wyszukiwarką. Możesz stąd szybko sprawdzić lub edytować dowolne zadanie.",
+    targetIdDesktop: "tutorial-calendar-all-tasks",
+    targetIdMobile: "tutorial-calendar-month-grid",
+    placement: "bottom-left",
+    screen: "calendar"
+  },
+
+  // --- SAMOUCZEK EKRANU DODAWANIA / EDYCJI ZADANIA (TASK MODAL) ---
+  {
+    id: "task_duration",
+    title: "Szacowany czas",
+    desc: "Przewidywany czas na zadanie. Pomaga aplikacji idealnie rozplanować dzień i chronić Cię przed przeciążeniem.",
+    targetIdDesktop: "tutorial-task-duration",
+    targetIdMobile: "tutorial-task-duration",
+    placement: "bottom",
+    screen: "task_modal"
+  },
+  {
+    id: "task_deadline",
+    title: "Deadline",
+    desc: "Ostateczny termin realizacji. Aplikacja automatycznie dopasuje plan tak, by ukończyć zadanie przed tą datą.",
+    targetIdDesktop: "tutorial-task-deadline",
+    targetIdMobile: "tutorial-task-deadline",
+    placement: "bottom",
+    screen: "task_modal"
+  },
+  {
+    id: "task_difficulty",
+    title: "Wysiłek umysłowy",
+    desc: "Skala 1–5 określa poziom skupienia. Pomaga rozłożyć trudniejsze zadania i dobrać odpowiednie przerwy na regenerację.",
+    targetIdDesktop: "tutorial-task-difficulty",
+    targetIdMobile: "tutorial-task-difficulty",
+    placement: "top",
+    screen: "task_modal"
+  },
+  {
+    id: "task_priority",
+    title: "Ważność",
+    desc: "Priorytet zadania. Decyduje o kolejności układania dnia – kluczowe zadania trafiają w godziny najwyższej energii.",
+    targetIdDesktop: "tutorial-task-priority",
+    targetIdMobile: "tutorial-task-priority",
+    placement: "top",
+    screen: "task_modal"
+  },
+  {
+    id: "task_recurrence",
+    title: "Cykliczność",
+    desc: "Powtarzalność, np. codzienne nawyki, zadania w dni robocze lub spotkania co tydzień.",
+    targetIdDesktop: "tutorial-task-recurrence",
+    targetIdMobile: "tutorial-task-recurrence",
+    placement: "top",
+    screen: "task_modal"
+  },
+  {
+    id: "task_lock",
+    title: "Zablokuj termin (Kłódka)",
+    desc: "Sztywno rezerwuje wybrane godziny w kalendarzu. Algorytm nie przesunie tego zadania podczas generowania planu.",
+    targetIdDesktop: "tutorial-task-lock",
+    targetIdMobile: "tutorial-task-lock",
+    placement: "top",
+    screen: "task_modal"
+  },
+
+  // --- SAMOUCZEK MONITORA NASTROJU (MOOD) ---
+  {
+    id: "mood_register",
+    title: "Zarejestruj swój nastrój",
+    desc: "Wybierz emotkę odpowiadającą Twojemu samopoczuciu i dodaj krótką notatkę. Regularne rejestrowanie pomaga dopasowywać plan dnia do Twojej energii.",
+    targetIdDesktop: "tutorial-mood-register",
+    targetIdMobile: "tutorial-mobile-mood-register",
+    placement: "bottom",
+    screen: "mood"
+  },
+  {
+    id: "mood_ai",
+    title: "Analiza AI nastroju",
+    desc: "Sztuczna inteligencja przeanalizuje Twoje wpisy z ostatnich dni, wykryje wzorce i przygotuje dla Ciebie spersonalizowane wskazówki wellbeingowe.",
+    targetIdDesktop: "tutorial-mood-ai",
+    targetIdMobile: "tutorial-mobile-mood-ai",
+    placement: "bottom",
+    screen: "mood"
+  },
+  {
+    id: "mood_filters",
+    title: "Zakres czasu wykresu",
+    desc: "Przełączaj perspektywę (Tydzień, Miesiąc, Kwartał), aby obserwować wahania energii i samopoczucia w krótkim lub dłuższym horyzoncie.",
+    targetIdDesktop: "tutorial-mood-filters",
+    targetIdMobile: "tutorial-mood-filters",
+    placement: "bottom",
+    screen: "mood"
+  },
+  {
+    id: "mood_chart",
+    title: "Wykres i edycja nastroju",
+    desc: "Wizualizacja Twojego nastroju dzień po dniu. Kliknij dowolną kropkę na wykresie, aby podejrzeć notatkę lub zaktualizować swój wpis.",
+    targetIdDesktop: "tutorial-mood-chart",
+    targetIdMobile: "tutorial-mood-chart",
+    placement: "top",
+    screen: "mood"
+  },
+  {
+    id: "mood_avg",
+    title: "Linia średniej",
+    desc: "Włącz lub wyłącz linię średniego nastroju, aby szybko sprawdzić ogólny bilans samopoczucia w wybranym okresie.",
+    targetIdDesktop: "tutorial-mood-avg",
+    targetIdMobile: "tutorial-mood-chart",
+    placement: "bottom",
+    screen: "mood"
+  },
+
+  // --- SAMOUCZEK CENTRUM POMOCY (WARNING / POMOC) ---
+  {
+    id: "help_notice",
+    title: "Sygnał wellbeingowy",
+    desc: "Aplikacja dba o Twoją równowagę psychiczną. Gdy zauważysz u siebie przeciążenie zadaniami lub spadek nastroju, ta sekcja przypomina o odpoczynku i wsparciu.",
+    targetIdDesktop: "tutorial-help-notice",
+    targetIdMobile: "tutorial-help-notice",
+    placement: "bottom",
+    screen: "warning"
+  },
+  {
+    id: "help_contacts",
+    title: "Baza bezpłatnego wsparcia",
+    desc: "Sprawdzona lista bezpłatnych linii pomocowych i organizacji zaufania wraz z godzinami ich dyżurów i bezpośrednim kontaktem.",
+    targetIdDesktop: "tutorial-help-contacts",
+    targetIdMobile: "tutorial-help-contacts",
+    placement: "top",
+    screen: "warning"
+  },
+
+  // --- SAMOUCZEK USTAWIEŃ (SETTINGS) ---
+  {
+    id: "settings_name",
+    title: "Nazwa użytkownika",
+    desc: "Wpisz swoje imię lub pseudonim – tak będziemy zwracać się do Ciebie w aplikacji oraz podczas powiadomień AI.",
+    targetIdDesktop: "tutorial-settings-name",
+    targetIdMobile: "tutorial-settings-name",
+    placement: "bottom",
+    screen: "settings"
+  },
+  {
+    id: "settings_worktime",
+    title: "Czas pracy i start dnia",
+    desc: "Ustal, ile godzin dziennie chcesz pracować oraz o której godzinie zaczynasz. Algorytm ułoży harmonogram zgodnie z tymi ramami.",
+    targetIdDesktop: "tutorial-settings-worktime",
+    targetIdMobile: "tutorial-settings-worktime",
+    placement: "bottom",
+    screen: "settings"
+  },
+  {
+    id: "settings_boosters",
+    title: "Poprawiacze nastroju",
+    desc: "Zaznacz czynności, które dodają Ci energii w trudniejszych momentach (np. spacer, kawa, muzyka). Aplikacja może Ci je podpowiadać w trakcie przerw.",
+    targetIdDesktop: "tutorial-settings-boosters",
+    targetIdMobile: "tutorial-settings-boosters",
+    placement: "top",
+    screen: "settings"
+  },
+  {
+    id: "settings_google",
+    title: "Synchronizacja z Kalendarzem Google",
+    desc: "Połącz swoje konto Google, aby automatycznie pobierać spotkania i rezerwować na nie czas w Twoim planie dnia.",
+    targetIdDesktop: "tutorial-settings-google",
+    targetIdMobile: "tutorial-settings-google",
+    placement: "top",
+    screen: "settings"
+  },
+  {
+    id: "settings_faq",
+    title: "FAQ – Baza wiedzy",
+    desc: "Odpowiedzi na najczęściej zadawane pytania dotyczące działania aplikacji, algorytmu generowania planu i funkcji AI.",
+    targetIdDesktop: "tutorial-settings-faq",
+    targetIdMobile: "tutorial-settings-faq",
+    placement: "top",
+    screen: "settings"
+  },
+  {
+    id: "settings_privacy",
+    title: "Polityka Prywatności",
+    desc: "Informacje o tym, w jaki sposób zbieramy, przetwarzamy i bezpiecznie przechowujemy Twoje dane. Twoje notatki i historia nastroju są w pełni prywatne.",
+    targetIdDesktop: "tutorial-settings-privacy",
+    targetIdMobile: "tutorial-settings-privacy",
+    placement: "top",
+    screen: "settings"
+  },
+  {
+    id: "settings_terms",
+    title: "Regulamin Usługi (ToS)",
+    desc: "Zasady korzystania z aplikacji, opis działania funkcji asystenta AI oraz prawa i obowiązki użytkownika.",
+    targetIdDesktop: "tutorial-settings-terms",
+    targetIdMobile: "tutorial-settings-terms",
+    placement: "top",
+    screen: "settings"
+  },
+  {
+    id: "settings_danger",
+    title: "Strefa niebezpieczna (Usuwanie konta)",
+    desc: "UWAGA: Usunięcie konta jest całkowicie NIEODWRACALNE i BEZPOWROTNE! Skasuje wszystkie Twoje zadania, całą historię nastroju, monety AI, serię dni (streak) oraz profil bez możliwości ich przywrócenia.",
+    targetIdDesktop: "tutorial-settings-danger",
+    targetIdMobile: "tutorial-settings-danger",
+    placement: "top",
+    screen: "settings"
   }
 ];
 
@@ -149,36 +402,62 @@ export default function GlobalTutorial({ userEmail, activeTab = "dashboard" }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [position, setPosition] = useState(null);
   const tooltipRef = useRef(null);
+  const prevTabRef = useRef(activeTab);
 
-  // Aktualizacja sekwencji, reaguje również na reset (gdy isTooltipSeen zmieni referencję)
+  // Aktualizacja sekwencji, reaguje również na reset lub zmianę ekranu (np. otwarcie modala)
   useEffect(() => {
-    // Samouczek menu i pulpitu odpalamy tylko wtedy, gdy użytkownik jest na pulpicie ("dashboard")
-    const relevantSteps = TUTORIAL_STEPS.filter(step => !step.screen || step.screen === activeTab);
+    const relevantSteps = TUTORIAL_STEPS.filter(step => step.screen === activeTab);
     const unseen = relevantSteps.filter(step => !isTooltipSeen(step.id));
-    // Resetujemy do nowej sekwencji tylko jeśli aktualnie nic nie wyświetlamy
-    if (unseen.length > 0 && (sequence.length === 0 || currentIndex >= sequence.length)) {
+
+    if (activeTab !== prevTabRef.current) {
+      prevTabRef.current = activeTab;
       setSequence(unseen);
       setCurrentIndex(0);
+      return;
     }
-  }, [isTooltipSeen, sequence.length, currentIndex, activeTab]);
+
+    if (unseen.length > 0 && (sequence.length === 0 || currentIndex >= sequence.length || unseen.length === relevantSteps.length)) {
+      setSequence(unseen);
+      setCurrentIndex(0);
+    } else if (unseen.length === 0 && sequence.length > 0) {
+      setSequence([]);
+      setCurrentIndex(0);
+    }
+  }, [isTooltipSeen, activeTab, sequence.length, currentIndex]);
 
   const currentStep = sequence[currentIndex];
 
   useEffect(() => {
     if (!currentStep) return;
 
-    const updatePosition = () => {
-      const isMobile = window.innerWidth < 768;
-      const targetId = isMobile ? currentStep.targetIdMobile : currentStep.targetIdDesktop;
-      const el = document.getElementById(targetId);
+    const isMobile = window.innerWidth < 768;
+    const targetId = isMobile ? currentStep.targetIdMobile : currentStep.targetIdDesktop;
+    const el = document.getElementById(targetId);
 
-      if (!el || !tooltipRef.current) {
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const isVisible = (
+        rect.top >= 70 &&
+        rect.bottom <= (window.innerHeight - 70)
+      );
+
+      if (!isVisible) {
+        el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      }
+    }
+
+    const updatePosition = () => {
+      const isMob = window.innerWidth < 768;
+      const tId = isMob ? currentStep.targetIdMobile : currentStep.targetIdDesktop;
+      const targetEl = document.getElementById(tId);
+
+      if (!targetEl || !tooltipRef.current) {
         // Fallback - środek ekranu jeśli elementu nie widać
         setPosition({ top: window.innerHeight / 2 - 100, left: window.innerWidth / 2 - 140, fallback: true });
         return;
       }
 
-      const rect = el.getBoundingClientRect();
+      const rect = targetEl.getBoundingClientRect();
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
 
       let top, left;
@@ -191,11 +470,11 @@ export default function GlobalTutorial({ userEmail, activeTab = "dashboard" }) {
       let actualPlacement = currentStep.placement;
 
       // Dla wersji mobilnej elementy menu są na dole ekranu, więc dymek ma być nad nimi (top)
-      if (isMobile && actualPlacement === 'right') {
+      if (isMob && actualPlacement === 'right') {
         actualPlacement = 'top';
       }
 
-      // Sprawdzenie czy tooltip ucieknie za górną krawędź ekranu
+      // Sprawdzenie czy tooltip ucieknie za górną/dolną krawędź ekranu
       if (actualPlacement === 'top' && (rect.top - tooltipRect.height - space < 16)) {
         actualPlacement = 'bottom';
       } else if (actualPlacement === 'bottom' && (rect.bottom + tooltipRect.height + space > window.innerHeight - 16)) {
@@ -208,43 +487,54 @@ export default function GlobalTutorial({ userEmail, activeTab = "dashboard" }) {
         top = Math.max(16, Math.min(top, window.innerHeight - tooltipRect.height - 16));
         left = Math.max(16, Math.min(left, window.innerWidth - tooltipRect.width - 16));
 
+        const rawY = targetCenterY - top - 10;
         arrowProps = {
           direction: 'left',
-          y: targetCenterY - top - 10
+          y: Math.max(16, Math.min(rawY, tooltipRect.height - 24))
+        };
+      } else if (actualPlacement === 'left') {
+        left = rect.left - tooltipRect.width - space;
+        top = targetCenterY - tooltipRect.height / 2;
+        top = Math.max(16, Math.min(top, window.innerHeight - tooltipRect.height - 16));
+        left = Math.max(16, Math.min(left, window.innerWidth - tooltipRect.width - 16));
+
+        const rawY = targetCenterY - top - 10;
+        arrowProps = {
+          direction: 'right',
+          y: Math.max(16, Math.min(rawY, tooltipRect.height - 24))
         };
       } else if (actualPlacement === 'bottom') {
         top = rect.bottom + space;
         left = targetCenterX - tooltipRect.width / 2;
         left = Math.max(16, Math.min(left, window.innerWidth - tooltipRect.width - 16));
 
+        const rawX = targetCenterX - left - 10;
         arrowProps = {
           direction: 'up',
-          x: targetCenterX - left - 10
+          x: Math.max(16, Math.min(rawX, tooltipRect.width - 24))
         };
       } else if (actualPlacement === 'top') {
         top = rect.top - tooltipRect.height - space;
         left = targetCenterX - tooltipRect.width / 2;
         left = Math.max(16, Math.min(left, window.innerWidth - tooltipRect.width - 16));
 
+        const rawX = targetCenterX - left - 10;
         arrowProps = {
           direction: 'down',
-          x: targetCenterX - left - 10
+          x: Math.max(16, Math.min(rawX, tooltipRect.width - 24))
         };
       } else if (actualPlacement === 'bottom-left') {
-        // Wyrównanie do prawej krawędzi dla elementów w nagłówku (żeby nie wychodziły poza prawy róg ekranu)
         top = rect.bottom + space;
         left = rect.right - tooltipRect.width;
         left = Math.max(16, Math.min(left, window.innerWidth - tooltipRect.width - 16));
 
+        const rawX = targetCenterX - left - 10;
         arrowProps = {
           direction: 'up',
-          x: targetCenterX - left - 10
+          x: Math.max(16, Math.min(rawX, tooltipRect.width - 24))
         };
       }
 
-      // Bezpiecznik: jeśli mimo wszystko top jest ujemny (np. dla bottom-left gdy ekran jest bardzo mały), 
-      // chociaż to rzadkość bo bottom-left idzie w dół. 
-      // Zabezpieczamy 'top' na sztywno:
       top = Math.max(16, Math.min(top, window.innerHeight - tooltipRect.height - 16));
 
       setPosition({ top, left, arrowProps, fallback: false, targetRect: rect });
@@ -255,7 +545,7 @@ export default function GlobalTutorial({ userEmail, activeTab = "dashboard" }) {
     window.addEventListener('scroll', updatePosition, true);
     const observer = new MutationObserver(updatePosition);
     observer.observe(document.body, { childList: true, subtree: true });
-    const interval = setInterval(updatePosition, 500);
+    const interval = setInterval(updatePosition, 100);
 
     return () => {
       window.removeEventListener('resize', updatePosition);
@@ -333,6 +623,12 @@ export default function GlobalTutorial({ userEmail, activeTab = "dashboard" }) {
                 <>
                   <div className="absolute -left-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-r-[10px] border-r-white" style={{ top: position.arrowProps.y }}></div>
                   <div className="absolute -left-3 w-0 h-0 border-y-[9px] border-y-transparent border-r-[11px] border-r-[#2D9E6B] -z-10" style={{ top: position.arrowProps.y - 1 }}></div>
+                </>
+              )}
+              {position.arrowProps.direction === 'right' && (
+                <>
+                  <div className="absolute -right-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-l-[10px] border-l-white" style={{ top: position.arrowProps.y }}></div>
+                  <div className="absolute -right-3 w-0 h-0 border-y-[9px] border-y-transparent border-l-[11px] border-l-[#2D9E6B] -z-10" style={{ top: position.arrowProps.y - 1 }}></div>
                 </>
               )}
             </>

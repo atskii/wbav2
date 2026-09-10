@@ -13,14 +13,14 @@ export default function WarningView({ loading, user }) {
           Wsparcie jest bliżej, niż myślisz. Jeśli czujesz, że potrzebujesz wsparcia, skontaktuj się z osobami, które są gotowe Ci pomóc. Poniżej znajdziesz listę organizacji oferujących bezpłatną pomoc.
         </p>
       </header>
-      <div className="bg-amber-50 border border-amber-100 p-6 rounded-2xl flex flex-col sm:flex-row gap-4 items-start mb-12 shadow-sm">
+      <div id="tutorial-help-notice" className="bg-amber-50 border border-amber-100 p-6 rounded-2xl flex flex-col sm:flex-row gap-4 items-start mb-12 shadow-sm">
         <div className="bg-white p-2 rounded-xl shadow-sm self-start"><Settings size={20} className="text-amber-500 animate-pulse" /></div>
         <p className="text-[11px] font-medium text-amber-800 leading-relaxed">
           <span className="font-black uppercase tracking-wider block mb-1">Ważna informacja</span>
           Ta informacja nie jest diagnozą, ale ważnym sygnałem ostrzegawczym. Warto przyjrzeć się swojemu planowi dnia, wprowadzić drobne zmiany i jeśli czujesz, że sytuacja się utrzymuje — rozważyć rozmowę ze specjalistą.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <div id="tutorial-help-contacts" className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {CONTACTS.map((c, i) => (
           <div key={i} className="bg-white border border-[#E8DDD0] rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 shadow-sm hover:shadow-md transition-all group flex flex-col">
             <p className="text-[10px] font-black uppercase text-[#9FB5AD] tracking-[0.15em] mb-1">{c.org}</p>

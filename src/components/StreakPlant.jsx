@@ -3,7 +3,7 @@ import { CheckCircle, RefreshCw, Zap, Sparkles, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateTaskXP } from "../lib/xpHelpers";
 
-function fireCustomConfetti() {
+export function fireCustomConfetti() {
   const canvas = document.createElement("canvas");
   canvas.style.position = "fixed";
   canvas.style.top = "0";
