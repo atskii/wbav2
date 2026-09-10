@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { CheckCircle, RefreshCw, Zap, Sparkles, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateTaskXP } from "../lib/xpHelpers";
-import { useTutorials } from "../hooks/useTutorials";
 
 function fireCustomConfetti() {
   const canvas = document.createElement("canvas");
@@ -100,13 +99,6 @@ export default function StreakPlant({ tasks = [], userEmail = null }) {
   const [hasFlowered, setHasFlowered] = useState(false);
   const [plantType, setPlantType] = useState('image'); // 'image' or 'cactus'
 
-  const { isTooltipSeen, markTooltipSeen } = useTutorials(userEmail);
-  const [showStreakPlantTutorial, setShowStreakPlantTutorial] = useState(false);
-
-  useEffect(() => {
-    setShowStreakPlantTutorial(!isTooltipSeen("dashboard_streak_plant"));
-  }, [isTooltipSeen]);
-
   const currentStep = xpProgress === 0 ? 1 : Math.ceil(xpProgress / 10);
 
   useEffect(() => {
@@ -119,7 +111,7 @@ export default function StreakPlant({ tasks = [], userEmail = null }) {
   }, [xpProgress, hasFlowered, total]);
 
   return (
-    <div className="bg-white md:bg-white/90 backdrop-blur-sm md:rounded-3xl p-5 md:p-6 md:border md:border-[#E8DDD0] md:shadow-sm md:hover:shadow-md transition-all relative overflow-visible flex flex-col">
+    <div id="tutorial-streak-plant" className="bg-white md:bg-white/90 backdrop-blur-sm md:rounded-3xl p-5 md:p-6 md:border md:border-[#E8DDD0] md:shadow-sm md:hover:shadow-md transition-all relative overflow-visible flex flex-col">
       {/* 1. TYTUŁ: Odstęp od dołu regulowany klasą mb-2 (np. mb-1, mb-2, mb-3, mb-4) */}
       <h3 className="font-lora text-xl font-bold text-[#1A2F22] text-center mb-3">Roślinka Streaku</h3>
 

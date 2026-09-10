@@ -252,15 +252,6 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
 
   // Samouczki
   const { isTooltipSeen, markTooltipSeen, resetTooltipGroup } = useTutorials(userEmail || userPrefs?.email);
-  const [showDateNavTutorial, setShowDateNavTutorial] = useState(false);
-  const [showGeneratePlanTutorial, setShowGeneratePlanTutorial] = useState(false);
-  const [showAddTaskTutorial, setShowAddTaskTutorial] = useState(false);
-
-  useEffect(() => {
-    setShowDateNavTutorial(!isTooltipSeen("dashboard_date_nav"));
-    setShowGeneratePlanTutorial(!isTooltipSeen("dashboard_generate_plan"));
-    setShowAddTaskTutorial(!isTooltipSeen("dashboard_add_task"));
-  }, [isTooltipSeen]);
 
   // Stany Drag & Drop z czytelnym podglądem godziny
   const [draggedTaskId, setDraggedTaskId] = useState(null);
@@ -355,43 +346,22 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
               </div>
               
               <div className="flex gap-2 w-full lg:w-auto mt-4 mb-2 lg:hidden">
-                <button onClick={onOpenTaskModal} className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">
+                <button id="tutorial-mobile-add-task" onClick={onOpenTaskModal} className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95">
                   Dodaj zadanie <Plus size={16} />
                 </button>
-                <button onClick={onGeneratePlanAI} disabled={isAiPlanning} title={hasAiOpinion ? "Opinia AI / Wygeneruj ponownie" : "AI"} className="flex items-center justify-center gap-1.5 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 relative">
+                <button id="tutorial-mobile-generate-plan-ai" onClick={onGeneratePlanAI} disabled={isAiPlanning} title={hasAiOpinion ? "Opinia AI / Wygeneruj ponownie" : "AI"} className="flex items-center justify-center gap-1.5 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-bold hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm active:scale-95 disabled:opacity-50 relative">
                   {isAiPlanning ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
                   <span>AI</span>
                   {hasAiOpinion && (
                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full animate-pulse" />
                   )}
                 </button>
-                <button onClick={onGeneratePlan} title="Generuj plan" className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] transition-all shadow-sm active:scale-95">
+                <button id="tutorial-mobile-generate-plan" onClick={onGeneratePlan} title="Generuj plan" className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] transition-all shadow-sm active:scale-95">
                   <RefreshCw size={16} />
                 </button>
               </div>
 
-              <div className="relative flex items-center justify-between w-full lg:w-auto lg:justify-start gap-3 mt-2">
-                {showDateNavTutorial && (
-                  <div className="absolute top-[calc(100%+12px)] left-0 w-64 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowDateNavTutorial(false);
-                        markTooltipSeen("dashboard_date_nav");
-                      }}
-                      className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                      title="Zamknij podpowiedź"
-                    >
-                      <X size={13} />
-                    </button>
-                    <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Nawigacja po dniach:</strong>
-                    <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                      Służy po to, aby dokładnie ustawić sobie plan i wprowadzić zmiany w poszczególne dni.
-                    </p>
-                    <div className="absolute -top-2.5 left-6 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
-                    <div className="absolute -top-3 left-6 w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
-                  </div>
-                )}
+              <div id="tutorial-date-nav" className="relative flex items-center justify-between w-full lg:w-auto lg:justify-start gap-3 mt-2">
                 <button onClick={() => onChangeDate(-1)} className="p-1 hover:bg-[#E8DDD0] rounded-full transition-all active:scale-95 text-[#1A2F22]">
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
@@ -406,29 +376,9 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
 
             <div className="hidden lg:flex gap-2 w-full lg:w-auto mt-2">
               <div className="relative">
-                {showGeneratePlanTutorial && (
-                  <div className="absolute top-[calc(100%+12px)] right-0 w-52 p-3.5 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowGeneratePlanTutorial(false);
-                        markTooltipSeen("dashboard_generate_plan");
-                      }}
-                      className="absolute top-1.5 right-1.5 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                      title="Zamknij podpowiedź"
-                    >
-                      <X size={12} />
-                    </button>
-                    <strong className="text-[#1E5C36] font-bold text-xs block mb-0.5">Generuj plan:</strong>
-                    <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                      Na podstawie zadań, które do niego dodaliśmy, utworzy się nam zoptymalizowany plan dnia.
-                    </p>
-                    <div className="absolute -top-2.5 right-10 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
-                    <div className="absolute -top-3 right-10 w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
-                  </div>
-                )}
                 <div className="flex items-center gap-2">
                   <button 
+                    id="tutorial-desktop-generate-plan-ai"
                     onClick={onGeneratePlanAI} 
                     disabled={isAiPlanning} 
                     title={hasAiOpinion ? "Opinia AI / Wygeneruj ponownie" : "Inteligentny plan AI"} 
@@ -441,6 +391,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                     )}
                   </button>
                   <button 
+                    id="tutorial-generate-plan"
                     onClick={onGeneratePlan} 
                     title="Generuj plan" 
                     className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#057E85] text-white rounded-xl text-sm font-bold hover:bg-[#04686e] transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0"
@@ -451,28 +402,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
               </div>
 
               <div className="relative">
-                {showAddTaskTutorial && (
-                  <div className="absolute top-[calc(100%+12px)] left-0 w-48 p-3.5 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowAddTaskTutorial(false);
-                        markTooltipSeen("dashboard_add_task");
-                      }}
-                      className="absolute top-1.5 right-1.5 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                      title="Zamknij podpowiedź"
-                    >
-                      <X size={12} />
-                    </button>
-                    <strong className="text-[#1E5C36] font-bold text-xs block mb-0.5">Dodaj zadanie:</strong>
-                    <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                      Tutaj szybko dodasz nowe zadania do swojego planu.
-                    </p>
-                    <div className="absolute -top-2.5 left-8 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
-                    <div className="absolute -top-3 left-8 w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
-                  </div>
-                )}
-                <button onClick={onOpenTaskModal} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] transition-all shadow-sm active:scale-95">
+                <button id="tutorial-add-task" onClick={onOpenTaskModal} className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl text-sm font-bold hover:bg-[#F5EFE6] transition-all shadow-sm active:scale-95">
                   Dodaj <Plus size={15} />
                 </button>
               </div>
@@ -671,10 +601,10 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                 </div>
               </div>
             </div>
-            {backlog.length > 0 && (
-              <div className="sticky bottom-0 z-[100] mt-10 pl-12 md:pl-20 pointer-events-none flex justify-center">
-                <div 
-                  className={`w-full max-w-3xl pointer-events-auto transition-all ${dashDragTarget && dashDragTarget.type === 'backlog' ? "scale-105" : ""}`}
+            {/* Pasek zadań poza planem / Backlog (zawsze widoczny) */}
+            <div id="tutorial-backlog" className="sticky bottom-0 z-[100] mt-10 pl-12 md:pl-20 pointer-events-none flex justify-center">
+              <div 
+                className={`w-full max-w-3xl pointer-events-auto transition-all ${dashDragTarget && dashDragTarget.type === 'backlog' ? "scale-105" : ""}`}
                   onDragOver={(e) => { 
                     e.preventDefault(); 
                     e.dataTransfer.dropEffect = "move"; 
@@ -733,7 +663,6 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                   </div>
                 </div>
               </div>
-            )}
           </div>
         </div>
         <div className="hidden md:block xl:col-span-4 xl:h-full w-full mt-8 xl:mt-0">

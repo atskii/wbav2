@@ -39,6 +39,7 @@ import AiPlanModal from "./components/AiPlanModal";
 import AiPromptModal from "./components/AiPromptModal";
 import AdminPanel from "./components/AdminPanel";
 import StreakPlant from "./components/StreakPlant";
+import GlobalTutorial from "./components/GlobalTutorial";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsOfService from "./components/TermsOfService";
 
@@ -82,15 +83,6 @@ export default function App() {
   const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
 
   const { isTooltipSeen, markTooltipSeen, isFirstScreenVisit, markScreenVisited, resetAllTutorials, resetScreen } = useTutorials(user?.email);
-  const [showProfileTutorial, setShowProfileTutorial] = useState(false);
-  const [showHelpTutorial, setShowHelpTutorial] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setShowProfileTutorial(!isTooltipSeen("header_profile"));
-      setShowHelpTutorial(!isTooltipSeen("header_help"));
-    }
-  }, [user, isTooltipSeen]);
 
   useEffect(() => {
     if (user && activeTab) {
@@ -1509,6 +1501,7 @@ export default function App() {
                   )}
 
                   <button
+                    id="tutorial-header-help"
                     type="button"
                     onClick={() => setHelpMenuOpen(!helpMenuOpen)}
                     className="h-10 w-10 rounded-full bg-gradient-to-tr from-[#1E5C36] to-[#2D9E6B] hover:from-[#2D9E6B] hover:to-[#38B77D] text-white flex items-center justify-center font-black text-lg shadow-md shadow-green-900/15 hover:shadow-lg transition-all duration-200 cursor-pointer border border-[#1E5C36]/30 hover:scale-105 active:scale-95 flex-shrink-0"
@@ -1516,29 +1509,6 @@ export default function App() {
                   >
                     ?
                   </button>
-
-                  {/* Dymek samouczka przycisku pomocy (?) */}
-                  {showHelpTutorial && !helpMenuOpen && (
-                    <div className="absolute top-0 right-[calc(100%+14px)] w-60 p-3.5 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-right-2 duration-300 text-left">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowHelpTutorial(false);
-                          markTooltipSeen("header_help");
-                        }}
-                        className="absolute top-1.5 right-1.5 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                        title="Zamknij podpowiedź"
-                      >
-                        <X size={12} />
-                      </button>
-                      <strong className="text-[#1E5C36] font-bold text-xs block mb-0.5">Centrum pomocy (?):</strong>
-                      <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                        Jeśli chciałbyś sobie kiedyś przypomnieć działanie aplikacji, kliknij tutaj, aby ponownie odtworzyć samouczek na danym ekranie.
-                      </p>
-                      <div className="absolute top-3.5 -right-2.5 w-0 h-0 border-y-[8px] border-y-transparent border-l-[10px] border-l-white"></div>
-                      <div className="absolute top-3.5 -right-3 w-0 h-0 border-y-[9px] border-y-transparent border-l-[11px] border-l-[#2D9E6B] -z-10"></div>
-                    </div>
-                  )}
 
                   <AnimatePresence>
                     {helpMenuOpen && (
@@ -1576,6 +1546,7 @@ export default function App() {
 
                 {/* 2. Streak badge */}
                 <motion.div 
+                  id="tutorial-header-streak"
                   layout
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className="flex items-center justify-center gap-1.5 px-4 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-700 font-extrabold text-sm flex-shrink-0 shadow-sm" 
@@ -1587,6 +1558,7 @@ export default function App() {
 
                 {/* 3. Monety / Tokeny AI */}
                 <motion.div 
+                  id="tutorial-header-ai-tokens"
                   layout
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className={`flex items-center justify-center gap-1.5 px-4 h-10 rounded-full font-extrabold text-sm flex-shrink-0 shadow-sm transition-all ${
@@ -1636,28 +1608,6 @@ export default function App() {
                     />
                   )}
 
-                  {showProfileTutorial && !profileMenuOpen && (
-                    <div className="absolute top-[calc(100%+12px)] right-0 w-64 p-4 bg-white text-[#1A2F22] rounded-2xl shadow-2xl border-2 border-[#2D9E6B] z-[9999] animate-in fade-in slide-in-from-top-2 duration-300 text-left">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowProfileTutorial(false);
-                          markTooltipSeen("header_profile");
-                        }}
-                        className="absolute top-2 right-2 p-1 hover:bg-[#E8F4ED] text-[#5A7368] hover:text-[#1E5C36] rounded-full transition-all cursor-pointer"
-                        title="Zamknij podpowiedź"
-                      >
-                        <X size={13} />
-                      </button>
-                      <strong className="text-[#1E5C36] font-bold text-xs block mb-1">Twój profil:</strong>
-                      <p className="text-[11px] leading-relaxed text-[#5A7368] pr-2">
-                        Możesz się tu wylogować, połączyć z Kalendarzem Google oraz przejść do Ustawień konta.
-                      </p>
-                      <div className="absolute -top-2.5 right-6 w-0 h-0 border-x-[8px] border-x-transparent border-b-[10px] border-b-white"></div>
-                      <div className="absolute -top-3 right-6 w-0 h-0 border-x-[9px] border-x-transparent border-b-[11px] border-b-[#2D9E6B] -z-10"></div>
-                    </div>
-                  )}
-
                   <motion.div 
                     initial={false}
                     animate={{ 
@@ -1672,6 +1622,7 @@ export default function App() {
                     }`}
                   >
                     <button 
+                      id="tutorial-header-profile"
                       onClick={() => setProfileMenuOpen(!profileMenuOpen)} 
                       className="w-full h-10 flex items-center justify-between gap-2.5 px-3.5 hover:bg-[#F9FAFB] transition-colors text-left select-none whitespace-nowrap cursor-pointer"
                     >
@@ -1739,6 +1690,7 @@ export default function App() {
                 {/* 1. Przycisk pomocy (?) */}
                 <div className="relative">
                   <button
+                    id="tutorial-mobile-header-help"
                     type="button"
                     onClick={() => setHelpMenuOpen(!helpMenuOpen)}
                     className="h-10 w-10 rounded-full bg-[#1E5C36]/10 hover:bg-[#1E5C36] text-[#1E5C36] hover:text-white flex items-center justify-center font-black text-lg transition-all duration-200 cursor-pointer active:scale-95 flex-shrink-0"
@@ -1785,6 +1737,7 @@ export default function App() {
                 <div className="flex items-center gap-3.5 sm:gap-5">
                   {/* 2. Streak badge */}
                   <div 
+                    id="tutorial-mobile-header-streak"
                     className="flex items-center justify-center gap-1 px-1 h-10 text-amber-700 font-extrabold text-base flex-shrink-0" 
                     title={`${streakCount} dni serii`}
                   >
@@ -1794,6 +1747,7 @@ export default function App() {
 
                   {/* 3. Monety / Tokeny AI */}
                   <div 
+                    id="tutorial-mobile-header-ai-tokens"
                     className={`flex items-center justify-center gap-1 px-1 h-10 font-extrabold text-base flex-shrink-0 transition-all ${
                       aiTokens > 2
                         ? "text-[#02848C]"
@@ -1814,6 +1768,7 @@ export default function App() {
                   {/* 4. Profil z ikonką awatara */}
                   <div className="relative flex-shrink-0">
                     <button
+                      id="tutorial-mobile-header-profile"
                       type="button"
                       onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                       className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#2D9E6B] to-[#1E5C36] text-white flex items-center justify-center font-bold text-base shadow-inner cursor-pointer active:scale-95 transition-all flex-shrink-0"
@@ -2005,6 +1960,8 @@ export default function App() {
               setIsAiPromptModalOpen(true);
             }}
           />
+
+          <GlobalTutorial userEmail={user?.email} />
 
           {showMoodModal && <MoodModal onClose={() => setShowMoodModal(false)} onAdd={addMood} />}
           {showDebugModal && <DebugModal onClose={() => setShowDebugModal(false)} actions={debugActions} />}
