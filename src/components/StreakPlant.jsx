@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, RefreshCw, Zap, Sparkles, X } from "lucide-react";
+import { CheckCircle, RefreshCw, Zap, Sparkles, X, BookOpen, Leaf } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { calculateTaskXP } from "../lib/xpHelpers";
+import PlantCatalogModal from "./PlantCatalogModal";
+import { supabase } from "../lib/supabase";
 
 export function fireCustomConfetti() {
   const canvas = document.createElement("canvas");
@@ -85,7 +87,13 @@ export function fireCustomConfetti() {
 // ═══════════════════════════════════════════════════
 //  STREAK PLANT (OBLICZENIA NA ŻYWO)
 // ═══════════════════════════════════════════════════
-export default function StreakPlant({ tasks = [], userEmail = null }) {
+export default function StreakPlant({
+  tasks = [],
+  userEmail = null,
+  streakCount = 0,
+  userPrefs = null,
+  onSelectPlant = null,
+}) {
   const total = tasks.length;
   const doneTasks = tasks.filter(t => t.done);
   const done = doneTasks.length;
@@ -96,8 +104,35 @@ export default function StreakPlant({ tasks = [], userEmail = null }) {
   const xpProgress = totalXP === 0 ? 0 : Math.round((earnedXP / totalXP) * 100);
   const plantHeight = Math.max(15, xpProgress);
 
+  const claimedDays = userPrefs?.claimedStreakDays || [];
+  const isCactusUnlocked = streakCount >= 3 || claimedDays.includes(3);
+
   const [hasFlowered, setHasFlowered] = useState(false);
-  const [plantType, setPlantType] = useState('image'); // 'image' or 'cactus'
+  const [plantType, setPlantType] = useState(() => {
+    const saved = userPrefs?.selectedPlant || localStorage.getItem('selected_plant_type') || 'image';
+    if (saved === 'cactus' && !isCactusUnlocked) return 'image';
+    return saved;
+  });
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+
+  // Sync if userPrefs changes
+  useEffect(() => {
+    if (userPrefs?.selectedPlant) {
+      if (userPrefs.selectedPlant === 'cactus' && !isCactusUnlocked) {
+        setPlantType('image');
+      } else {
+        setPlantType(userPrefs.selectedPlant);
+      }
+    }
+  }, [userPrefs?.selectedPlant, isCactusUnlocked]);
+
+  // If cactus is currently active but becomes locked, safely revert to 'image'
+  useEffect(() => {
+    if (plantType === 'cactus' && !isCactusUnlocked) {
+      setPlantType('image');
+      localStorage.setItem('selected_plant_type', 'image');
+    }
+  }, [plantType, isCactusUnlocked]);
 
   const currentStep = xpProgress === 0 ? 1 : Math.ceil(xpProgress / 10);
 
@@ -110,73 +145,128 @@ export default function StreakPlant({ tasks = [], userEmail = null }) {
     }
   }, [xpProgress, hasFlowered, total]);
 
+  const handleSelectPlant = async (newType) => {
+    setPlantType(newType);
+    localStorage.setItem('selected_plant_type', newType);
+
+    if (onSelectPlant) {
+      onSelectPlant(newType);
+    }
+
+    if (userEmail) {
+      try {
+        const currentPrefs = userPrefs || {};
+        await supabase
+          .from('profiles')
+          .update({ prefs: { ...currentPrefs, selectedPlant: newType } })
+          .eq('email', userEmail);
+      } catch (err) {
+        console.error("Błąd podczas zapisywania wybranej rośliny:", err);
+      }
+    }
+  };
+
+  const plantNameLabel = plantType === 'cactus' ? 'Kaktus Pustynny' : 'Monstera Deliciosa';
+
   return (
     <div id="tutorial-streak-plant" className="bg-white md:bg-white/90 backdrop-blur-sm md:rounded-3xl p-5 md:p-6 md:border md:border-[#E8DDD0] md:shadow-sm md:hover:shadow-md transition-all relative overflow-visible flex flex-col">
-      {/* 1. TYTUŁ: Odstęp od dołu regulowany klasą mb-2 (np. mb-1, mb-2, mb-3, mb-4) */}
-      <h3 className="font-lora text-xl font-bold text-[#1A2F22] text-center mb-3">Roślinka Streaku</h3>
+      {/* 1. TYTUŁ I GATUNEK */}
+      <div className="text-center mb-2">
+        <h3 className="font-lora text-xl font-bold text-[#1A2F22]">Roślinka Streaku</h3>
+        <p className="text-xs text-[#5A7368] font-medium mt-0.5">{plantNameLabel}</p>
+      </div>
 
       <div className="flex flex-col items-center w-full">
         {/* 2. KONTENER ROŚLINKY: Wysokość regulowana klasą h-64 (np. h-60, h-64, h-72) i odstęp mb-3 */}
-        <div className="relative h-100 w-full mb-2">
-          {plantType === 'cactus' ? (
-            <>
-              {/* Doniczka - na samym dole */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 h-16 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
-                <div className="w-40 h-5 bg-[#3E5249] rounded-sm -mt-1.5 shadow-md" />
-              </div>
-              {/* Kaktus - rośnie z góry doniczki */}
-              <div
-                className="absolute left-1/2 -translate-x-1/2 w-20 bg-[#2D9E6B] rounded-t-[3rem] transition-all duration-1000 ease-out z-10 shadow-inner"
-                style={{ bottom: '64px', height: `${Math.round(30 + (plantHeight / 100) * 160)}px` }}
+        <div className="relative h-100 w-full mb-2 flex justify-center items-end">
+          <AnimatePresence>
+            {plantType === 'cactus' ? (
+              <motion.div
+                key="cactus"
+                initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                style={{ transformOrigin: "bottom center" }}
+                className="absolute inset-0 flex justify-center items-end pb-2"
               >
-                <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[3rem]" />
-              </div>
-              {/* Kwiatek - pojawia się przy 100% */}
-              <AnimatePresence>
-                {xpProgress === 100 && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0, rotate: -45 }}
-                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    transition={{ duration: 0.5, type: "spring" }}
-                    className="absolute left-1/2 -translate-x-1/2 z-30"
-                    style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 10}px` }}
-                  >
-                    <Sparkles className="w-8 h-8 text-[#FFB7B2] animate-pulse drop-shadow-md" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </>
-          ) : (
-            /* Roślina ze zdjęć - doniczka w stałym rozmiarze zakotwiczona na dole */
-            <div className="relative w-full h-full flex justify-center items-end pb-2">
-              <AnimatePresence>
-                <motion.img
-                  key={currentStep}
-                  src={`/plant/step ${currentStep}.png`}
-                  alt={`Etap wzrostu ${currentStep}`}
-                  initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
-                  animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-                  exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  style={{ transformOrigin: "bottom center" }}
-                  className="absolute bottom-0 w-48 sm:w-52 h-auto object-contain object-bottom pointer-events-none"
-                />
-              </AnimatePresence>
-            </div>
-          )}
+                {/* Doniczka - na samym dole */}
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-36 h-16 bg-[#5A7368] rounded-b-3xl rounded-t-sm z-20 flex flex-col items-center">
+                  <div className="w-40 h-5 bg-[#3E5249] rounded-sm -mt-1.5 shadow-md" />
+                </div>
+                {/* Kaktus - rośnie z góry doniczki z oryginalną animacją ease-out */}
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 w-20 bg-[#2D9E6B] rounded-t-[3rem] transition-all duration-1000 ease-out z-10 shadow-inner"
+                  style={{ bottom: '64px', height: `${Math.round(30 + (plantHeight / 100) * 160)}px` }}
+                >
+                  <div className="absolute inset-0 opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#1A2F22_4px,#1A2F22_6px)] rounded-t-[3rem]" />
+                </div>
+                {/* Kwiatek - pojawia się przy 100% */}
+                <AnimatePresence>
+                  {xpProgress === 100 && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0, rotate: -45 }}
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ duration: 0.5, type: "spring" }}
+                      className="absolute left-1/2 -translate-x-1/2 z-30"
+                      style={{ bottom: `${64 + Math.round(30 + (plantHeight / 100) * 160) - 10}px` }}
+                    >
+                      <Sparkles className="w-8 h-8 text-[#FFB7B2] animate-pulse drop-shadow-md" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ) : (
+              /* Roślina ze zdjęć - doniczka w stałym rozmiarze zakotwiczona na dole */
+              <motion.div
+                key="image"
+                initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                style={{ transformOrigin: "bottom center" }}
+                className="absolute inset-0 flex justify-center items-end pb-2"
+              >
+                <AnimatePresence>
+                  <motion.img
+                    key={currentStep}
+                    src={`/plant/step ${currentStep}.png`}
+                    alt={`Etap wzrostu ${currentStep}`}
+                    initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                    exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    style={{ transformOrigin: "bottom center" }}
+                    className="absolute bottom-0 w-48 sm:w-52 h-auto object-contain object-bottom pointer-events-none"
+                  />
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* 3. PRZYCISK ZMIANY ROŚLINKI: Odstęp od paska postępu regulowany klasą mb-3 (np. mb-2, mb-3, mb-4) */}
+        {/* 3. PRZYCISK ZMIANY ROŚLINKI: Otwiera Katalog Roślin */}
         <div className="flex justify-center mb-3">
           <button
-            onClick={() => setPlantType(prev => prev === 'cactus' ? 'image' : 'cactus')}
-            className="flex items-center gap-1.5 bg-[#078B83] hover:bg-[#06736D] text-white px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors cursor-pointer"
+            onClick={() => setIsCatalogOpen(true)}
+            className="flex items-center gap-1.5 bg-[#078B83] hover:bg-[#06736D] text-white px-3.5 py-1.5 rounded-xl text-[13px] font-medium transition-all shadow-sm hover:shadow cursor-pointer active:scale-98"
           >
-            Zmień roślinkę <RefreshCw size={14} />
+            <span>Zmień roślinkę</span>
+            <RefreshCw size={13} className="opacity-85" />
           </button>
         </div>
       </div>
+
+      {/* Katalog Roślin Modal */}
+      <PlantCatalogModal
+        isOpen={isCatalogOpen}
+        onClose={() => setIsCatalogOpen(false)}
+        currentPlant={plantType}
+        onSelectPlant={handleSelectPlant}
+        streakCount={streakCount}
+        claimedDays={claimedDays}
+      />
 
       {/* 4. PASEK POSTĘPU DNIA */}
       <div className="w-full pt-1">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, X, Sparkles, Check, Lock, ChevronRight } from 'lucide-react';
+import { Flame, X, Sparkles, Check, ChevronRight } from 'lucide-react';
 import { fireCustomConfetti } from './StreakPlant';
 
 export default function StreakAnimation({ streakCount, onClose, onClaimReward, mode = 'auto', claimedDays = [] }) {
@@ -85,7 +85,7 @@ export default function StreakAnimation({ streakCount, onClose, onClaimReward, m
       if (!isDashboard) {
         setTimeout(() => {
           if (onClose) onClose();
-        }, 600);
+        }, 400);
       }
     }
   };
@@ -253,9 +253,26 @@ export default function StreakAnimation({ streakCount, onClose, onClaimReward, m
                                 <div className="w-8 h-8 rounded-full bg-[#2D9E6B]/10 flex items-center justify-center text-[#2D9E6B]">
                                   <Check size={20} />
                                 </div>
+                              ) : isLocked && displayDay === 3 ? (
+                                <div className="relative flex flex-col items-center grayscale opacity-40">
+                                  <span className="text-2xl drop-shadow-sm leading-none select-none">🌵</span>
+                                  <div className="absolute -bottom-1 -right-2 bg-gray-400 text-white text-[8px] font-extrabold px-1 rounded-sm shadow-xs">
+                                    ROŚLINA
+                                  </div>
+                                </div>
                               ) : isLocked ? (
-                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                                  <Lock size={16} />
+                                <div className="relative grayscale opacity-40">
+                                  <img src="/icons/AI Coin.svg" alt="Coin" className="w-8 h-8 object-contain" />
+                                  <div className="absolute -bottom-1 -right-1 bg-gray-400 text-white text-[9px] font-bold px-1 rounded-sm">
+                                    +{rewardValue}
+                                  </div>
+                                </div>
+                              ) : displayDay === 3 ? (
+                                <div className="relative flex flex-col items-center">
+                                  <span className="text-2xl drop-shadow-sm leading-none select-none">🌵</span>
+                                  <div className="absolute -bottom-1 -right-2 bg-[#078B83] text-white text-[8px] font-extrabold px-1 rounded-sm shadow-xs">
+                                    ROŚLINA
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="relative">
@@ -274,14 +291,8 @@ export default function StreakAnimation({ streakCount, onClose, onClaimReward, m
                                 Odbierz
                               </button>
                             )}
-                            
-                            {isClaimedDay && (
-                              <div className="text-[#2D9E6B] text-[10px] font-bold">Odebrano</div>
-                            )}
 
-                            {isLocked && (
-                              <div className="text-gray-400 text-[10px] font-bold">Blokada</div>
-                            )}
+
                           </motion.div>
                           
                           {index < days.length - 1 && (

@@ -20,7 +20,7 @@ import { useTutorials } from "./hooks/useTutorials";
 import Font from "./components/ui/Font";
 import AnimatedAICounter from "./components/ui/AnimatedAICounter";
 import Toasts from "./components/ui/Toasts";
-import XpFloat from "./components/ui/XpFloat";
+
 
 // Components
 import Landing from "./components/Landing";
@@ -37,6 +37,7 @@ import WarningView from "./components/WarningView";
 import SettingsView from "./components/SettingsView";
 import DebugModal from "./components/DebugModal";
 import StreakAnimation from "./components/StreakAnimation";
+import PlantUnlockAnimation from "./components/PlantUnlockAnimation";
 import AiPlanModal from "./components/AiPlanModal";
 import AiPromptModal from "./components/AiPromptModal";
 import AdminPanel from "./components/AdminPanel";
@@ -320,6 +321,7 @@ export default function App() {
   const [showDebugModal, setShowDebugModal] = useState(false);
   const [showStreakAnimation, setShowStreakAnimation] = useState(false);
   const [streakAnimationMode, setStreakAnimationMode] = useState('auto'); // 'auto' | 'dashboard'
+  const [showPlantUnlock, setShowPlantUnlock] = useState(null); // null or plantId e.g. 'cactus'
   const [isTokenBouncing, setIsTokenBouncing] = useState(false);
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
@@ -555,13 +557,63 @@ export default function App() {
       setShowDebugModal(false);
     },
 
+    testStreakAnimationAuto: () => {
+      // Kasuje flagę dzienną, aby popup mógł się wyświetlić
+      const todayStr = getNow().toISOString().split('T')[0];
+      localStorage.removeItem(`streak_animation_shown_${todayStr}`);
+      setStreakAnimationMode('auto');
+      setShowStreakAnimation(true);
+      setShowDebugModal(false);
+    },
+
+    testPlantUnlock: (plantId = 'cactus') => {
+      setShowPlantUnlock(plantId);
+      setShowDebugModal(false);
+    },
+
     setStreakDay: async (newStreak) => {
       if (!user || !user.email) return;
       const currentPrefs = user.prefs || {};
-      const updatedPrefs = { ...currentPrefs, loginStreak: newStreak };
+      
+      // Resetuj odebrane nagrody od dnia newStreak w górę (tak, aby newStreak był do odebrania)
+      const prevClaimed = currentPrefs.claimedStreakDays || [];
+      const updatedClaimedDays = prevClaimed.filter(d => d < newStreak);
+
+      // Jeśli po resecie dzień 3 nie jest odebrany lub streak < 3, zablokuj kaktusa i ustaw domyślną monsterę
+      let updatedPlant = currentPrefs.selectedPlant;
+      if ((newStreak < 3 || !updatedClaimedDays.includes(3)) && updatedPlant === 'cactus') {
+        updatedPlant = 'image';
+        localStorage.setItem('selected_plant_type', 'image');
+      }
+
+      const updatedPrefs = {
+        ...currentPrefs,
+        loginStreak: newStreak,
+        claimedStreakDays: updatedClaimedDays,
+        selectedPlant: updatedPlant
+      };
+
       await supabase.from('profiles').update({ prefs: updatedPrefs }).eq('email', user.email);
       setUser(prev => ({ ...prev, prefs: updatedPrefs }));
-      add(`Ustawiono streak na ${newStreak} dni (Test)`, 'info');
+      add(`Ustawiono streak na ${newStreak} dni & zresetowano nagrody od dnia ${newStreak} (Test)`, 'info');
+    },
+
+    resetClaimedStreakRewards: async () => {
+      if (!user || !user.email) return;
+      const currentPrefs = user.prefs || {};
+      let updatedPlant = currentPrefs.selectedPlant;
+      if (updatedPlant === 'cactus') {
+        updatedPlant = 'image';
+        localStorage.setItem('selected_plant_type', 'image');
+      }
+      const updatedPrefs = {
+        ...currentPrefs,
+        claimedStreakDays: [],
+        selectedPlant: updatedPlant
+      };
+      await supabase.from('profiles').update({ prefs: updatedPrefs }).eq('email', user.email);
+      setUser(prev => ({ ...prev, prefs: updatedPrefs }));
+      add('Zresetowano wszystkie odebrane nagrody streaku (Test)', 'info');
     },
 
     generateFakeMoods: async () => {
@@ -700,6 +752,20 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [view]);
+
+  // Udostępnienie metod testowych w oknie konsoli (np. setStreakDay(3))
+  useEffect(() => {
+    window.setStreakDay = (val) => debugActions.setStreakDay(Number(val));
+    window.resetClaimedStreakRewards = () => debugActions.resetClaimedStreakRewards();
+    window.showStreakAnimation = () => debugActions.testStreakAnimationAuto();
+    window.showPlantUnlock = (id) => debugActions.testPlantUnlock(id || 'cactus');
+    return () => {
+      delete window.setStreakDay;
+      delete window.resetClaimedStreakRewards;
+      delete window.showStreakAnimation;
+      delete window.showPlantUnlock;
+    };
+  }, [user]);
 
   useEffect(() => {
     const nowLocal = getNow();
@@ -1140,7 +1206,7 @@ export default function App() {
     }
   };
 
-  const [xpItems, setXpItems] = useState([]);
+
   const streakCount = user?.prefs?.loginStreak || 0;
   const aiTokens = user?.aiTokens !== undefined ? user.aiTokens : (user?.prefs?.ai_tokens ?? 10);
 
@@ -1155,6 +1221,25 @@ export default function App() {
     await setAiTokensDebug(cur + amount);
     setUser(prev => ({ ...prev, prefs: newPrefs }));
     await supabase.from('profiles').update({ prefs: newPrefs }).eq('email', user?.email);
+
+    if (dayNumber === 3) {
+      // Show plant unlock animation quickly after streak modal closes
+      setTimeout(() => {
+        setShowPlantUnlock('cactus');
+      }, 300);
+    } else {
+      add(`Odebrano nagrodę za ${dayNumber} dzień serii! (+${amount} monet AI)`, "success");
+    }
+  };
+
+  const handleSelectPlant = (newPlant) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        prefs: { ...(prev.prefs || {}), selectedPlant: newPlant }
+      };
+    });
   };
 
 
@@ -1169,25 +1254,16 @@ export default function App() {
       const todayStr = getNow().toISOString().split('T')[0];
       const doneToday = tasks.filter(t => t.done && (t.pDate === todayStr || t.t === todayStr)).length;
       if (doneToday === 0 && streakCount > 0) {
-        setStreakAnimationMode('auto');
-        setShowStreakAnimation(true);
+        const todayKey = `streak_animation_shown_${todayStr}`;
+        const alreadyShown = localStorage.getItem(todayKey);
+        if (!alreadyShown) {
+          localStorage.setItem(todayKey, '1');
+          setStreakAnimationMode('auto');
+          setShowStreakAnimation(true);
+        }
       }
 
-      const earnedXP = calculateTaskXP(task);
-      const xPos = e && e.clientX ? e.clientX : (typeof window !== 'undefined' ? window.innerWidth / 2 : 500);
-      const yPos = e && e.clientY ? e.clientY : (typeof window !== 'undefined' ? window.innerHeight / 2 : 400);
 
-      const newItem = {
-        id: Date.now() + Math.random(),
-        xp: earnedXP,
-        x: xPos,
-        y: yPos,
-      };
-
-      setXpItems(prev => [...prev, newItem]);
-      setTimeout(() => {
-        setXpItems(prev => prev.filter(item => item.id !== newItem.id));
-      }, 1800);
     }
 
     try {
@@ -1493,7 +1569,7 @@ export default function App() {
     <div className="flex h-screen bg-[#F5EFE6] font-sans selection:bg-[#2D9E6B] selection:text-white overflow-hidden">
       <Font />
       <Toasts ts={ts.filter(t => isAdmin || t.forceShow)} rm={rm} />
-      <XpFloat xpItems={xpItems} />
+
 
       {focusedTask ? (
         <FocusModeView
@@ -1917,6 +1993,7 @@ export default function App() {
                   isAiPlanning={isAiPlanning}
                   userPrefs={user?.prefs}
                   userEmail={user?.email}
+                  onSelectPlant={handleSelectPlant}
                 />
               )}
               {activeTab === "calendar" && (
@@ -1954,6 +2031,9 @@ export default function App() {
                     <StreakPlant
                       tasks={tasks.filter(t => checkIsDate(t.pDate, new Date()) || (!t.pDate && (checkIsDate(t.t, new Date()) || checkIsDate(t.deadline, new Date()))))}
                       userEmail={user?.email}
+                      streakCount={streakCount}
+                      userPrefs={user?.prefs}
+                      onSelectPlant={handleSelectPlant}
                     />
                   </div>
                 </div>
@@ -2034,6 +2114,13 @@ export default function App() {
               onClaimReward={handleClaimStreakReward}
               mode={streakAnimationMode}
               claimedDays={user?.prefs?.claimedStreakDays || []}
+            />
+          )}
+
+          {showPlantUnlock && (
+            <PlantUnlockAnimation
+              plantId={showPlantUnlock}
+              onClose={() => setShowPlantUnlock(null)}
             />
           )}
 

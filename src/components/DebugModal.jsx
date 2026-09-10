@@ -90,7 +90,16 @@ export default function DebugModal({ onClose, actions }) {
             <div className="space-y-4">
               <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-[#1A2F22] mb-1">Testuj Animację Streaku</h4>
+                  <h4 className="font-bold text-[#1A2F22] mb-1">Popup "Zdobyłeś serię" (mały)</h4>
+                  <p className="text-xs text-gray-500">Odpala małą animację pojawiającą się po wykonaniu zadania.</p>
+                </div>
+                <button onClick={actions.testStreakAnimationAuto} className="px-4 py-2 bg-orange-50 text-orange-600 border border-orange-200 text-xs font-bold rounded-lg hover:bg-orange-100 transition-colors whitespace-nowrap ml-4">
+                  Testuj
+                </button>
+              </div>
+              <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-[#1A2F22] mb-1">Testuj Animację Streaku (duży)</h4>
                   <p className="text-xs text-gray-500">Odpala pełnoekranową animację płomieni i confetti.</p>
                 </div>
                 <button onClick={actions.testStreakAnimation} className="px-4 py-2 bg-orange-50 text-orange-600 border border-orange-200 text-xs font-bold rounded-lg hover:bg-orange-100 transition-colors whitespace-nowrap ml-4">
@@ -121,6 +130,27 @@ export default function DebugModal({ onClose, actions }) {
                     Ustaw
                   </button>
                 </div>
+              </div>
+              <div className="p-4 border border-orange-100 bg-orange-50/50 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-orange-800 text-sm mb-0.5">Zresetuj odebrane nagrody streaku</h4>
+                  <p className="text-xs text-orange-600/90">Czyści historię odebranych nagród, aby móc testować ich odbieranie od nowa.</p>
+                </div>
+                <button 
+                  onClick={actions.resetClaimedStreakRewards} 
+                  className="px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-300 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ml-4"
+                >
+                  Resetuj nagrody
+                </button>
+              </div>
+              <div className="p-4 border border-gray-100 rounded-xl flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-[#1A2F22] mb-1">Animacja odblokowania rośliny</h4>
+                  <p className="text-xs text-gray-500">Odpala animację odblokowania kaktusa.</p>
+                </div>
+                <button onClick={() => actions.testPlantUnlock('cactus')} className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors whitespace-nowrap ml-4">
+                  Testuj
+                </button>
               </div>
             </div>
           )}

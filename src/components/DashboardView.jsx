@@ -246,7 +246,7 @@ const BacklogCard = ({
 // ═══════════════════════════════════════════════════
 //  DASHBOARD VIEW (ZAMROŻONY PLAN Z GUZIKIEM GENERUJ)
 // ═══════════════════════════════════════════════════
-export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onMoveTask, onAlert, onFocusTask, loading, onGeneratePlan, onGeneratePlanAI, hasAiOpinion, isAiPlanning, userPrefs, userEmail }) {
+export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onMoveTask, onAlert, onFocusTask, loading, onGeneratePlan, onGeneratePlanAI, hasAiOpinion, isAiPlanning, userPrefs, userEmail, onSelectPlant }) {
 
   const [showBacklog, setShowBacklog] = useState(false);
 
@@ -666,7 +666,13 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
           </div>
         </div>
         <div className="hidden md:block xl:col-span-4 xl:h-full w-full mt-8 xl:mt-0">
-          <StreakPlant tasks={scheduled} userEmail={userEmail} />
+          <StreakPlant
+            tasks={scheduled}
+            userEmail={userEmail}
+            streakCount={userPrefs?.loginStreak || 0}
+            userPrefs={userPrefs}
+            onSelectPlant={onSelectPlant}
+          />
         </div>
       </div>
     </div>
