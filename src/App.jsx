@@ -152,6 +152,11 @@ export default function App() {
     } catch (e) {
       console.error("SignOut error:", e);
     }
+    try {
+      if (user?.email) {
+        sessionStorage.removeItem(`wba_first_session_${user.email}`);
+      }
+    } catch (e) {}
     localStorage.removeItem("wba_user");
     localStorage.removeItem("wba_test_tasks");
     localStorage.removeItem("wba_test_moods");
@@ -214,29 +219,21 @@ export default function App() {
       const fetchData = async () => {
         setIsLoading(true);
         try {
-          // 1. Pobierz zadania
-          const { data: tasksData } = await supabase
-            .from('tasks')
-            .select('*')
-            .eq('user_email', user.email);
-          setTasks(tasksData || []);
+          // Pobierz zadania, nastroje oraz profil równolegle
+          const [tasksRes, moodsRes, profileRes] = await Promise.all([
+            supabase.from('tasks').select('*').eq('user_email', user.email),
+            supabase.from('moods').select('*').eq('user_email', user.email).order('d', { ascending: true }),
+            supabase.from('profiles').select('prefs, ai_tokens').eq('email', user.email).single()
+          ]);
 
-          // 2. Pobierz nastroje
-          const { data: moodsData } = await supabase
-            .from('moods')
-            .select('*')
-            .eq('user_email', user.email)
-            .order('d', { ascending: true });
-          setMoods(moodsData || []);
+          setTasks(tasksRes.data || []);
+          setMoods(moodsRes.data || []);
 
-          // 3. Pobierz preferencje (status onboardingu) oraz tokeny AI
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('prefs, ai_tokens')
-            .eq('email', user.email)
-            .single();
+          const profileData = profileRes.data;
+          const profileError = profileRes.error;
+          const hasCompletedOnboarding = !profileError && profileData && profileData.prefs && (profileData.prefs.startTime || profileData.prefs.hours);
 
-          if (!profileError && profileData) {
+          if (hasCompletedOnboarding) {
             let currentPrefs = profileData.prefs || {};
             const initialAiTokens = (profileData.ai_tokens !== null && profileData.ai_tokens !== undefined)
               ? profileData.ai_tokens
@@ -268,6 +265,22 @@ export default function App() {
               prefsChanged = true;
             }
 
+            // Logika odroczenia popupu nastroju przy pierwszym logowaniu
+            let isFirstSessionActive = false;
+            try {
+              isFirstSessionActive = sessionStorage.getItem(`wba_first_session_${user.email}`) === 'true';
+            } catch (e) {}
+
+            if (currentPrefs.firstLoginCompleted === false) {
+              if (!isFirstSessionActive) {
+                // Nowa sesja / kolejna tura logowania po pierwszym logowaniu
+                currentPrefs.firstLoginCompleted = true;
+                prefsChanged = true;
+              }
+            } else if (currentPrefs.firstLoginCompleted === undefined) {
+              currentPrefs.firstLoginCompleted = true;
+            }
+
             if (prefsChanged) {
               await supabase
                 .from('profiles')
@@ -286,7 +299,7 @@ export default function App() {
               setView("app");
             }
           } else {
-            // Brak profilu w bazie - wymuś onboarding
+            // Brak profilu w bazie lub nieukończony onboarding - wymuś onboarding
             if (window.location.pathname !== "/polityka-prywatnosci" && window.location.pathname !== "/privacy" && window.location.pathname !== "/regulamin" && window.location.pathname !== "/terms") {
               setView("onboarding");
             }
@@ -538,6 +551,17 @@ export default function App() {
         await supabase.from('tutorials').delete().eq('user_email', user.email);
         await supabase.from('profiles').delete().eq('email', user.email);
 
+        try {
+          if (user?.email) {
+            sessionStorage.removeItem(`wba_first_session_${user.email}`);
+            localStorage.removeItem(`wba_last_mood_prompt_${user.email}`);
+            localStorage.removeItem(`wba_tutorials_${user.email}`);
+          }
+          localStorage.removeItem('wba_last_mood_prompt');
+          localStorage.removeItem('wba_tutorials_anonymous');
+          resetAllTutorials();
+        } catch (e) {}
+
         setTasks([]);
         setMoods([]);
         setUser(null);
@@ -673,9 +697,13 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (view === "landing" && user) setView("app");
+    if (view === "landing" && user) {
+      if (isAdmin || (user.prefs && (user.prefs.startTime || user.prefs.hours))) {
+        setView("app");
+      }
+    }
     if (!user && view !== "landing" && view !== "auth" && view !== "privacy" && view !== "terms") setView("landing");
-  }, [user, view]);
+  }, [user, view, isAdmin]);
 
   // --- REALTIME: Nasłuchiwanie zdalnych komend dla zwykłych użytkowników ---
   useEffect(() => {
@@ -775,6 +803,20 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
+    // Popup nastroju ma się pojawić tylko gdy jesteśmy w widoku aplikacji i użytkownik jest zalogowany
+    if (view !== 'app' || !user || !user.email || ADMIN_EMAILS.includes(user.email)) return;
+
+    // Jeśli użytkownik loguje się pierwszy raz (trwa pierwsza sesja po rejestracji/onboardingu),
+    // odraczamy popup nastroju do kolejnej tury logowania
+    let isFirstSession = false;
+    try {
+      isFirstSession = user?.prefs?.firstLoginCompleted === false && sessionStorage.getItem(`wba_first_session_${user.email}`) === 'true';
+    } catch (e) {}
+
+    if (isFirstSession) {
+      return;
+    }
+
     const nowLocal = getNow();
     const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
 
@@ -782,20 +824,23 @@ export default function App() {
     const moodToday = moods.find(m => m.d === todayStr);
 
     // 2. Sprawdzamy w pamięci przeglądarki, czy popup już dzisiaj wyskoczył
-    const lastPromptDate = localStorage.getItem('wba_last_mood_prompt');
+    const userPromptKey = `wba_last_mood_prompt_${user.email}`;
+    const lastPromptDate = localStorage.getItem(userPromptKey) || localStorage.getItem('wba_last_mood_prompt');
 
     if (!moodToday && lastPromptDate !== todayStr && !hasPromptedToday) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setShowMoodModal(true);
         setHasPromptedToday(true);
         // Zapisujemy dzisiejszą datę do localStorage, aby F5 tego nie zresetowało
-        localStorage.setItem('wba_last_mood_prompt', todayStr);
+        try {
+          localStorage.setItem(userPromptKey, todayStr);
+          localStorage.setItem('wba_last_mood_prompt', todayStr);
+        } catch (e) {}
       }, 2000);
-    }
 
-    // Usunięto kod odpowiedzialny za wyskakiwanie popupu po 5 godzinach, 
-    // aby aplikacja pytała o nastrój bezwzględnie raz dziennie.
-  }, [moods, hasPromptedToday, getNow]);
+      return () => clearTimeout(timer);
+    }
+  }, [view, user, moods, hasPromptedToday, getNow]);
   const handleNav = (tab) => {
     // Usunęliśmy stąd blokadę, która otwierała Modal zamiast widoku
     setIsLoading(true);
@@ -1524,6 +1569,13 @@ export default function App() {
           const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
           prefs.lastLoginDate = todayStr;
           prefs.loginStreak = 1;
+          prefs.firstLoginCompleted = false;
+
+          try {
+            sessionStorage.setItem(`wba_first_session_${user.email}`, 'true');
+          } catch (e) {
+            console.error("sessionStorage error:", e);
+          }
 
           // Zapisz preferencje oraz 10 monet AI w Supabase przed wejściem do aplikacji
           const { error } = await supabase
@@ -1532,7 +1584,25 @@ export default function App() {
 
           if (error) throw error;
 
+          // Upewnij się, że stan samouczka jest czysty i aktywny dla nowego użytkownika
+          try {
+            if (user?.email) {
+              localStorage.removeItem(`wba_tutorials_${user.email}`);
+              await supabase.from('tutorials').delete().eq('user_email', user.email);
+            }
+            localStorage.removeItem('wba_tutorials_anonymous');
+            resetAllTutorials();
+            window.dispatchEvent(
+              new CustomEvent("wba_tutorials_changed", {
+                detail: { userEmail: user?.email, newState: { screens: {}, tooltips: {} } }
+              })
+            );
+          } catch (tErr) {
+            console.error("Tutorial reset error:", tErr);
+          }
+
           setUser({ ...user, name: prefs.name || user.name, prefs, aiTokens: 10 });
+          setActiveTab("dashboard");
           setView("app");
           add("Ustawienia zostały zapisane!");
         } catch (err) {
@@ -1548,7 +1618,7 @@ export default function App() {
       <Font />
       <PrivacyPolicy onBack={() => {
         window.history.pushState({}, '', '/');
-        setView(user ? "app" : "landing");
+        setView(user?.prefs?.startTime ? "app" : (user ? "onboarding" : "landing"));
       }} />
     </>
   );
@@ -1558,7 +1628,7 @@ export default function App() {
       <Font />
       <TermsOfService onBack={() => {
         window.history.pushState({}, '', '/');
-        setView(user ? "app" : "landing");
+        setView(user?.prefs?.startTime ? "app" : (user ? "onboarding" : "landing"));
       }} />
     </>
   );
@@ -1576,6 +1646,19 @@ export default function App() {
           supabase={supabase}
         />
       </>
+    );
+  }
+
+  // Zabezpieczenie: jeśli użytkownik jest zalogowany, ale nie ukończył onboardingu (lub profil jest jeszcze weryfikowany),
+  // nie renderuj ani przez moment głównego pulpitu aplikacji!
+  if (user && !isAdmin && !user.prefs?.startTime && (view === "app" || isLoading)) {
+    return (
+      <div className="min-h-screen bg-[#F5EFE6] flex items-center justify-center font-dm-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#1E5C36]/20 border-t-[#1E5C36] rounded-full animate-spin" />
+          <p className="text-[#1E5C36] font-medium text-sm">Wczytywanie...</p>
+        </div>
+      </div>
     );
   }
 

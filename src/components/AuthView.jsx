@@ -42,9 +42,6 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
       }
     }
 
-    const isAlek = loginEmail.toLowerCase() === "alek.iglowski@gmail.com";
-    const redirectUrl = isAlek ? "http://localhost:5173/" : window.location.origin;
-
     setLoading(true);
     try {
       if (mode === "login") {
@@ -57,10 +54,6 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
         
         if (data?.user) {
           localStorage.setItem("wba_last_email", loginEmail);
-          if (isAlek && window.location.origin !== "http://localhost:5173") {
-            window.location.href = "http://localhost:5173/";
-            return;
-          }
           onAuth({ email: data.user.email, name: data.user.email.split("@")[0] });
         }
       } else {
@@ -69,7 +62,7 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
           email: loginEmail,
           password: password,
           options: {
-            emailRedirectTo: redirectUrl,
+            emailRedirectTo: window.location.origin,
           },
         });
 
@@ -77,10 +70,6 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
 
         if (data?.user) {
           localStorage.setItem("wba_last_email", loginEmail);
-          if (isAlek && window.location.origin !== "http://localhost:5173") {
-            window.location.href = "http://localhost:5173/";
-            return;
-          }
           onAuth({ email: data.user.email, name: data.user.email.split("@")[0] });
         }
       }
@@ -102,14 +91,11 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
     try {
       setLoading(true);
       setErr("");
-      const currentEmail = (email || localStorage.getItem("wba_last_email") || "").trim().toLowerCase();
-      const isAlek = currentEmail === "alek.iglowski@gmail.com";
-      const redirectTo = isAlek ? "http://localhost:5173/" : window.location.origin;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectTo
+          redirectTo: window.location.origin
         }
       });
       if (error) throw error;

@@ -101,9 +101,13 @@ export default function SettingsView({ user, setUser, add }) {
     try {
       await supabase.from('tasks').delete().eq('user_email', user.email);
       await supabase.from('moods').delete().eq('user_email', user.email);
+      await supabase.from('tutorials').delete().eq('user_email', user.email);
       await supabase.from('profiles').delete().eq('email', user.email);
       await supabase.auth.signOut();
       localStorage.removeItem("wba_user");
+      try {
+        localStorage.removeItem(`wba_tutorials_${user.email}`);
+      } catch (e) {}
       setUser(null);
       // App.jsx will handle redirect to landing view when user is null
     } catch (err) {
