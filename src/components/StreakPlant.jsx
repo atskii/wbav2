@@ -106,8 +106,8 @@ export default function StreakPlant({
 
   const claimedDays = userPrefs?.claimedStreakDays || [];
   const isCactusUnlocked = streakCount >= 3 || claimedDays.includes(3);
-  const isBonsaiUnlocked = streakCount >= 7 || claimedDays.includes(7);
-  const isBambooUnlocked = streakCount >= 14 || claimedDays.includes(14);
+  const isBonsaiUnlocked = streakCount >= 1 || claimedDays.includes(1);
+  const isBambooUnlocked = streakCount >= 7 || claimedDays.includes(7);
 
   const [hasFlowered, setHasFlowered] = useState(false);
   const [plantType, setPlantType] = useState(() => {
@@ -294,7 +294,7 @@ export default function StreakPlant({
                     exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
                     transition={{ duration: 0.4, ease: "easeInOut" }}
                     style={{ transformOrigin: "bottom center" }}
-                    className="absolute bottom-0 w-48 sm:w-56 h-auto object-contain object-bottom pointer-events-none"
+                    className="absolute bottom-0 w-64 sm:w-80 h-auto object-contain object-bottom pointer-events-none"
                   />
                 </AnimatePresence>
                 <AnimatePresence>

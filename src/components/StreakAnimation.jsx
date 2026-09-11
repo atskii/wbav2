@@ -253,13 +253,17 @@ export default function StreakAnimation({ streakCount, onClose, onClaimReward, m
                                 <div className="w-8 h-8 rounded-full bg-[#2D9E6B]/10 flex items-center justify-center text-[#2D9E6B]">
                                   <Check size={20} />
                                 </div>
-                              ) : isLocked && (displayDay === 3 || displayDay === 7 || displayDay === 14) ? (
+                              ) : isLocked && (displayDay === 1 || displayDay === 3 || displayDay === 7) ? (
                                 <div className="relative flex flex-col items-center grayscale opacity-40">
-                                  <span className="text-2xl drop-shadow-sm leading-none select-none">
-                                    {displayDay === 3 ? '🌵' : displayDay === 7 ? '🪴' : '🎋'}
-                                  </span>
-                                  <div className="absolute -bottom-1 -right-2 bg-gray-400 text-white text-[8px] font-extrabold px-1 rounded-sm shadow-xs">
-                                    ROŚLINA
+                                  {displayDay === 1 ? (
+                                    <img src="/bonsai/bonsai10.png" className="w-8 h-8 object-contain drop-shadow-sm scale-125" alt="Bonsai" />
+                                  ) : displayDay === 3 ? (
+                                    <span className="text-2xl drop-shadow-sm leading-none select-none">🌵</span>
+                                  ) : (
+                                    <img src="/bamboo/bamboo10.png" className="w-8 h-8 object-contain drop-shadow-sm scale-125" alt="Bambus" />
+                                  )}
+                                  <div className="absolute -bottom-1 -right-4 bg-gray-400 text-white text-[8px] font-extrabold px-1 rounded-sm shadow-xs whitespace-nowrap">
+                                    {displayDay === 1 ? 'BONSAI' : displayDay === 3 ? 'KAKTUS' : 'BAMBUS'}
                                   </div>
                                 </div>
                               ) : isLocked ? (
@@ -269,13 +273,17 @@ export default function StreakAnimation({ streakCount, onClose, onClaimReward, m
                                     +{rewardValue}
                                   </div>
                                 </div>
-                              ) : (displayDay === 3 || displayDay === 7 || displayDay === 14) ? (
+                              ) : (displayDay === 1 || displayDay === 3 || displayDay === 7) ? (
                                 <div className="relative flex flex-col items-center">
-                                  <span className="text-2xl drop-shadow-sm leading-none select-none">
-                                    {displayDay === 3 ? '🌵' : displayDay === 7 ? '🪴' : '🎋'}
-                                  </span>
-                                  <div className="absolute -bottom-1 -right-2 bg-[#078B83] text-white text-[8px] font-extrabold px-1 rounded-sm shadow-xs">
-                                    ROŚLINA
+                                  {displayDay === 1 ? (
+                                    <img src="/bonsai/bonsai10.png" className="w-8 h-8 object-contain drop-shadow-sm scale-125" alt="Bonsai" />
+                                  ) : displayDay === 3 ? (
+                                    <span className="text-2xl drop-shadow-sm leading-none select-none">🌵</span>
+                                  ) : (
+                                    <img src="/bamboo/bamboo10.png" className="w-8 h-8 object-contain drop-shadow-sm scale-125" alt="Bambus" />
+                                  )}
+                                  <div className="absolute -bottom-1 -right-4 bg-[#078B83] text-white text-[8px] font-extrabold px-1 rounded-sm shadow-xs whitespace-nowrap">
+                                    {displayDay === 1 ? 'BONSAI' : displayDay === 3 ? 'KAKTUS' : 'BAMBUS'}
                                   </div>
                                 </div>
                               ) : (

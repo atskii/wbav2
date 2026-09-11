@@ -585,7 +585,14 @@ export default function App() {
         updatedPlant = 'image';
         localStorage.setItem('selected_plant_type', 'image');
       }
-
+      if ((newStreak < 1 || !updatedClaimedDays.includes(1)) && updatedPlant === 'bonsai') {
+        updatedPlant = 'image';
+        localStorage.setItem('selected_plant_type', 'image');
+      }
+      if ((newStreak < 7 || !updatedClaimedDays.includes(7)) && updatedPlant === 'bamboo') {
+        updatedPlant = 'image';
+        localStorage.setItem('selected_plant_type', 'image');
+      }
       const updatedPrefs = {
         ...currentPrefs,
         loginStreak: newStreak,
@@ -602,7 +609,7 @@ export default function App() {
       if (!user || !user.email) return;
       const currentPrefs = user.prefs || {};
       let updatedPlant = currentPrefs.selectedPlant;
-      if (updatedPlant === 'cactus') {
+      if (['cactus', 'bonsai', 'bamboo'].includes(updatedPlant)) {
         updatedPlant = 'image';
         localStorage.setItem('selected_plant_type', 'image');
       }
@@ -1222,15 +1229,15 @@ export default function App() {
     setUser(prev => ({ ...prev, prefs: newPrefs }));
     await supabase.from('profiles').update({ prefs: newPrefs }).eq('email', user?.email);
 
-    if (dayNumber === 3) {
+    if (dayNumber === 1) {
+      setTimeout(() => {
+        setShowPlantUnlock('bonsai');
+      }, 300);
+    } else if (dayNumber === 3) {
       setTimeout(() => {
         setShowPlantUnlock('cactus');
       }, 300);
     } else if (dayNumber === 7) {
-      setTimeout(() => {
-        setShowPlantUnlock('bonsai');
-      }, 300);
-    } else if (dayNumber === 14) {
       setTimeout(() => {
         setShowPlantUnlock('bamboo');
       }, 300);

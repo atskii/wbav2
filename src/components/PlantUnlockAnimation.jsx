@@ -22,40 +22,27 @@ const PLANT_UNLOCK_DATA = {
   },
   bonsai: {
     name: "Bonsai Zen",
-    description: "Miniaturowe drzewo, symbol cierpliwości i harmonii. Odblokowany za 7 dni serii!",
+    description: "Miniaturowe drzewo, symbol cierpliwości i harmonii. Odblokowany za 1 dzień serii!",
     renderVisual: () => (
       <div className="flex items-center justify-center">
-        <svg className="w-24 h-24 object-contain" viewBox="0 0 100 100" fill="none">
-          <ellipse cx="40" cy="35" rx="18" ry="11" fill="#2E7D32" opacity="0.9" />
-          <ellipse cx="65" cy="30" rx="16" ry="9" fill="#388E3C" opacity="0.95" />
-          <ellipse cx="50" cy="22" rx="14" ry="8" fill="#4CAF50" />
-          <path d="M48 40 C 45 55, 38 65, 52 80 L 46 80 C 34 65, 40 52, 44 40 Z" fill="#5D4037" />
-          <path d="M50 48 C 60 52, 64 45, 66 40" stroke="#5D4037" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M30 80 L70 80 L65 92 L35 92 Z" fill="#263238" />
-          <rect x="26" y="77" width="48" height="4" rx="1.5" fill="#37474F" />
-        </svg>
+        <img
+          src="/bonsai/bonsai10.png"
+          alt="Bonsai Zen"
+          className="h-28 w-auto object-contain drop-shadow-md -mb-2"
+        />
       </div>
     ),
   },
   bamboo: {
     name: "Bambus Szczęścia",
-    description: "Szybko rosnący symbol fortuny i dobrobytu. Odblokowany za 14 dni serii!",
+    description: "Szybko rosnący symbol fortuny i dobrobytu. Odblokowany za 7 dni serii!",
     renderVisual: () => (
       <div className="flex items-center justify-center">
-        <svg className="w-24 h-24 object-contain" viewBox="0 0 100 100" fill="none">
-          <rect x="37" y="18" width="6" height="60" rx="1.5" fill="#43A047" />
-          <line x1="37" y1="36" x2="43" y2="36" stroke="#2E7D32" strokeWidth="1.2" />
-          <line x1="37" y1="54" x2="43" y2="54" stroke="#2E7D32" strokeWidth="1.2" />
-          <rect x="47" y="26" width="6" height="52" rx="1.5" fill="#66BB6A" />
-          <line x1="47" y1="44" x2="53" y2="44" stroke="#388E3C" strokeWidth="1.2" />
-          <line x1="47" y1="62" x2="53" y2="62" stroke="#388E3C" strokeWidth="1.2" />
-          <rect x="57" y="22" width="5" height="56" rx="1.5" fill="#43A047" />
-          <line x1="57" y1="40" x2="62" y2="40" stroke="#2E7D32" strokeWidth="1.2" />
-          <path d="M43 26 C 53 20, 56 12, 56 12 C 56 12, 47 19, 43 26 Z" fill="#81C784" />
-          <path d="M53 36 C 65 30, 68 22, 68 22 C 68 22, 58 31, 53 36 Z" fill="#81C784" />
-          <path d="M37 45 C 26 39, 23 32, 23 32 C 23 32, 32 41, 37 45 Z" fill="#66BB6A" />
-          <path d="M30 78 L70 78 L66 92 L34 92 Z" fill="#FFF8E1" stroke="#FFE082" strokeWidth="1.5" />
-        </svg>
+        <img
+          src="/bamboo/bamboo10.png"
+          alt="Bambus Szczęścia"
+          className="h-24 w-auto object-contain drop-shadow-md"
+        />
       </div>
     ),
   },

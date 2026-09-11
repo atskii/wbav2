@@ -59,14 +59,14 @@ export default function PlantCatalogModal({
       id: "bonsai",
       rawId: "bonsai",
       name: "Bonsai Zen",
-      requiredStreak: 7,
-      isUnlocked: streakCount >= 7 || claimedDays.includes(7),
+      requiredStreak: 1,
+      isUnlocked: streakCount >= 1 || claimedDays.includes(1),
       renderPreview: () => (
-        <div className="w-full h-20 flex items-center justify-center">
+        <div className="w-full h-20 flex items-end justify-center pb-1">
           <img
             src="/bonsai/bonsai10.png"
             alt="Bonsai Zen"
-            className="h-24 w-auto object-contain drop-shadow-sm pb-1"
+            className="h-24 w-auto object-contain object-bottom drop-shadow-sm"
           />
         </div>
       ),
@@ -75,14 +75,14 @@ export default function PlantCatalogModal({
       id: "bamboo",
       rawId: "bamboo",
       name: "Bambus Szczęścia",
-      requiredStreak: 14,
-      isUnlocked: streakCount >= 14 || claimedDays.includes(14),
+      requiredStreak: 7,
+      isUnlocked: streakCount >= 7 || claimedDays.includes(7),
       renderPreview: () => (
-        <div className="w-full h-20 flex items-center justify-center">
+        <div className="w-full h-20 flex items-end justify-center pb-1">
           <img
             src="/bamboo/bamboo10.png"
             alt="Bambus Szczęścia"
-            className="h-24 w-auto object-contain drop-shadow-sm pb-1"
+            className="h-24 w-auto object-contain object-bottom drop-shadow-sm"
           />
         </div>
       ),
