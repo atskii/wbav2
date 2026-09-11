@@ -78,21 +78,12 @@ export default function PlantCatalogModal({
       requiredStreak: 14,
       isUnlocked: streakCount >= 14 || claimedDays.includes(14),
       renderPreview: () => (
-        <div className="w-full h-20 flex flex-col items-center justify-center pt-1">
-          <svg className="w-12 h-16 object-contain drop-shadow-sm -mb-2 z-10" viewBox="0 0 100 100" fill="none">
-            <rect x="37" y="40" width="6" height="60" rx="1.5" fill="#43A047" />
-            <line x1="37" y1="60" x2="43" y2="60" stroke="#2E7D32" strokeWidth="1.2" />
-            <line x1="37" y1="80" x2="43" y2="80" stroke="#2E7D32" strokeWidth="1.2" />
-            <rect x="47" y="50" width="6" height="50" rx="1.5" fill="#66BB6A" />
-            <line x1="47" y1="70" x2="53" y2="70" stroke="#388E3C" strokeWidth="1.2" />
-            <rect x="57" y="45" width="5" height="55" rx="1.5" fill="#43A047" />
-            <line x1="57" y1="65" x2="62" y2="65" stroke="#2E7D32" strokeWidth="1.2" />
-            <path d="M43 50 C 53 44, 56 36, 56 36 C 56 36, 47 43, 43 50 Z" fill="#81C784" />
-            <path d="M53 60 C 65 54, 68 46, 68 46 C 68 46, 58 55, 53 60 Z" fill="#81C784" />
-          </svg>
-          <div className="relative w-16 h-3.5 bg-gradient-to-b from-[#FFF8E1] to-[#FFE082] rounded-b-xl rounded-t-sm overflow-hidden border border-[#FFD54F]/50 z-20">
-            <div className="absolute top-0 w-18 h-1 bg-[#F9A825] rounded-sm -ml-1" />
-          </div>
+        <div className="w-full h-20 flex items-center justify-center">
+          <img
+            src="/bamboo/bamboo10.png"
+            alt="Bambus Szczęścia"
+            className="h-24 w-auto object-contain drop-shadow-sm pb-1"
+          />
         </div>
       ),
     },
