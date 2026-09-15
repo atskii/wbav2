@@ -175,7 +175,13 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-4 shrink-0">
           <div className="flex items-center justify-between w-full md:w-auto">
             <h2 className="text-lg md:text-xl font-bold text-[#151515]">Wykres nastroju w czasie</h2>
-            <button onClick={() => setShowAvg(!showAvg)} className={`md:hidden px-3 py-1.5 text-xs transition-all border rounded-lg ${showAvg ? "font-bold text-[#02848C] border-[#02848C] bg-[#E5F2F3]" : "font-semibold text-[#707070] border-[#E8E8E8] bg-white"}`}>Średnia</button>
+            <button 
+              id="tutorial-mobile-mood-avg" 
+              onClick={() => setShowAvg(!showAvg)} 
+              className={`md:hidden px-3 py-1.5 text-xs transition-all border rounded-lg ${showAvg ? "font-bold text-[#02848C] border-[#02848C] bg-[#E5F2F3]" : "font-semibold text-[#707070] border-[#E8E8E8] bg-white"}`}
+            >
+              Średnia
+            </button>
           </div>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 w-full md:w-auto">
             <div id="tutorial-mood-filters" className="flex w-full md:w-auto overflow-x-auto hide-scrollbar rounded-lg border border-[#F4F4F4]">

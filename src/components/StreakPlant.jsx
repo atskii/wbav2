@@ -196,7 +196,7 @@ export default function StreakPlant({
 
       <div className="flex flex-col items-center w-full">
         {/* 2. KONTENER ROŚLINKY: Wysokość regulowana klasą h-64 (np. h-60, h-64, h-72) i odstęp mb-3 */}
-        <div className="relative h-100 w-full mb-2 flex justify-center items-end">
+        <div id="tutorial-plant-growth" className="relative h-100 w-full mb-2 flex justify-center items-end">
           <AnimatePresence>
             {plantType === 'cactus' ? (
               <motion.div
@@ -344,6 +344,7 @@ export default function StreakPlant({
         {/* 3. PRZYCISK ZMIANY ROŚLINKI: Otwiera Katalog Roślin */}
         <div className="flex justify-center mb-3">
           <button
+            id="tutorial-plant-change"
             onClick={() => setIsCatalogOpen(true)}
             className="flex items-center gap-1.5 bg-[#078B83] hover:bg-[#06736D] text-white px-3.5 py-1.5 rounded-xl text-[13px] font-medium transition-all shadow-sm hover:shadow cursor-pointer active:scale-98"
           >
@@ -364,7 +365,7 @@ export default function StreakPlant({
       />
 
       {/* 4. PASEK POSTĘPU DNIA */}
-      <div className="w-full pt-1">
+      <div id="tutorial-plant-progress" className="w-full pt-1">
         <div className="flex justify-between mb-2">
           <span className="text-xs font-semibold text-[#5A7368]">Postęp dnia</span>
           <span translate="no" className="text-xs font-bold text-[#1E5C36]">{done}/{total}</span>

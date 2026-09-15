@@ -16,11 +16,21 @@ const TUTORIAL_STEPS = [
   {
     id: "nav_calendar",
     title: "Kalendarz",
-    desc: "Przejrzysty widok miesięczny i tygodniowy. Pozwala planować zadania w przód i kontrolować obciążenie.",
+    desc: "Przejrzysty widok kalendarza. Pozwala planować zadania w przód i kontrolować obciążenie.",
     targetIdDesktop: "tutorial-nav-calendar",
     targetIdMobile: "tutorial-mobile-nav-calendar",
     placement: "right",
     screen: "dashboard"
+  },
+  {
+    id: "nav_plant_mobile",
+    title: "Roślinka Streaku",
+    desc: "Wykonuj zadania, aby ją rozwijać! Zdobywaj XP za każde zrealizowane zadanie, a po osiągnięciu 100% roślinka zakwitnie.",
+    targetIdDesktop: "",
+    targetIdMobile: "tutorial-mobile-nav-plant",
+    placement: "right",
+    screen: "dashboard",
+    mobileOnly: true
   },
   {
     id: "nav_mood",
@@ -103,7 +113,8 @@ const TUTORIAL_STEPS = [
     targetIdDesktop: "tutorial-streak-plant",
     targetIdMobile: "tutorial-streak-plant",
     placement: "top",
-    screen: "dashboard"
+    screen: "dashboard",
+    desktopOnly: true
   },
   {
     id: "header_help",
@@ -159,7 +170,8 @@ const TUTORIAL_STEPS = [
     targetIdDesktop: "tutorial-calendar-view-type",
     targetIdMobile: "tutorial-mobile-calendar-month-picker",
     placement: "bottom",
-    screen: "calendar"
+    screen: "calendar",
+    desktopOnly: true
   },
   {
     id: "calendar_today_btn",
@@ -168,12 +180,13 @@ const TUTORIAL_STEPS = [
     targetIdDesktop: "tutorial-calendar-today-btn",
     targetIdMobile: "tutorial-mobile-calendar-nav",
     placement: "bottom",
-    screen: "calendar"
+    screen: "calendar",
+    desktopOnly: true
   },
   {
     id: "calendar_nav_arrows",
     title: "Przełączanie okresów",
-    desc: "Przechodź wygodnie do poprzedniego lub kolejnego miesiąca / tygodnia / dnia. Na telefonie możesz też po prostu przesuwać palcem w lewo lub w prawo (swipe)!",
+    desc: "Przechodź wygodnie do kolejnych miesięcy (a na komputerze również tygodni lub dni). Na telefonie możesz też po prostu przesuwać palcem w lewo lub w prawo (swipe)!",
     targetIdDesktop: "tutorial-calendar-nav-arrows",
     targetIdMobile: "tutorial-mobile-calendar-nav",
     placement: "bottom-left",
@@ -195,7 +208,40 @@ const TUTORIAL_STEPS = [
     targetIdDesktop: "tutorial-calendar-all-tasks",
     targetIdMobile: "tutorial-calendar-month-grid",
     placement: "bottom-left",
-    screen: "calendar"
+    screen: "calendar",
+    desktopOnly: true
+  },
+
+  // --- SAMOUCZEK EKRANU ROŚLINKI (PLANT - WERSJA MOBILNA) ---
+  {
+    id: "plant_growth",
+    title: "Wzrost Twojej Roślinki",
+    desc: "Roślinka rozwija się wraz z każdym zrealizowanym zadaniem w danym dniu. Osiągnij 100% dziennego postępu, aby roślinka w pełni zakwitła!",
+    targetIdDesktop: "tutorial-plant-growth",
+    targetIdMobile: "tutorial-plant-growth",
+    placement: "bottom",
+    screen: "plant",
+    mobileOnly: true
+  },
+  {
+    id: "plant_change",
+    title: "Katalog Roślin",
+    desc: "W tym miejscu możesz zmienić gatunek roślinki (np. na Bonsai, Kaktus czy Bambus). Nowe odmiany odblokowujesz za utrzymywanie serii dni (streak)!",
+    targetIdDesktop: "tutorial-plant-change",
+    targetIdMobile: "tutorial-plant-change",
+    placement: "top",
+    screen: "plant",
+    mobileOnly: true
+  },
+  {
+    id: "plant_progress",
+    title: "Dzienny pasek postępu",
+    desc: "Pasek postępu pokazuje, ile dzisiejszych zadań zostało już ukończonych i jak blisko jesteś pełnego rozkwitu roślinki.",
+    targetIdDesktop: "tutorial-plant-progress",
+    targetIdMobile: "tutorial-plant-progress",
+    placement: "top",
+    screen: "plant",
+    mobileOnly: true
   },
 
   // --- SAMOUCZEK EKRANU DODAWANIA / EDYCJI ZADANIA (TASK MODAL) ---
@@ -296,7 +342,7 @@ const TUTORIAL_STEPS = [
     title: "Linia średniej",
     desc: "Włącz lub wyłącz linię średniego nastroju, aby szybko sprawdzić ogólny bilans samopoczucia w wybranym okresie.",
     targetIdDesktop: "tutorial-mood-avg",
-    targetIdMobile: "tutorial-mood-chart",
+    targetIdMobile: "tutorial-mobile-mood-avg",
     placement: "bottom",
     screen: "mood"
   },
@@ -404,25 +450,38 @@ export default function GlobalTutorial({ userEmail, activeTab = "dashboard" }) {
   const tooltipRef = useRef(null);
   const prevTabRef = useRef(activeTab);
 
-  // Aktualizacja sekwencji, reaguje również na reset lub zmianę ekranu (np. otwarcie modala)
+  // Aktualizacja sekwencji, reaguje również na reset lub zmianę ekranu (np. otwarcie modala) oraz zmianę szerokości okna (desktop/mobile)
   useEffect(() => {
-    const relevantSteps = TUTORIAL_STEPS.filter(step => step.screen === activeTab);
-    const unseen = relevantSteps.filter(step => !isTooltipSeen(step.id));
+    const updateSequence = () => {
+      const isMobile = window.innerWidth < 768;
+      const relevantSteps = TUTORIAL_STEPS.filter(step => step.screen === activeTab)
+        .filter(step => {
+          if (isMobile && step.desktopOnly) return false;
+          if (!isMobile && step.mobileOnly) return false;
+          return true;
+        });
+        
+      const unseen = relevantSteps.filter(step => !isTooltipSeen(step.id));
 
-    if (activeTab !== prevTabRef.current) {
-      prevTabRef.current = activeTab;
-      setSequence(unseen);
-      setCurrentIndex(0);
-      return;
-    }
+      if (activeTab !== prevTabRef.current) {
+        prevTabRef.current = activeTab;
+        setSequence(unseen);
+        setCurrentIndex(0);
+        return;
+      }
 
-    if (unseen.length > 0 && (sequence.length === 0 || currentIndex >= sequence.length || unseen.length === relevantSteps.length)) {
-      setSequence(unseen);
-      setCurrentIndex(0);
-    } else if (unseen.length === 0 && sequence.length > 0) {
-      setSequence([]);
-      setCurrentIndex(0);
-    }
+      if (unseen.length > 0 && (sequence.length === 0 || currentIndex >= sequence.length || unseen.length === relevantSteps.length)) {
+        setSequence(unseen);
+        setCurrentIndex(0);
+      } else if (unseen.length === 0 && sequence.length > 0) {
+        setSequence([]);
+        setCurrentIndex(0);
+      }
+    };
+
+    updateSequence();
+    window.addEventListener('resize', updateSequence);
+    return () => window.removeEventListener('resize', updateSequence);
   }, [isTooltipSeen, activeTab, sequence.length, currentIndex]);
 
   const currentStep = sequence[currentIndex];
