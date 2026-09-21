@@ -7,7 +7,7 @@ import { APP_FAQS } from "../lib/constants";
 // ═══════════════════════════════════════════════════
 //  SETTINGS VIEW
 // ═══════════════════════════════════════════════════
-export default function SettingsView({ user, setUser, add }) {
+export default function SettingsView({ user, setUser, add, setView }) {
 
   const OPTS = ["Wyjście na słońce", "Dobra kawa", "Dobra herbata", "Krótki spacer", "Rozmowa z bliskim", "Mała przekąska", "Muzyka", "Zmiana otoczenia", "Ćwiczenia oddechowe"];
   const [name, setName] = useState(user?.name || "");
@@ -264,6 +264,12 @@ export default function SettingsView({ user, setUser, add }) {
             </div>
             <a 
               href="/polityka-prywatnosci"
+              onClick={(e) => {
+                if (setView) {
+                  e.preventDefault();
+                  setView("privacy");
+                }
+              }}
               className="w-full sm:w-auto text-center whitespace-nowrap px-4 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl font-semibold text-sm hover:border-[#2D9E6B] hover:text-[#1E5C36] transition-all shadow-sm flex items-center justify-center gap-2"
             >
               Zobacz
@@ -284,6 +290,12 @@ export default function SettingsView({ user, setUser, add }) {
             </div>
             <a 
               href="/regulamin"
+              onClick={(e) => {
+                if (setView) {
+                  e.preventDefault();
+                  setView("terms");
+                }
+              }}
               className="w-full sm:w-auto text-center whitespace-nowrap px-4 py-2.5 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-xl font-semibold text-sm hover:border-[#2D9E6B] hover:text-[#1E5C36] transition-all shadow-sm flex items-center justify-center gap-2"
             >
               Zobacz

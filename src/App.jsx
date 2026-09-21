@@ -50,17 +50,31 @@ import TokenStoreScreen from "./components/TokenStoreScreen";
 const ADMIN_EMAILS = ["admin@wellbeing.app", "admin@wba.com"];
 const TEST_EMAIL = "testuser@testuser";
 
+const getInitialRouteState = () => {
+  const path = window.location.pathname;
+  if (path === "/polityka-prywatnosci" || path === "/privacy") return { view: "privacy", tab: "settings", authMode: "login" };
+  if (path === "/regulamin" || path === "/terms") return { view: "terms", tab: "settings", authMode: "login" };
+  if (path === "/logowanie") return { view: "auth", tab: "dashboard", authMode: "login" };
+  if (path === "/rejestracja") return { view: "auth", tab: "dashboard", authMode: "register" };
+  if (path === "/onboarding") return { view: "onboarding", tab: "dashboard", authMode: "login" };
+  
+  if (path === "/strona-glowna") return { view: "app", tab: "dashboard", authMode: "login" };
+  if (path === "/kalendarz") return { view: "app", tab: "calendar", authMode: "login" };
+  if (path === "/monitor-nastroju") return { view: "app", tab: "mood", authMode: "login" };
+  if (path === "/pomoc") return { view: "app", tab: "warning", authMode: "login" };
+  if (path === "/ustawienia") return { view: "app", tab: "settings", authMode: "login" };
+  if (path === "/roslinka") return { view: "app", tab: "plant", authMode: "login" };
+  
+  return { view: "landing", tab: "dashboard", authMode: "login" };
+};
+
 export default function App() {
-  const [view, setView] = useState(() => {
-    const path = window.location.pathname;
-    if (path === "/polityka-prywatnosci" || path === "/privacy") return "privacy";
-    if (path === "/regulamin" || path === "/terms") return "terms";
-    return "landing";
-  });
-  const [authMode, setAuthMode] = useState("login");
+  const initialRoute = getInitialRouteState();
+  const [view, setView] = useState(initialRoute.view);
+  const [authMode, setAuthMode] = useState(initialRoute.authMode);
   const [user, setUser] = usePersist("wba_user", null);
 
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState(initialRoute.tab);
   const [isAiPlanning, setIsAiPlanning] = useState(false);
   const [aiCoachMessage, setAiCoachMessage] = useState(null);
   const [aiCoachOpinions, setAiCoachOpinions] = useState(() => {
@@ -88,6 +102,44 @@ export default function App() {
   const [showTokenStore, setShowTokenStore] = useState(false);
 
   const { isTooltipSeen, markTooltipSeen, isFirstScreenVisit, markScreenVisited, resetAllTutorials, resetScreen } = useTutorials(user?.email);
+
+  // Routing sync
+  useEffect(() => {
+    let currentPath = "/";
+    if (view === "landing") currentPath = "/";
+    else if (view === "privacy") currentPath = "/polityka-prywatnosci";
+    else if (view === "terms") currentPath = "/regulamin";
+    else if (view === "onboarding") currentPath = "/onboarding";
+    else if (view === "auth") {
+      currentPath = authMode === "register" ? "/rejestracja" : "/logowanie";
+    }
+    else if (view === "app") {
+      const tabPaths = {
+        dashboard: "/strona-glowna",
+        calendar: "/kalendarz",
+        mood: "/monitor-nastroju",
+        warning: "/pomoc",
+        settings: "/ustawienia",
+        plant: "/roslinka"
+      };
+      currentPath = tabPaths[activeTab] || "/strona-glowna";
+    }
+
+    if (window.location.pathname !== currentPath) {
+      window.history.pushState(null, "", currentPath);
+    }
+  }, [view, activeTab, authMode]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const state = getInitialRouteState();
+      setView(state.view);
+      setAuthMode(state.authMode);
+      setActiveTab(state.tab);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     if (user && activeTab) {
@@ -170,12 +222,30 @@ export default function App() {
 
   // Sync Supabase Auth session & handle redirects
   useEffect(() => {
+    const handleLocalhostRedirect = (email) => {
+      if (email === "alek.iglowski@gmail.com" && window.location.hostname !== "localhost") {
+        window.location.href = "http://localhost:5173";
+        return true;
+      }
+      return false;
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const uEmail = session.user.email;
+        if (handleLocalhostRedirect(uEmail)) return;
+        
         setUser(prev => {
           if (prev && prev.email === uEmail) return prev;
           return { email: uEmail, name: uEmail.split('@')[0], prefs: null };
+        });
+
+        setView(currentView => {
+          if (currentView === "landing" || currentView === "auth") {
+            setActiveTab("dashboard");
+            return "app";
+          }
+          return currentView;
         });
       }
     });
@@ -183,9 +253,19 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         const uEmail = session.user.email;
+        if (handleLocalhostRedirect(uEmail)) return;
+
         setUser(prev => {
           if (prev && prev.email === uEmail) return prev;
           return { email: uEmail, name: uEmail.split('@')[0], prefs: null };
+        });
+
+        setView(currentView => {
+          if (currentView === "landing" || currentView === "auth") {
+            setActiveTab("dashboard");
+            return "app";
+          }
+          return currentView;
         });
       } else {
         setUser(null);
@@ -1617,8 +1697,12 @@ export default function App() {
     <>
       <Font />
       <PrivacyPolicy onBack={() => {
-        window.history.pushState({}, '', '/');
-        setView(user?.prefs?.startTime ? "app" : (user ? "onboarding" : "landing"));
+        if (user) {
+          setActiveTab("settings");
+          setView(user?.prefs?.startTime ? "app" : "onboarding");
+        } else {
+          setView("landing");
+        }
       }} />
     </>
   );
@@ -1627,8 +1711,12 @@ export default function App() {
     <>
       <Font />
       <TermsOfService onBack={() => {
-        window.history.pushState({}, '', '/');
-        setView(user?.prefs?.startTime ? "app" : (user ? "onboarding" : "landing"));
+        if (user) {
+          setActiveTab("settings");
+          setView(user?.prefs?.startTime ? "app" : "onboarding");
+        } else {
+          setView("landing");
+        }
       }} />
     </>
   );
@@ -2136,7 +2224,7 @@ export default function App() {
                 </div>
               )}
               {activeTab === "warning" && <WarningView loading={isLoading} user={user} />}
-              {activeTab === "settings" && <SettingsView user={user} setUser={setUser} add={add} />}
+              {activeTab === "settings" && <SettingsView user={user} setUser={setUser} add={add} setView={setView} />}
             </div>
 
             {/* DOLNY PASEK NAWIGACYJNY - TYLKO WERSJA MOBILNA */}
