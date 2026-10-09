@@ -41,30 +41,89 @@ export default function SettingsView({ user, setUser, add, setView }) {
             const events = await fetchGoogleCalendarEvents(tokenResponse.access_token);
             const mappedTasks = mapGoogleEventsToTasks(events);
             
-            const { data: existing } = await supabase.from('tasks').select('desc').eq('user_email', user.email).like('desc', '%[GCal:%');
-            const existingIds = (existing || []).map(t => {
-                const m = t.desc ? t.desc.match(/\[GCal:(.+?)\]/) : null;
-                return m ? m[1] : null;
-            }).filter(Boolean);
+            const { data: existing } = await supabase.from('tasks').select('id, desc').eq('user_email', user.email).like('desc', '%[GCal:%');
+            
+            const existingGcalMap = {};
+            (existing || []).forEach(t => {
+              const m = t.desc ? t.desc.match(/\[GCal:(.+?)\]/) : null;
+              if (m) {
+                const gid = m[1];
+                if (!existingGcalMap[gid]) existingGcalMap[gid] = [];
+                existingGcalMap[gid].push(t);
+              }
+            });
 
-            const newTasks = mappedTasks.filter(t => {
-                const m = t.desc.match(/\[GCal:(.+?)\]/);
-                const gid = m ? m[1] : null;
-                return !existingIds.includes(gid);
-            }).map(t => ({...t, user_email: user.email}));
+            const currentGcalIds = [];
+            const newTasks = [];
+            const tasksToUpdate = [];
+            const taskIdsToDelete = [];
+
+            mappedTasks.forEach(t => {
+              const m = t.desc.match(/\[GCal:(.+?)\]/);
+              const gid = m ? m[1] : null;
+              if (!gid) return;
+
+              currentGcalIds.push(gid);
+
+              if (existingGcalMap[gid] && existingGcalMap[gid].length > 0) {
+                tasksToUpdate.push({
+                  ...t,
+                  id: existingGcalMap[gid][0].id,
+                  user_email: user.email
+                });
+                for (let i = 1; i < existingGcalMap[gid].length; i++) {
+                  taskIdsToDelete.push(existingGcalMap[gid][i].id);
+                }
+              } else {
+                newTasks.push({ ...t, user_email: user.email });
+              }
+            });
+
+            Object.keys(existingGcalMap).forEach(gid => {
+              if (!currentGcalIds.includes(gid)) {
+                existingGcalMap[gid].forEach(t => taskIdsToDelete.push(t.id));
+              }
+            });
+
+            let changed = false;
 
             if (newTasks.length > 0) {
-                const { error } = await supabase.from('tasks').insert(newTasks);
+              const { error } = await supabase.from('tasks').insert(newTasks);
+              if (error) throw error;
+              changed = true;
+            }
+
+            if (tasksToUpdate.length > 0) {
+              const updatePromises = tasksToUpdate.map(task => {
+                const { id, ...rest } = task;
+                return supabase.from('tasks').update(rest).eq('id', id);
+              });
+              const results = await Promise.all(updatePromises);
+              for (const { error } of results) {
                 if (error) throw error;
-                add(`Zsynchronizowano ${newTasks.length} nowych wydarzeń!`);
-                setTimeout(() => window.location.reload(), 1500);
+              }
+              changed = true;
+            }
+
+            if (taskIdsToDelete.length > 0) {
+              const { error } = await supabase.from('tasks').delete().in('id', taskIdsToDelete);
+              if (error) throw error;
+              changed = true;
+            }
+
+            if (changed) {
+              add(`Zsynchronizowano kalendarz (Nowe: ${newTasks.length}, Zakt.: ${tasksToUpdate.length}, Usunięte: ${taskIdsToDelete.length})`);
+              setTimeout(() => window.location.reload(), 1500);
             } else {
-                add(`Wszystkie wydarzenia są już zsynchronizowane. Brak nowych.`, "info");
+              add(`Wszystkie wydarzenia są już zsynchronizowane. Brak zmian.`, "info");
             }
           } catch(e) {
             console.error("GCal Sync Error:", e);
             add("Błąd podczas synchronizacji Kalendarza Google.", "warn");
           }
+        } else {
+          console.error("No access token in response:", tokenResponse);
+          add("Błąd: brak dostępu do kalendarza Google.", "warn");
         }
         setIsSyncing(false);
       },

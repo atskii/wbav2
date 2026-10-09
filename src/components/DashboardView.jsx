@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Plus,
-  RefreshCw, Play, Check, RotateCcw, Trash2, Lock, Star, BookOpen, Leaf, X, Pencil, HelpCircle, Sparkles
+  RefreshCw, Play, Check, RotateCcw, Trash2, Lock, Star, BookOpen, Leaf, X, Pencil, HelpCircle, Sparkles, Clock
 } from "lucide-react";
 import { checkIsDate } from "../lib/dateHelpers";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
@@ -249,6 +249,10 @@ const BacklogCard = ({
 export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onMoveTask, onAlert, onFocusTask, loading, onGeneratePlan, onGeneratePlanAI, hasAiOpinion, isAiPlanning, userPrefs, userEmail, onSelectPlant }) {
 
   const [showBacklog, setShowBacklog] = useState(false);
+  const [customGapTitles, setCustomGapTitles] = useState({});
+  const [deletedGaps, setDeletedGaps] = useState({});
+  const [editingGapId, setEditingGapId] = useState(null);
+  const [tempGapTitle, setTempGapTitle] = useState("");
 
   // Samouczki
   const { isTooltipSeen, markTooltipSeen, resetTooltipGroup } = useTutorials(userEmail || userPrefs?.email);
@@ -318,10 +322,14 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
       if (gap >= 15) {
         // Propozycja przerwy deterministycznie dobierana na podstawie godziny (unikamy migania przy re-renderach)
         const breakPicks = userPrefs?.picks || [];
-        const breakTitle = breakPicks.length > 0
+        const generatedTitle = breakPicks.length > 0
           ? breakPicks[currEnd % breakPicks.length]
           : "Czas na regenerację";
-        timelineWithGaps.push({ id: `gap-${i}`, isVisualGap: true, title: breakTitle, duration: `${gap} min`, sMins: currEnd, eMins: nextStart });
+        const gapKey = `gap-${dateStr}-${currEnd}`;
+        if (!deletedGaps[gapKey]) {
+          const breakTitle = customGapTitles[gapKey] || generatedTitle;
+          timelineWithGaps.push({ id: gapKey, isVisualGap: true, title: breakTitle, originalTitle: generatedTitle, duration: `${gap} min`, sMins: currEnd, eMins: nextStart });
+        }
       }
     }
   });
@@ -547,6 +555,8 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                       <AnimatePresence>
                         {renderItems.map(t => {
                           if (t.isVisualGap) {
+                            const isEditing = editingGapId === t.id;
+                            
                             return (
                               <motion.div 
                                 key={t.id} 
@@ -556,11 +566,52 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                 className="absolute left-0 right-0 flex items-center justify-center z-10 pointer-events-none" 
                                 style={{ top: `${t.topRem}rem`, height: `${t.actualHeight}rem` }}
                               >
-                                <div className="w-full flex items-center justify-center relative">
-                                  <div className="absolute px-4 py-1.5 flex items-center gap-2">
-                                    {t.title.toLowerCase().includes('spacer') || t.title.toLowerCase().includes('powietrze') ? <Leaf size={16} className="text-[#057E85]" /> : <BookOpen size={16} className="text-[#057E85]" />}
-                                    <span className="text-sm font-semibold text-[#057E85]">{t.title}</span>
+                                <div className="w-full flex items-center justify-center relative group">
+                                  <div 
+                                    className="absolute px-4 py-1.5 flex items-center gap-2 pointer-events-auto cursor-pointer rounded-xl hover:bg-[#057E85]/5 transition-colors"
+                                    onClick={() => {
+                                      if (!isEditing) {
+                                        setEditingGapId(t.id);
+                                        setTempGapTitle(t.title);
+                                      }
+                                    }}
+                                  >
+                                    <Clock size={16} className="text-[#057E85]" />
+                                    
+                                    {isEditing ? (
+                                      <input 
+                                        autoFocus
+                                        type="text"
+                                        className="text-sm font-semibold text-[#057E85] bg-transparent border-b border-[#057E85] outline-none text-center"
+                                        style={{ width: `${Math.max(tempGapTitle.length * 8, 50)}px` }}
+                                        value={tempGapTitle}
+                                        onChange={(e) => setTempGapTitle(e.target.value)}
+                                        onBlur={() => {
+                                          setCustomGapTitles(prev => ({ ...prev, [t.id]: tempGapTitle.trim() || t.originalTitle }));
+                                          setEditingGapId(null);
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            setCustomGapTitles(prev => ({ ...prev, [t.id]: tempGapTitle.trim() || t.originalTitle }));
+                                            setEditingGapId(null);
+                                          } else if (e.key === 'Escape') {
+                                            setEditingGapId(null);
+                                          }
+                                        }}
+                                      />
+                                    ) : (
+                                      <span className="text-sm font-semibold text-[#057E85]">{t.title}</span>
+                                    )}
                                   </div>
+                                  {!isEditing && (
+                                    <button 
+                                      onClick={() => setDeletedGaps(prev => ({ ...prev, [t.id]: true }))}
+                                      className="absolute right-2 opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 transition-all pointer-events-auto shadow-sm border border-transparent hover:border-red-100 z-20"
+                                      title="Usuń przerwę z widoku"
+                                    >
+                                      <X size={14} strokeWidth={2.5} />
+                                    </button>
+                                  )}
                                 </div>
                               </motion.div>
                             );
