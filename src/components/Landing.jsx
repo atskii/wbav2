@@ -26,7 +26,7 @@ export default function Landing({ onCTA }) {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-12">
             <a href="#" className="flex items-center hover:opacity-90 transition-opacity">
-              <img src="/logo WBA.svg" alt="Wellbeing app" className="h-7 md:h-8 w-auto object-contain" />
+              <img src="/logo WBA.svg" alt="Wellbeing app" width="387" height="50" className="h-7 md:h-8 w-auto object-contain" />
             </a>
             <div className="hidden md:flex items-center gap-6">
               <a href="#" className="text-[#0E6630] font-bold text-lg">Home</a>
@@ -70,7 +70,7 @@ export default function Landing({ onCTA }) {
       <section className="py-12 md:py-20 px-4 md:px-8 max-w-7xl mx-auto flex flex-col md:grid md:grid-cols-2 gap-10 md:gap-16 items-center">
         <div className="max-w-xl order-1 md:order-1 text-left">
           <h1 className="text-[32px] md:text-5xl font-bold text-[#151515] leading-[1.2] mb-6 md:mb-8">
-            Zdobądź kontrolę nad swoim dniem i zadbaj o swój dobrostan!
+            Zdrowa produktywność bez wypalenia – zorganizuj swój dzień z Wellbeing App
           </h1>
           <p className="text-[#151515] text-base md:text-xl leading-relaxed mb-8">
             Oferujemy prosty sposób, aby wspierać pracowników w radzeniu sobie ze stresem i wypaleniem zawodowym, zwiększać ich zaangażowanie i tworzyć zdrowszą, bardziej efektywną kulturę pracy.
@@ -80,7 +80,7 @@ export default function Landing({ onCTA }) {
           </button>
         </div>
         <div className="flex justify-center order-2 md:order-2 w-full">
-          <img src="/Frame 256.png" alt="Hero ilustracja" className="w-full max-w-md object-contain" />
+          <img src="/Frame 256.png" alt="Hero ilustracja" width="502" height="502" className="w-full max-w-md h-auto object-contain" />
         </div>
       </section>
 
@@ -277,7 +277,7 @@ export default function Landing({ onCTA }) {
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-8 md:gap-12 text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center justify-between w-full gap-6">
             <a href="#" className="flex items-center hover:opacity-90 transition-opacity">
-              <img src="/logo WBA.svg" alt="Wellbeing app" className="h-7 md:h-8 w-auto object-contain" />
+              <img src="/logo WBA.svg" alt="Wellbeing app" width="387" height="50" className="h-7 md:h-8 w-auto object-contain" />
             </a>
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
               <a href="#" className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Home</a>
