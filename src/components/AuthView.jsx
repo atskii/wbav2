@@ -111,8 +111,8 @@ export default function AuthView({ mode, onAuth, onSwitch, onBack }) {
     <div className="font-dm-sans min-h-screen bg-[#F5EFE6] flex flex-col">
       {/* Navbar */}
       <nav className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4 flex items-center justify-between">
-        <button onClick={onBack}>
-          <span className="font-lora text-[#1E5C36] font-bold text-xl">Wellbeing app</span>
+        <button onClick={onBack} className="flex items-center hover:opacity-90 transition-opacity focus:outline-none">
+          <img src="/logo WBA.svg" alt="Wellbeing app" className="h-7 w-auto object-contain" />
         </button>
         <div className="flex gap-2">
           <button

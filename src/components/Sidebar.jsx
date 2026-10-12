@@ -41,7 +41,16 @@ export default function Sidebar({ active, onNav, user, onLogout, selectedDate, s
         hidden md:flex md:sticky top-0 left-0 z-[70] h-screen bg-white border-r border-[#E8DDD0] flex-col w-64 flex-shrink-0
       `}>
         <div className={`px-5 py-6 border-b border-[#E8DDD0] flex items-center justify-between`}>
-          <span className={`font-lora text-[#1E5C36] font-bold text-xl tracking-tight inline`}>Wellbeing app</span>
+          <button
+            onClick={() => {
+              if (onNav) onNav("dashboard");
+              if (setIsMobileOpen) setIsMobileOpen(false);
+            }}
+            className="flex items-center text-left focus:outline-none hover:opacity-90 transition-opacity"
+            title="Strona główna"
+          >
+            <img src="/logo WBA.svg" alt="Wellbeing app" className="h-6 w-auto object-contain" />
+          </button>
           <button onClick={() => setIsMobileOpen(false)} className="p-1.5 hover:bg-[#F5EFE6] rounded-xl text-[#5A7368] transition-all md:hidden">
             <X size={20} />
           </button>

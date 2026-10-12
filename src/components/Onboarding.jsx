@@ -49,7 +49,9 @@ export default function Onboarding({ initialName = "", onComplete }) {
 
   return (
     <div className="font-dm-sans min-h-screen bg-[#F5EFE6] flex flex-col">
-      <nav className="bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4"><span className="font-lora text-[#1E5C36] font-bold text-xl">Wellbeing app</span></nav>
+      <nav className="bg-white/85 backdrop-blur-xl border-b border-[#E8DDD0] px-6 py-4 flex items-center">
+        <img src="/logo WBA.svg" alt="Wellbeing app" className="h-7 w-auto object-contain" />
+      </nav>
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative overflow-hidden">
         <div className="relative z-10 bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg border border-[#E8DDD0]">
           <div className="flex justify-center gap-2 mb-7">

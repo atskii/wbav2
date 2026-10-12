@@ -25,7 +25,9 @@ export default function Landing({ onCTA }) {
       <nav className="bg-[#FCFCFD] px-4 md:px-8 py-4 relative z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-12">
-            <span className="text-[#03421C] font-bold text-xl md:text-2xl tracking-tight">Wellbeing app</span>
+            <a href="#" className="flex items-center hover:opacity-90 transition-opacity">
+              <img src="/logo WBA.svg" alt="Wellbeing app" className="h-7 md:h-8 w-auto object-contain" />
+            </a>
             <div className="hidden md:flex items-center gap-6">
               <a href="#" className="text-[#0E6630] font-bold text-lg">Home</a>
               <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">Produkt</a>
@@ -274,7 +276,9 @@ export default function Landing({ onCTA }) {
       <footer className="bg-white py-8 md:py-12 px-4 md:px-8 border-t border-gray-100">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-8 md:gap-12 text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center justify-between w-full gap-6">
-            <span className="text-[#03421C] font-bold text-xl md:text-2xl tracking-tight">Wellbeing app</span>
+            <a href="#" className="flex items-center hover:opacity-90 transition-opacity">
+              <img src="/logo WBA.svg" alt="Wellbeing app" className="h-7 md:h-8 w-auto object-contain" />
+            </a>
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
               <a href="#" className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Home</a>
               <a href="#" className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Produkt</a>
