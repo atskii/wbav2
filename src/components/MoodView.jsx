@@ -255,24 +255,99 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
             {showAvg && countV > 0 && (<g className="animate-in fade-in duration-500"><line x1={paddingX} y1={avgY} x2={width} y2={avgY} stroke="#02848C" strokeWidth="2" strokeDasharray="8,6" strokeLinecap="round" /><rect x={width - 120} y={avgY - 24} width="110" height="20" rx="4" fill="#02848C" /><text x={width - 65} y={avgY - 10} fill="white" fontSize="10" fontWeight="bold" textAnchor="middle">Średnia: {avgV.toFixed(1)} / 6.0</text></g>)}
             {points.map((p, i) => { const isHovered = hovered?.d === p.data.d; return (<g key={i}>{isHovered && (<line x1={p.x} y1={p.y} x2={p.x} y2={height} stroke="#1A949A" strokeWidth="1" strokeDasharray="4,4" />)}<circle cx={p.x} cy={p.y} r={isHovered ? 6 : 4} fill="#1A949A" className="transition-all" />{isHovered && <circle cx={p.x} cy={p.y} r={12} fill="#1A949A" className="opacity-20" />}<circle cx={p.x} cy={p.y} r={hitRadius} fill="transparent" className="cursor-pointer" onMouseEnter={() => !editingMood && setHovered(p.data)} onMouseLeave={() => !editingMood && setHovered(null)} onClick={() => { setHovered(null); setEditingMood(p.data); setEditingNote(p.data.note || ""); }} /></g>); })}
           </svg>
-          {hovered && !editingMood && (
-            <div className={`absolute z-50 bg-white border border-[#E8E8E8] shadow-lg rounded-xl p-3 w-56 pointer-events-none transform -translate-y-[115%] ${((points.find(p => p.data.d === hovered.d)?.x / width) * 100) > 80 ? '-translate-x-[90%]' : ((points.find(p => p.data.d === hovered.d)?.x / width) * 100) < 20 ? '-translate-x-[10%]' : '-translate-x-1/2'}`} style={{ left: `${(points.find(p => p.data.d === hovered.d)?.x / width) * 100}%`, top: `${(points.find(p => p.data.d === hovered.d)?.y / height) * 100}%` }}>
-              <div className="flex justify-between items-start mb-1"><div className="flex items-center gap-2"><span className="text-xl">{EMOJIS[hovered.v]}</span><span className="text-[10px] font-bold text-[#02848C] bg-[#E5F2F3] px-2 py-0.5 rounded-md">{MOOD_L[hovered.v]}</span></div><span className="text-[9px] font-black text-[#8B8692]">{hovered.d}</span></div>
-              <p className="text-[11px] text-[#5A5A5A] mt-1 leading-relaxed italic border-l-2 border-[#F4F4F4] pl-2">"{hovered.note || "Brak notatki."}"</p>
-              <p className="text-[9px] text-[#8B8692] mt-2 font-bold uppercase tracking-wider text-center">Kliknij kropkę, aby edytować</p>
-            </div>
-          )}
-          {editingMood && (
-            <div className={`absolute z-50 bg-white border-2 border-[#02848C] shadow-2xl rounded-2xl p-4 w-72 transform -translate-y-[105%] ${((points.find(p => p.data.d === editingMood.d)?.x / width) * 100) > 80 ? '-translate-x-[95%]' : ((points.find(p => p.data.d === editingMood.d)?.x / width) * 100) < 20 ? '-translate-x-[5%]' : '-translate-x-1/2'}`} style={{ left: `${(points.find(p => p.data.d === editingMood.d)?.x / width) * 100}%`, top: `${(points.find(p => p.data.d === editingMood.d)?.y / height) * 100}%` }}>
-              <div className="flex justify-between items-center mb-3"><span className="text-xs font-bold text-[#151515]">Edytuj dzień: <span className="text-[#02848C]">{editingMood.d}</span></span><button onClick={() => setEditingMood(null)} className="text-[#8B8692] hover:text-red-500 transition-colors bg-red-50 p-1 rounded-full"><X size={14} /></button></div>
-              <div className="mb-3"><p className="text-[10px] font-bold text-[#5A5A5A] mb-1 uppercase tracking-wide">Notatka:</p><textarea value={editingNote} onChange={(e) => setEditingNote(e.target.value)} placeholder="Jak minął dzień?" className="w-full bg-[#FAFAFA] border border-[#F4F4F4] rounded-lg p-2 text-xs focus:outline-none focus:border-[#02848C] resize-none h-16 transition-all placeholder:text-[#8B8692]" /></div>
-              <div className="mb-1"><p className="text-[10px] font-bold text-[#5A5A5A] mb-1 uppercase tracking-wide">Nastrój:</p><div className="flex gap-1 justify-between">{EMOJIS.map((emoji, index) => (<button key={index} onClick={() => { onEditMood(editingMood.d, index, editingNote); setEditingMood(null); }} className={`text-xl p-1 rounded-lg hover:bg-[#FAFAFA] transition-all hover:scale-125 ${editingMood.v === index ? 'bg-[#E5F2F3] scale-110 shadow-sm border border-[#02848C]/30' : ''}`} title={MOOD_L[index]}>{emoji}</button>))}</div></div>
-            </div>
-          )}
+          {hovered && !editingMood && (() => {
+            const pt = points.find(p => p.data.d === hovered.d);
+            if (!pt) return null;
+            const isTopHalf = pt.y < 90;
+            const xPct = (pt.x / width) * 100;
+            const xAlign = xPct > 80 ? '-translate-x-[90%]' : xPct < 20 ? '-translate-x-[10%]' : '-translate-x-1/2';
+            const yAlign = isTopHalf ? 'translate-y-4' : '-translate-y-[115%]';
+
+            return (
+              <div 
+                className={`absolute z-30 bg-white border border-[#E8E8E8] shadow-lg rounded-xl p-3 w-56 pointer-events-none transform ${yAlign} ${xAlign}`} 
+                style={{ left: `${xPct}%`, top: `${(pt.y / height) * 100}%` }}
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{EMOJIS[hovered.v]}</span>
+                    <span className="text-[10px] font-bold text-[#02848C] bg-[#E5F2F3] px-2 py-0.5 rounded-md">{MOOD_L[hovered.v]}</span>
+                  </div>
+                  <span className="text-[9px] font-black text-[#8B8692]">{hovered.d}</span>
+                </div>
+                <p className="text-[11px] text-[#5A5A5A] mt-1 leading-relaxed italic border-l-2 border-[#F4F4F4] pl-2">"{hovered.note || "Brak notatki."}"</p>
+                <p className="text-[9px] text-[#8B8692] mt-2 font-bold uppercase tracking-wider text-center">Kliknij kropkę, aby edytować</p>
+              </div>
+            );
+          })()}
         </div>
         </div>
       </div>
       </div>
+
+      {/* Modal edycji nastroju wybranego dnia */}
+      {editingMood && (
+        <div 
+          className="fixed inset-0 z-[600] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-150" 
+          onClick={() => setEditingMood(null)}
+        >
+          <div 
+            className="bg-white border-2 border-[#02848C] shadow-2xl rounded-2xl p-5 w-full max-w-sm animate-in zoom-in-95 duration-150" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm font-bold text-[#151515]">
+                Edytuj dzień: <span className="text-[#02848C]">{editingMood.d}</span>
+              </span>
+              <button 
+                onClick={() => setEditingMood(null)} 
+                className="text-[#8B8692] hover:text-red-500 transition-colors bg-red-50 p-1.5 rounded-full"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-[11px] font-bold text-[#5A5A5A] mb-1.5 uppercase tracking-wide">Notatka:</p>
+              <textarea 
+                value={editingNote} 
+                onChange={(e) => setEditingNote(e.target.value)} 
+                placeholder="Jak minął dzień?" 
+                className="w-full bg-[#FAFAFA] border border-[#E8DDD0] rounded-xl p-3 text-xs focus:outline-none focus:border-[#02848C] resize-none h-20 transition-all placeholder:text-[#8B8692]" 
+              />
+            </div>
+
+            <div className="mb-3">
+              <p className="text-[11px] font-bold text-[#5A5A5A] mb-2 uppercase tracking-wide">Wybierz nastrój:</p>
+              <div className="flex gap-1.5 justify-between">
+                {EMOJIS.map((emoji, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => { 
+                      onEditMood(editingMood.d, index, editingNote); 
+                      setEditingMood(null); 
+                    }} 
+                    className={`text-2xl p-2 rounded-xl hover:bg-[#FAFAFA] transition-all hover:scale-125 ${editingMood.v === index ? 'bg-[#E5F2F3] scale-110 shadow-sm border border-[#02848C]/40' : ''}`} 
+                    title={MOOD_L[index]}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => { 
+                onEditMood(editingMood.d, editingMood.v, editingNote); 
+                setEditingMood(null); 
+              }}
+              className="w-full mt-2 py-2.5 bg-[#02848C] text-white rounded-xl text-xs font-bold hover:bg-[#02747b] transition-all shadow-sm active:scale-95"
+            >
+              Zapisz zmiany
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* MOBILE BOTTOM ACTION BAR */}
       <div className="md:hidden w-full max-w-6xl mt-2 px-4 pb-8 flex flex-col gap-3 shrink-0">

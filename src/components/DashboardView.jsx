@@ -667,7 +667,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
               </div>
             </div>
             {/* Pasek zadań poza planem / Backlog (zawsze widoczny) */}
-            <div id="tutorial-backlog" className="sticky bottom-0 z-[100] mt-10 pl-12 md:pl-20 pointer-events-none flex justify-center">
+            <div id="tutorial-backlog" className="sticky bottom-0 z-40 mt-10 pl-12 md:pl-20 pointer-events-none flex justify-center">
               <div 
                 className={`w-full max-w-3xl pointer-events-auto transition-all ${dashDragTarget && dashDragTarget.type === 'backlog' ? "scale-105" : ""}`}
                   onDragOver={(e) => { 

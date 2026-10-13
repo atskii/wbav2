@@ -1985,7 +1985,7 @@ export default function App() {
           />
           <main className="flex-1 overflow-hidden relative bg-[#FAFAFA] flex flex-col">
             {/* NOWY HEADER RESPANSYWNY */}
-            <header className="w-full px-4 md:px-10 py-4 md:py-6 flex items-center justify-between z-[60] gap-2">
+            <header className="relative z-[200] w-full px-4 md:px-10 py-4 md:py-6 flex items-center justify-between gap-2">
               <div className="hidden md:flex items-center space-x-2 md:space-x-4 min-w-0 flex-1">
                 <span className="text-lg md:text-2xl font-bold text-[#1A2F22] flex items-baseline gap-1 md:gap-2 truncate">
                   <span className="truncate">Cześć {user?.name ? user.name.split(' ')[0] : "Natalia"}!</span>
