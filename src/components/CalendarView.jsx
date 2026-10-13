@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   ChevronDown, ChevronLeft, ChevronRight, ArrowRight,
-  Star, Trash2, X, Calendar as CalendarIcon, Check, Search
+  Star, Trash2, X, Calendar as CalendarIcon, Check, Search, CalendarPlus, RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SkeletonScreen from "./ui/Skeleton";
@@ -24,7 +24,8 @@ export default function CalendarView({
   onMoveTask,
   onReturnToBacklog,
   loading,
-  onNav
+  onNav,
+  onScheduleTask
 }) {
   const [viewType, setViewType] = useState("Miesiąc");
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -994,6 +995,15 @@ export default function CalendarView({
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-[10px] text-[#5A7368] font-semibold pointer-events-none">{t.duration || "60 min"}</span>
                       <div className="ml-auto flex gap-1">
+                        {!t.pDate && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); if (onScheduleTask) onScheduleTask(t); }} 
+                            title="Dodaj do planu dnia" 
+                            className="w-6 h-6 rounded-full hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            <RefreshCw size={12} />
+                          </button>
+                        )}
                         <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); }} title="usuń zadanie" className="w-6 h-6 rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
                       </div>
                     </div>

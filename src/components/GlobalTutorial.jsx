@@ -100,7 +100,7 @@ const TUTORIAL_STEPS = [
   {
     id: "dashboard_backlog",
     title: "Zadania poza planem (Backlog)",
-    desc: "Tutaj trafiają zadania dodane bez określonej godziny. Możesz je w każdej chwili podejrzeć, a kliknięcie 'Generuj plan' automatycznie wpasuje je w Twój dzień.",
+    desc: "Tutaj trafiają zadania dodane bez określonej godziny. Możesz dodać wybrane zadanie pojedynczo ikonką 'Dodaj do planu dnia' lub kliknąć 'Generuj plan', aby ułożyć cały dzień.",
     targetIdDesktop: "tutorial-backlog",
     targetIdMobile: "tutorial-backlog",
     placement: "top",

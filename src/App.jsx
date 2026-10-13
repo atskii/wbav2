@@ -1208,6 +1208,150 @@ export default function App() {
     }
   };
 
+  const scheduleSingleTask = async (taskToSchedule) => {
+    if (!taskToSchedule) return;
+
+    // Godzina startu i limit dnia z preferencji użytkownika
+    const parsedStart = user?.prefs?.startTime ? user.prefs.startTime.split(':').map(Number) : [6, 0];
+    const timelineStart = parsedStart[0] || 6;
+    const workHours = user?.prefs?.hours || 15;
+    const dayLimitMins = Math.min(timelineStart + workHours, 24) * 60;
+    const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+
+    // Czas trwania zadania w minutach
+    const durMatch = taskToSchedule.duration ? taskToSchedule.duration.match(/(\d+)/) : null;
+    const duration = durMatch ? parseInt(durMatch[1]) : 45;
+
+    // Proporcjonalna przerwa dopasowana do długości i wagi zadania (zgodnie ze standardowym algorytmem generatePlan)
+    const getTaskBreak = (t) => {
+      const dur = t?.durationMins || (t?.duration ? parseInt(t.duration.match(/(\d+)/)?.[1] || 45) : 45);
+      if (dur >= 90) {
+        return t?.p === "wysoki" ? 25 : 20;
+      } else if (dur >= 60) {
+        return t?.p === "wysoki" ? 15 : 12;
+      } else if (dur >= 30) {
+        return 10;
+      } else {
+        return 5;
+      }
+    };
+
+    const myBreak = getTaskBreak(taskToSchedule);
+
+    // 1. Zbieramy aktualnie zaplanowane zadania na wybrany dzień
+    const scheduledBlocks = tasks
+      .filter(t => {
+        if (t.id === taskToSchedule.id) return false;
+        if (t.isLocked) {
+          if (t.pDate) return t.pDate === dateStr;
+          return t.t && checkIsDate(t.t, selectedDate);
+        }
+        return t.pDate === dateStr && t.sMins !== null && t.sMins !== undefined;
+      })
+      .map(t => {
+        let sMins = t.sMins;
+        let eMins = t.eMins;
+        if (t.isLocked && t.t) {
+          const match = t.t.match(/(\d{1,2}):(\d{2})/);
+          sMins = match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
+        }
+        const dMatch = t.duration ? t.duration.match(/(\d+)/) : null;
+        const dur = dMatch ? parseInt(dMatch[1]) : 45;
+        if (sMins === null || sMins === undefined) sMins = 0;
+        if (eMins === null || eMins === undefined || eMins <= sMins) {
+          eMins = sMins + dur;
+        }
+        const breakTime = getTaskBreak({ ...t, durationMins: dur });
+        return { ...t, sMins, eMins, durationMins: dur, breakTime };
+      })
+      .sort((a, b) => a.sMins - b.sMins);
+
+    // 2. Punkt startowy dnia z uwzględnieniem bieżącej godziny (jeśli to dzisiaj)
+    let earliestPossible = timelineStart * 60;
+    const nowL = new Date();
+    if (selectedDate.toDateString() === nowL.toDateString()) {
+      const currentMins = nowL.getHours() * 60 + nowL.getMinutes();
+      const roundedCurrentMins = Math.ceil(currentMins / 15) * 15;
+      earliestPossible = Math.max(earliestPossible, roundedCurrentMins);
+    }
+
+    let targetStart = null;
+
+    if (scheduledBlocks.length === 0) {
+      // Brak innych zadań – wstawiamy na początek dostępnego dnia
+      targetStart = earliestPossible;
+    } else {
+      // 3a. Sprawdzamy czy zmieści się PRZED pierwszym zadaniem (z wymaganą przerwą po naszym zadaniu)
+      const firstBlock = scheduledBlocks[0];
+      if (earliestPossible + duration + myBreak <= firstBlock.sMins) {
+        targetStart = earliestPossible;
+      }
+
+      // 3b. Szukamy luki MIĘDZY zadaniami z zachowaniem proporcjonalnych przerw
+      if (targetStart === null) {
+        for (let i = 0; i < scheduledBlocks.length - 1; i++) {
+          const curr = scheduledBlocks[i];
+          const next = scheduledBlocks[i + 1];
+
+          // Start po poprzednim zadaniu + jego przerwa
+          const slotStart = Math.max(earliestPossible, curr.eMins + curr.breakTime);
+
+          // Musi zmieścić się nasze zadanie + nasza przerwa przed kolejnym zadaniem
+          if (slotStart + duration + myBreak <= next.sMins) {
+            targetStart = slotStart;
+            break;
+          }
+        }
+      }
+
+      // 3c. Jeśli nie zmieściło się w lukach, wstawiamy PO OSTATNIM zadaniu (+ jego przerwa)
+      if (targetStart === null) {
+        const last = scheduledBlocks[scheduledBlocks.length - 1];
+        const slotStart = Math.max(earliestPossible, last.eMins + last.breakTime);
+        if (slotStart + duration <= 24 * 60) {
+          targetStart = slotStart;
+        }
+      }
+    }
+
+    if (targetStart === null) {
+      add("Brak wolnego miejsca w harmonogramie na ten dzień dla tego zadania.", "warn");
+      return;
+    }
+
+    const targetEnd = targetStart + duration;
+
+    // 4. Optymistyczna zmiana stanu UI
+    setTasks(prev => prev.map(t => (t.id === taskToSchedule.id) ? {
+      ...t,
+      pDate: dateStr,
+      sMins: targetStart,
+      eMins: targetEnd
+    } : t));
+
+    // 5. Zapis do bazy Supabase
+    if (user && user.email) {
+      try {
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            pDate: dateStr,
+            sMins: targetStart,
+            eMins: targetEnd
+          })
+          .eq('id', taskToSchedule.id)
+          .eq('user_email', user.email);
+
+        if (error) console.error("Błąd bazy danych przy planowaniu pojedynczego zadania:", error);
+      } catch (err) {
+        console.error("Błąd połączenia z bazą:", err);
+      }
+    }
+
+    const formatMins = (m) => `${Math.floor(m / 60)}:${(m % 60).toString().padStart(2, '0')}`;
+    add(`Zadanie "${taskToSchedule.title}" dodano do planu na ${formatMins(targetStart)} - ${formatMins(targetEnd)}! ✨`);
+  };
+
   const handleAIGeneratePlan = async (userContext = "") => {
     const currentTokens = user.aiTokens !== undefined ? user.aiTokens : (user.prefs?.ai_tokens ?? 10);
     if (currentTokens < 1) {
@@ -2241,6 +2385,7 @@ export default function App() {
                   userPrefs={user?.prefs}
                   userEmail={user?.email}
                   onSelectPlant={handleSelectPlant}
+                  onScheduleTask={scheduleSingleTask}
                 />
               )}
               {activeTab === "calendar" && (
@@ -2257,6 +2402,7 @@ export default function App() {
                   onReturnToBacklog={returnToBacklog}
                   loading={isLoading}
                   onNav={handleNav}
+                  onScheduleTask={scheduleSingleTask}
                 />
               )}
 

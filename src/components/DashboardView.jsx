@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   ChevronLeft, ChevronRight, ChevronDown, Plus,
-  RefreshCw, Play, Check, RotateCcw, Trash2, Lock, Star, BookOpen, Leaf, X, Pencil, HelpCircle, Sparkles, Clock
+  RefreshCw, Play, Check, RotateCcw, Trash2, Lock, Star, BookOpen, Leaf, X, Pencil, HelpCircle, Sparkles, Clock, CalendarPlus
 } from "lucide-react";
 import { checkIsDate } from "../lib/dateHelpers";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
@@ -149,7 +149,7 @@ const TaskCard = ({
 // Komponent dla zadania w Backlogu
 const BacklogCard = ({
   t, i, isTapped, setTappedTaskId, draggedTaskId, setDraggedTaskId, setDashDragTarget,
-  onEditTask, onDelete
+  onEditTask, onDelete, onScheduleTask
 }) => {
   const x = useMotionValue(0);
   const [touchStartX, setTouchStartX] = useState(null);
@@ -227,16 +227,30 @@ const BacklogCard = ({
         }
       }} 
     >
-      <div className="flex items-start gap-3 pr-24">
+      <div className="flex items-start gap-3 pr-32 sm:pr-36">
         <div className={`mt-0.5 flex-shrink-0 flex items-center gap-1 ${t.p === 'wysoki' ? 'text-red-400' : t.p === 'sredni' ? 'text-amber-400' : 'text-emerald-400'}`}>
           <Star size={16} fill="currentColor" strokeWidth={1} />
           {t.isLocked && <span className="text-red-600 font-black text-[10px] animate-pulse">!</span>}
         </div>
-        <div className="flex flex-col gap-1"><span className="text-[13px] font-bold text-[#1A2F22]">{t.title}</span><span className="text-[9px] font-bold text-[#5A7368]">{t.duration}</span></div>
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className="text-[13px] font-bold text-[#1A2F22] truncate">{t.title}</span>
+          <span className="text-[9px] font-bold text-[#5A7368]">{t.duration || "45 min"}</span>
+        </div>
       </div>
-      <div className={`flex items-center gap-2 transition-all absolute top-1/2 -translate-y-1/2 right-6 z-30 bg-white/90 p-1 rounded-xl backdrop-blur-sm ${isTapped ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100'}`}>
-        <button onClick={(e) => { e.stopPropagation(); onEditTask(t); setTappedTaskId(null); }} title="edytuj" className="w-9 h-9 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center shadow-sm transition-all"><Pencil size={16} /></button>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); setTappedTaskId(null); }} title="usuń zadanie" className="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all"><Trash2 size={16} /></button>
+      <div className={`flex items-center gap-1.5 sm:gap-2 transition-all absolute top-1/2 -translate-y-1/2 right-3 sm:right-6 z-30 bg-white/95 p-1 rounded-xl backdrop-blur-sm ${isTapped ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            if (onScheduleTask) onScheduleTask(t); 
+            setTappedTaskId(null); 
+          }} 
+          title="Dodaj do planu dnia" 
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-50 text-[#0E6630] hover:bg-[#0E6630] hover:text-white flex items-center justify-center shadow-sm transition-all active:scale-95 border border-emerald-200"
+        >
+          <RefreshCw size={15} />
+        </button>
+        <button onClick={(e) => { e.stopPropagation(); onEditTask(t); setTappedTaskId(null); }} title="edytuj" className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white flex items-center justify-center shadow-sm transition-all active:scale-95"><Pencil size={15} /></button>
+        <button onClick={(e) => { e.stopPropagation(); onDelete(t.id); setTappedTaskId(null); }} title="usuń zadanie" className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-sm transition-all active:scale-95"><Trash2 size={15} /></button>
       </div>
       {t.isLocked && <div title="Sztywny termin zablokowany w kalendarzu" className="absolute bottom-4 left-5 z-30 flex items-center justify-center w-[18px] h-[18px] rounded border border-[#E8DDD0] bg-white shadow-sm"><Lock size={10} strokeWidth={2.5} className="text-[#5A7368]" /></div>}
     </motion.div>
@@ -246,7 +260,7 @@ const BacklogCard = ({
 // ═══════════════════════════════════════════════════
 //  DASHBOARD VIEW (ZAMROŻONY PLAN Z GUZIKIEM GENERUJ)
 // ═══════════════════════════════════════════════════
-export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onMoveTask, onAlert, onFocusTask, loading, onGeneratePlan, onGeneratePlanAI, hasAiOpinion, isAiPlanning, userPrefs, userEmail, onSelectPlant }) {
+export default function DashboardView({ tasks, moods, selectedDate, onChangeDate, onToggle, onOpenTaskModal, onEditTask, onDelete, onReturnToBacklog, onMoveTask, onAlert, onFocusTask, loading, onGeneratePlan, onGeneratePlanAI, hasAiOpinion, isAiPlanning, userPrefs, userEmail, onSelectPlant, onScheduleTask }) {
 
   const [showBacklog, setShowBacklog] = useState(false);
   const [customGapTitles, setCustomGapTitles] = useState({});
@@ -680,7 +694,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                         <div className="bg-amber-50 text-amber-600 p-2 rounded-xl"><Plus size={18} /></div>
                         <div className="text-left">
                           <h3 className="font-bold text-[#1A2F22] text-[13px]">Zadania poza planem ({backlog.length})</h3>
-                          <p className="text-[9px] text-[#5A7368]">Oczekują na kliknięcie "Generuj plan".</p>
+                          <p className="text-[9px] text-[#5A7368]">Możesz zaplanować pojedyncze zadanie lub kliknąć „Generuj plan”.</p>
                         </div>
                       </div>
                       <div className={`p-2 rounded-full bg-slate-50 transition-transform ${showBacklog ? 'rotate-180' : ''}`}><ChevronDown size={20} /></div>
@@ -703,6 +717,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
                                     key={t.id} t={t} i={i} isTapped={isTapped} setTappedTaskId={setTappedTaskId}
                                     draggedTaskId={draggedTaskId} setDraggedTaskId={setDraggedTaskId}
                                     setDashDragTarget={setDashDragTarget} onEditTask={onEditTask} onDelete={onDelete}
+                                    onScheduleTask={onScheduleTask}
                                   />
                                 );
                               })}
