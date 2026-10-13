@@ -43,7 +43,13 @@ export const checkIsDate = (textString, targetDate) => {
 
   const startMatch = textString.match(/\((\d{1,2})[\./ -](\d{1,2})[\./ -](\d{4})\)/);
   if (startMatch && (txt.includes("codziennie") || txt.includes("co tydzień") || txt.includes("w dni robocze"))) {
-    const startDate = new Date(parseInt(startMatch[3]), parseInt(startMatch[2]) - 1, parseInt(startMatch[1]));
+    const p1 = parseInt(startMatch[1]);
+    const p2 = parseInt(startMatch[2]);
+    const pYear = parseInt(startMatch[3]);
+    let startDate = new Date(pYear, p2 - 1, p1);
+    if (p2 > 12 && p1 <= 12) {
+      startDate = new Date(pYear, p1 - 1, p2);
+    }
     if (selDateOnly < startDate) return false;
   }
 
@@ -61,7 +67,14 @@ export const checkIsDate = (textString, targetDate) => {
   if (ymd && parseInt(ymd[1]) === selYear && parseInt(ymd[2]) === selMonth && parseInt(ymd[3]) === selDay) return true;
 
   const dmy = textString.match(/(\d{1,2})[\./ -](\d{1,2})[\./ -](\d{4})/);
-  if (dmy && parseInt(dmy[3]) === selYear && parseInt(dmy[2]) === selMonth && parseInt(dmy[1]) === selDay) return true;
+  if (dmy && parseInt(dmy[3]) === selYear) {
+    const p1 = parseInt(dmy[1]);
+    const p2 = parseInt(dmy[2]);
+    // Format DD.MM.YYYY (PL)
+    if (p1 === selDay && p2 === selMonth) return true;
+    // Format MM/DD/YYYY (US fallback)
+    if (p1 === selMonth && p2 === selDay) return true;
+  }
 
   return false;
 };

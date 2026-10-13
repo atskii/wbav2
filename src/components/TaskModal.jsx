@@ -42,23 +42,36 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
     const weight = Math.min(10, Math.round((difficulty * 1.5) + (parseInt(duration || 0) / 60)));
 
     let timeString = "";
+    let formattedPDate = null;
+    let calculatedSMins = null;
+    let calculatedEMins = null;
+
     if (isLocked && lockDateTime) {
       const d = new Date(lockDateTime);
-      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const dateStr = d.toLocaleDateString();
-      timeString = `🔒 ${timeStr} (${dateStr})`;
+      if (!isNaN(d.getTime())) {
+        const hours = d.getHours();
+        const mins = d.getMinutes();
+        const timeStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+        const dateStr = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+        formattedPDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        calculatedSMins = hours * 60 + mins;
+        const durInt = duration ? parseInt(duration) : 60;
+        calculatedEMins = calculatedSMins + durInt;
 
-      if (recurrence !== "jednorazowo") {
-        if (recurrence === "co tydzień") {
-          const dayOfWeek = d.getDay() === 0 ? 6 : d.getDay() - 1;
-          const daysArr = ["pon", "wt", "śr", "czw", "pt", "sob", "ndz"];
-          timeString += ` 🔁 co tydzień ${daysArr[dayOfWeek]}`;
-        } else {
-          timeString += ` 🔁 ${recurrence}`;
-        }
+        timeString = `🔒 ${timeStr} (${dateStr})`;
 
-        if (recurrenceEnd) {
-          timeString += ` 🛑 do ${recurrenceEnd}`;
+        if (recurrence !== "jednorazowo") {
+          if (recurrence === "co tydzień") {
+            const dayOfWeek = d.getDay() === 0 ? 6 : d.getDay() - 1;
+            const daysArr = ["pon", "wt", "śr", "czw", "pt", "sob", "ndz"];
+            timeString += ` 🔁 co tydzień ${daysArr[dayOfWeek]}`;
+          } else {
+            timeString += ` 🔁 ${recurrence}`;
+          }
+
+          if (recurrenceEnd) {
+            timeString += ` 🛑 do ${recurrenceEnd}`;
+          }
         }
       }
     }
@@ -75,7 +88,12 @@ export default function TaskModal({ onClose, onSave, taskToEdit, userEmail }) {
       difficulty,
       desc,
       isLocked,
-      lockDateTime, recurrence, recurrenceEnd
+      lockDateTime,
+      recurrence,
+      recurrenceEnd,
+      pDate: isLocked ? (formattedPDate || taskToEdit?.pDate) : (taskToEdit?.pDate || null),
+      sMins: isLocked ? calculatedSMins : (taskToEdit?.sMins || null),
+      eMins: isLocked ? calculatedEMins : (taskToEdit?.eMins || null)
     });
   };
 

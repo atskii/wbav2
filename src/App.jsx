@@ -1059,13 +1059,17 @@ export default function App() {
 
     // 1. Wyodrębniamy sztywne bloki (dla selectedDate)
     const lockedBlocks = currentTasks
-      .filter(t => t.isLocked && t.t && checkIsDate(t.t, selectedDate))
+      .filter(t => t.isLocked && (t.pDate === dateStr || (t.t && checkIsDate(t.t, selectedDate))))
       .map(t => {
-        const match = t.t.match(/(\d{1,2}):(\d{2})/);
-        const startMins = match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
+        let startMins = t.sMins;
+        if (startMins === null || startMins === undefined) {
+          const match = t.t ? t.t.match(/(\d{1,2}):(\d{2})/) : null;
+          startMins = match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
+        }
         const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;
         const duration = durMatch ? parseInt(durMatch[1]) : 60;
-        return { ...t, sMins: startMins, eMins: startMins + duration };
+        const eMins = (t.eMins !== null && t.eMins !== undefined) ? t.eMins : startMins + duration;
+        return { ...t, sMins: startMins, eMins };
       })
       .sort((a, b) => a.sMins - b.sMins);
 
@@ -1112,9 +1116,9 @@ export default function App() {
 
     const placed = new Set(); // ID zadań już umieszczonych w planie
 
-    // Budujemy listę slotów (luk) między zablokowanymi blokami
+    // Budujemy listę slotów (luk) na zadania elastyczne – TYLKO w ramach zaplanowanego zakresu [effectiveStart, dayLimitMins]
     const gaps = [];
-    let gapStart = timelineStart * 60;
+    let effectiveStart = timelineStart * 60;
 
     // Zabezpieczenie przed układaniem zadań w przeszłości (jeśli planujemy dzisiejszy dzień)
     const nowL = new Date();
@@ -1122,18 +1126,29 @@ export default function App() {
       const currentMins = nowL.getHours() * 60 + nowL.getMinutes();
       // Zaokrąglamy obecny czas w górę do pełnych 15 minut dla zachowania siatki
       const roundedCurrentMins = Math.ceil(currentMins / 15) * 15;
-      gapStart = Math.max(gapStart, roundedCurrentMins);
+      effectiveStart = Math.max(effectiveStart, roundedCurrentMins);
     }
 
+    let pointer = effectiveStart;
     for (const block of lockedBlocks) {
-      if (gapStart < block.sMins) {
-        gaps.push({ start: gapStart, end: block.sMins });
+      if (block.eMins <= pointer) continue;
+      if (block.sMins >= dayLimitMins) {
+        if (pointer < dayLimitMins) {
+          gaps.push({ start: pointer, end: dayLimitMins });
+          pointer = dayLimitMins;
+        }
+        break;
       }
-      gapStart = Math.max(gapStart, block.eMins);
+      const gapStartMins = Math.max(pointer, effectiveStart);
+      const gapEndMins = Math.min(block.sMins, dayLimitMins);
+      if (gapStartMins < gapEndMins) {
+        gaps.push({ start: gapStartMins, end: gapEndMins });
+      }
+      pointer = Math.max(pointer, block.eMins);
     }
     // Ostatnia luka po ostatnim zablokowanym bloku do końca dnia
-    if (gapStart < dayLimitMins) {
-      gaps.push({ start: gapStart, end: dayLimitMins });
+    if (pointer < dayLimitMins) {
+      gaps.push({ start: pointer, end: dayLimitMins });
     }
 
     // Dla każdej luki próbujemy wypełnić ją zadaniami z kolejki
@@ -1283,7 +1298,7 @@ export default function App() {
     } else {
       // 3a. Sprawdzamy czy zmieści się PRZED pierwszym zadaniem (z wymaganą przerwą po naszym zadaniu)
       const firstBlock = scheduledBlocks[0];
-      if (earliestPossible + duration + myBreak <= firstBlock.sMins) {
+      if (earliestPossible + duration + myBreak <= firstBlock.sMins && earliestPossible + duration <= dayLimitMins) {
         targetStart = earliestPossible;
       }
 
@@ -1296,19 +1311,19 @@ export default function App() {
           // Start po poprzednim zadaniu + jego przerwa
           const slotStart = Math.max(earliestPossible, curr.eMins + curr.breakTime);
 
-          // Musi zmieścić się nasze zadanie + nasza przerwa przed kolejnym zadaniem
-          if (slotStart + duration + myBreak <= next.sMins) {
+          // Musi zmieścić się nasze zadanie + nasza przerwa przed kolejnym zadaniem oraz przed końcem dnia pracy
+          if (slotStart + duration + myBreak <= next.sMins && slotStart + duration <= dayLimitMins) {
             targetStart = slotStart;
             break;
           }
         }
       }
 
-      // 3c. Jeśli nie zmieściło się w lukach, wstawiamy PO OSTATNIM zadaniu (+ jego przerwa)
+      // 3c. Jeśli nie zmieściło się w lukach, wstawiamy PO OSTATNIM zadaniu (+ jego przerwa), o ile mieści się w zaplanowanym zakresie
       if (targetStart === null) {
         const last = scheduledBlocks[scheduledBlocks.length - 1];
         const slotStart = Math.max(earliestPossible, last.eMins + last.breakTime);
-        if (slotStart + duration <= 24 * 60) {
+        if (slotStart + duration <= dayLimitMins) {
           targetStart = slotStart;
         }
       }
@@ -1672,12 +1687,19 @@ export default function App() {
     }
 
     try {
-      if (taskToSave.isLocked && taskToSave.lockDateTime && taskToSave.recurrence === "jednorazowo") {
+      if (taskToSave.isLocked && taskToSave.lockDateTime) {
         const d = new Date(taskToSave.lockDateTime);
-        taskToSave.pDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        taskToSave.sMins = d.getHours() * 60 + d.getMinutes();
-        const durMatch = taskToSave.duration ? taskToSave.duration.match(/(\d+)/) : null;
-        taskToSave.eMins = taskToSave.sMins + (durMatch ? parseInt(durMatch[1]) : 60);
+        if (!isNaN(d.getTime())) {
+          taskToSave.pDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          taskToSave.sMins = d.getHours() * 60 + d.getMinutes();
+          const durMatch = taskToSave.duration ? taskToSave.duration.match(/(\d+)/) : null;
+          taskToSave.eMins = taskToSave.sMins + (durMatch ? parseInt(durMatch[1]) : 60);
+        }
+      } else if (!taskToSave.isLocked && taskToSave.recurrence === "jednorazowo" && !taskToSave.lockDateTime && taskToSave.t && taskToSave.t.includes('🔒')) {
+        taskToSave.t = "";
+        taskToSave.sMins = null;
+        taskToSave.eMins = null;
+        taskToSave.pDate = null;
       }
 
       // Oddzielamy id od reszty danych
@@ -1743,8 +1765,9 @@ export default function App() {
               done: false,
               recurrence: 'zmaterializowane',
               recurrenceEnd: null,
-              sMins: null,
-              eMins: null,
+              sMins: taskDataWithoutId.sMins !== undefined ? taskDataWithoutId.sMins : null,
+              eMins: taskDataWithoutId.eMins !== undefined ? taskDataWithoutId.eMins : null,
+              isLocked: taskDataWithoutId.isLocked !== undefined ? taskDataWithoutId.isLocked : true,
             }));
 
             const { data: insData, error: insErr } = await supabase

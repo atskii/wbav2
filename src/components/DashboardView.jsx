@@ -299,25 +299,29 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
 
   const flexScheduled = tasks.filter(t => !t.isLocked && t.sMins !== null && t.sMins !== undefined && t.pDate === dateStr);
   const lockedScheduled = tasks.filter(t => {
-    if (!t.isLocked || !t.t) return false;
+    if (!t.isLocked) return false;
     // pDate jest głównym źródłem prawdy o przynależności do dnia
     if (t.pDate) return t.pDate === dateStr;
     // Fallback dla starych zadań bez pDate
-    return checkIsDate(t.t, selectedDate);
+    return t.t ? checkIsDate(t.t, selectedDate) : false;
   }).map(t => {
-    const match = t.t.match(/(\d{1,2}):(\d{2})/);
-    const startMins = match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
+    let startMins = t.sMins;
+    if (startMins === null || startMins === undefined) {
+      const match = t.t ? t.t.match(/(\d{1,2}):(\d{2})/) : null;
+      startMins = match ? parseInt(match[1]) * 60 + parseInt(match[2]) : 0;
+    }
     const durMatch = t.duration ? t.duration.match(/(\d+)/) : null;
     const duration = durMatch ? parseInt(durMatch[1]) : 60;
-    return { ...t, sMins: startMins, eMins: startMins + duration };
+    const endMins = (t.eMins !== null && t.eMins !== undefined) ? t.eMins : startMins + duration;
+    return { ...t, sMins: startMins, eMins: endMins };
   });
 
   const scheduled = [...flexScheduled, ...lockedScheduled].sort((a, b) => a.sMins - b.sMins);
 
   if (scheduled.length > 0) {
-    const earliestHour = Math.floor(scheduled[0].sMins / 60);
+    const earliestHour = Math.floor(Math.min(...scheduled.map(s => s.sMins)) / 60);
     if (earliestHour < timelineStart) {
-      timelineStart = earliestHour;
+      timelineStart = Math.max(0, earliestHour);
     }
   }
 
@@ -350,8 +354,12 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
 
   // Długość dnia pracy z onboardingu (domyślnie 12h od startu)
   const workHours = userPrefs?.hours || 12;
-  const lastTaskMins = scheduled.length > 0 ? scheduled[scheduled.length - 1].eMins : ((timelineStart + workHours) * 60);
-  const timelineEndHour = Math.min(Math.max(timelineStart + workHours, Math.ceil(lastTaskMins / 60) + 1), 24);
+  const maxTaskEndMins = scheduled.length > 0
+    ? Math.max(...scheduled.map(s => s.eMins || (s.sMins + (s.duration ? parseInt(s.duration) : 60))))
+    : ((timelineStart + workHours) * 60);
+  const targetEndHour = Math.ceil(maxTaskEndMins / 60);
+  const defaultEndHour = timelineStart + workHours;
+  const timelineEndHour = Math.min(24, Math.max(defaultEndHour, targetEndHour + 1));
   const hours = Array.from({ length: timelineEndHour - timelineStart + 1 }, (_, i) => timelineStart + i);
   const minsToRem = (mins) => (mins / 60) * 7.2;
   const formatTime = (mins) => `${Math.floor(mins / 60)}:${(mins % 60).toString().padStart(2, '0')}`;
@@ -433,7 +441,7 @@ export default function DashboardView({ tasks, moods, selectedDate, onChangeDate
 
           {/* RESPANSYWNA LINIA OSI CZASU */}
           <div className="xl:flex-1 xl:overflow-y-auto relative pr-2 md:pr-4 custom-scrollbar -mr-2 md:-mr-4 min-h-0">
-            <div className="relative mt-8" style={{ height: `${minsToRem((timelineEndHour - timelineStart) * 60)}rem` }}>
+            <div className="relative mt-8" style={{ height: `${minsToRem(Math.max((timelineEndHour - timelineStart) * 60, maxTaskEndMins - (timelineStart * 60)))}rem` }}>
               <div className="absolute left-[2.5rem] md:left-[3.25rem] top-0 bottom-0 border-l-2 border-dashed border-[#C4BBAF] z-0"></div>
               {isToday && nowMinute >= timelineStart*60 && nowMinute <= timelineEndHour*60 && (
                 <div className="absolute left-[2.5rem] md:left-[3.25rem] right-0 z-40 pointer-events-none flex items-center transition-all duration-1000" style={{ top: `${minsToRem(nowMinute - timelineStart*60)}rem` }}>
