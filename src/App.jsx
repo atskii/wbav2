@@ -285,7 +285,7 @@ export default function App() {
   // Sync Supabase Auth session & handle redirects
   useEffect(() => {
     const handleLocalhostRedirect = (email) => {
-      if (email === "alek.iglowski@gmail.com" && window.location.hostname !== "localhost") {
+      if (email === "haloh3998@gmail.com" && window.location.hostname !== "localhost") {
         window.location.href = "http://localhost:5173";
         return true;
       }
