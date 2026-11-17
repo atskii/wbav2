@@ -23,6 +23,7 @@ export default function MoodView({ moods, onOpenModal, onEditMood, todayDate, us
   }, [filter, moods, aiState.isOpen]);
 
   const handleAIAnalysis = async () => {
+    if (aiState.loading) return;
     if (aiTokens < 1) {
       setAiState({ 
         isOpen: true, 
