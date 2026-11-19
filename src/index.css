@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: #FCFCFD;
+  --color-foreground: #151515;
+  --color-primary: #0E6630;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #D0EBDA;
+  --color-secondary-foreground: #0E6630;
+  --color-muted: #E8F5EC;
+  --color-muted-foreground: #5A5A5A;
+  --color-accent: #E8F5EC;
+  --color-accent-foreground: #0E6630;
+  --color-destructive: #EF4444;
+  --color-destructive-foreground: #FFFFFF;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #151515;
+  --color-border: #E5E7EB;
+  --color-input: #D6D6D6;
+  --color-ring: #0E6630;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 /* Shared typography — replaces inline style={{ fontFamily }} objects */
 .font-lora {
   font-family: 'Lora', serif;

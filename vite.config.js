@@ -51,6 +51,11 @@ try {
 
 export default defineConfig({
   plugins: [react(), localGeminiApiPlugin()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     port: 5173,
     open: false

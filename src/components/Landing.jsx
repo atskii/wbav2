@@ -1,7 +1,14 @@
-import { useState } from "react";
-import {
-  Calendar, AlertTriangle, Bell, ArrowRight, Menu, X
-} from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { ArrowRight } from "lucide-react";
+import NavigationMenu4 from "./ui/navigation-menu-4";
+
+const SECTION_IDS = [
+  "home",
+  "produkt",
+  "wypalenie",
+  "o-nas",
+  "kontakt",
+];
 
 // ═══════════════════════════════════════════════════
 //  LANDING PAGE
@@ -9,65 +16,74 @@ import {
 export default function Landing({ onCTA }) {
   const fontInter = { fontFamily: "'Inter', sans-serif" };
   const fontDM = { fontFamily: "'DM Sans', sans-serif" };
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
+  const isProgrammaticScroll = useRef(false);
+  const scrollTimeoutRef = useRef(null);
+
+  const scrollToSection = useCallback((sectionId) => {
+    setActiveSection(sectionId);
+
+    const el = document.getElementById(sectionId);
+    if (!el) return;
+
+    isProgrammaticScroll.current = true;
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    const top = Math.max(0, el.getBoundingClientRect().top + window.scrollY - 72);
+    window.scrollTo({ top, behavior: "smooth" });
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      isProgrammaticScroll.current = false;
+    }, 750);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (isProgrammaticScroll.current) return;
+
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      if (docHeight - scrollBottom <= 60) {
+        setActiveSection("kontakt");
+        return;
+      }
+
+      const checkY = window.scrollY + 160;
+      let current = "home";
+      for (const id of SECTION_IDS) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const offsetTop = el.getBoundingClientRect().top + window.scrollY;
+        if (checkY >= offsetTop) {
+          current = id;
+        }
+      }
+      setActiveSection(current);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <div style={fontInter} className="min-h-screen bg-[#FCFCFD] text-[#151515] overflow-x-hidden relative">
-      {/* Mobile Menu Backdrop */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 z-40 md:hidden" 
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
+    <div style={fontInter} className="min-h-screen bg-[#FCFCFD] text-[#151515] overflow-x-clip relative">
       {/* Navbar */}
-      <nav className="bg-[#FCFCFD] px-4 md:px-8 py-4 relative z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-12">
-            <a href="#" className="flex items-center hover:opacity-90 transition-opacity">
-              <img src="/logo WBA.svg" alt="Wellbeing app" width="387" height="50" className="h-7 md:h-8 w-auto object-contain" />
-            </a>
-            <div className="hidden md:flex items-center gap-6">
-              <a href="#" className="text-[#0E6630] font-bold text-lg">Home</a>
-              <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">Produkt</a>
-              <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">Wypalenie</a>
-              <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">O nas</a>
-              <a href="#" className="text-[#5A5A5A] font-medium text-lg hover:text-[#0E6630]">Kontakt</a>
-            </div>
-          </div>
-          <div className="hidden md:flex items-center gap-4">
-            <button onClick={() => onCTA("login")} className="px-5 py-2.5 bg-[#D0EBDA] text-[#0E6630] font-medium rounded-lg hover:bg-[#bce0ca] transition-colors">Zaloguj się</button>
-            <button onClick={() => onCTA("register")} className="px-5 py-2.5 bg-[#0E6630] text-white font-medium rounded-lg hover:bg-[#0b5025] transition-colors">Zarejestruj się</button>
-          </div>
-          <button 
-            className="md:hidden p-2 text-[#03421C] ml-auto"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-
-        {/* Mobile Menu Overlay */}
-        {isMobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white shadow-xl border-t border-gray-100 flex flex-col p-6 gap-6 md:hidden rounded-b-2xl">
-            <div className="flex flex-col gap-4">
-              <a href="#" className="text-[#0E6630] font-bold text-lg">Home</a>
-              <a href="#" className="text-[#151515] font-medium text-lg">Produkt</a>
-              <a href="#" className="text-[#151515] font-medium text-lg">Wypalenie</a>
-              <a href="#" className="text-[#151515] font-medium text-lg">O nas</a>
-              <a href="#" className="text-[#151515] font-medium text-lg">Kontakt</a>
-            </div>
-            <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
-              <button onClick={() => onCTA("login")} className="w-full py-3 bg-[#D0EBDA] text-[#0E6630] font-medium rounded-lg text-center">Zaloguj się</button>
-              <button onClick={() => onCTA("register")} className="w-full py-3 bg-[#0E6630] text-white font-medium rounded-lg text-center hover:bg-[#0b5025] transition-all">Zarejestruj się</button>
-            </div>
-          </div>
-        )}
-      </nav>
+      <NavigationMenu4
+        onCTA={onCTA}
+        activeSection={activeSection}
+        onNavigate={scrollToSection}
+      />
 
       {/* Hero */}
-      <section className="py-12 md:py-20 px-4 md:px-8 max-w-7xl mx-auto flex flex-col md:grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+      <section id="home" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 max-w-7xl mx-auto flex flex-col md:grid md:grid-cols-2 gap-10 md:gap-16 items-center">
         <div className="max-w-xl order-1 md:order-1 text-left">
           <h1 className="text-[32px] md:text-5xl font-bold text-[#151515] leading-[1.2] mb-6 md:mb-8">
             Zdrowa produktywność bez wypalenia – zorganizuj swój dzień z Wellbeing App
@@ -85,7 +101,7 @@ export default function Landing({ onCTA }) {
       </section>
 
       {/* Benefits */}
-      <section className="py-12 md:py-20 px-4 md:px-8 bg-[#FFEDE6]">
+      <section id="produkt" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#FFEDE6]">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center md:items-center mb-10 md:mb-16">
             <span className="inline-block px-4 py-1 border border-[#F2733C] text-[#F2733C] rounded-full text-sm font-semibold mb-4 md:mb-6">Nasz produkt</span>
@@ -93,13 +109,29 @@ export default function Landing({ onCTA }) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[
-              { icon: <Calendar size={24} className="text-[#F2733C]" />, title: "Indywidualny planer, który pomaga organizować dzień i unikać przeciążenia" },
-              { icon: <AlertTriangle size={24} className="text-[#F2733C]" />, title: "Automatyczne sygnały, gdy Twój poziom stresu lub wypalenia rośnie" },
-              { icon: <Bell size={24} className="text-[#F2733C]" />, title: "Personalizowane wskazówki, jak zadbać o swój dobrostan i energię" }
+              {
+                image: "/benefit_planner.png",
+                alt: "Ilustracja indywidualnego planera zadań",
+                title: "Indywidualny planer, który pomaga organizować dzień i unikać przeciążenia"
+              },
+              {
+                image: "/benefit_signals.png",
+                alt: "Ilustracja automatycznych sygnałów stresu i wypalenia",
+                title: "Automatyczne sygnały, gdy Twój poziom stresu lub wypalenia rośnie"
+              },
+              {
+                image: "/benefit_tips.png",
+                alt: "Ilustracja personalizowanych wskazówek dobrostanu",
+                title: "Personalizowane wskazówki, jak zadbać o swój dobrostan i energię"
+              }
             ].map((f, i) => (
-              <div key={i} className="bg-white p-6 md:p-8 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-row md:flex-col items-center md:items-start text-left md:text-left gap-4 md:gap-0">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-[#FFEDE6] rounded-xl flex items-center justify-center mb-0 md:mb-6 shrink-0">
-                  {f.icon}
+              <div key={i} className="bg-white p-6 md:p-7 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-start text-left border border-[#F2733C]/10 group">
+                <div className="w-full aspect-square bg-[#F8F4E9] rounded-xl overflow-hidden mb-5 md:mb-6 flex items-center justify-center border border-[#E8DDD0]/60">
+                  <img
+                    src={f.image}
+                    alt={f.alt}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                  />
                 </div>
                 <p className="text-base md:text-xl font-medium text-[#151515] leading-relaxed">{f.title}</p>
               </div>
@@ -109,7 +141,7 @@ export default function Landing({ onCTA }) {
       </section>
 
       {/* Testimonials */}
-      <section className="py-12 md:py-20 px-4 md:px-8 bg-white">
+      <section id="opinie" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-white">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-16">
           <div className="flex-1 flex flex-col items-start text-left">
             <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Opinie</span>
@@ -134,7 +166,7 @@ export default function Landing({ onCTA }) {
       </section>
 
       {/* Wypalenie */}
-      <section className="py-12 md:py-20 px-4 md:px-8 bg-[#E8F5EC]">
+      <section id="wypalenie" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#E8F5EC]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-16">
           <div className="flex-1 flex justify-center order-2 md:order-1 w-full">
             <img src="/kluczykwypalenie.png" alt="Problem wypalenia" className="w-full max-w-lg aspect-square object-contain rounded-2xl md:rounded-3xl" />
@@ -153,7 +185,7 @@ export default function Landing({ onCTA }) {
       </section>
 
       {/* Co oferujemy */}
-      <section className="py-12 md:py-20 px-4 md:px-8 bg-[#E8F5EC] relative overflow-hidden">
+      <section id="co-oferujemy" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#E8F5EC] relative overflow-hidden">
         {/* Miejsce na grafikę w prawym dolnym rogu (np. niebieski ludzik) */}
         <div className="absolute bottom-0 right-0 w-32 h-32 md:w-[350px] md:h-[350px] pointer-events-none z-0 opacity-50 md:opacity-100">
           <img src="/blue_figure.png" alt="Ilustracja postaci" className="w-full h-full object-contain object-bottom right-0 bottom-0 absolute" />
@@ -200,7 +232,7 @@ export default function Landing({ onCTA }) {
       </section>
 
       {/* Nasza wizja */}
-      <section className="py-16 md:py-24 px-4 md:px-8 bg-[#0E6630] text-center relative overflow-hidden">
+      <section id="o-nas" className="scroll-mt-20 py-16 md:py-24 px-4 md:px-8 bg-[#0E6630] text-center relative overflow-hidden">
         <div className="max-w-4xl mx-auto relative z-10 flex flex-col items-center">
           <span className="inline-block px-4 py-1 border border-white text-white rounded-full text-sm font-semibold mb-6 md:mb-8">Nasza wizja</span>
           <p className="text-lg md:text-3xl font-bold text-white leading-relaxed">
@@ -210,7 +242,7 @@ export default function Landing({ onCTA }) {
       </section>
 
       {/* Rozwiązanie problemu */}
-      <section className="py-12 md:py-20 px-4 md:px-8 bg-white">
+      <section id="rozwiazanie" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-10 md:gap-16">
           <div className="flex-1 flex flex-col items-start text-left">
             <span className="inline-block px-4 py-1 border border-[#2F7377] text-[#2F7377] rounded-full text-sm font-semibold mb-4 md:mb-6 w-max">Rozwiązanie problemu</span>
@@ -231,7 +263,7 @@ export default function Landing({ onCTA }) {
       </section>
 
       {/* Kontakt */}
-      <section className="py-12 md:py-20 px-4 md:px-8 bg-[#F5EFE6] relative overflow-hidden">
+      <section id="kontakt" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#F5EFE6] relative overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none">
           {/* Miejsce na grafikę tła */}
           <img src="/kontakt_tlo.png" alt="Tło kontaktowe" className="w-full h-full object-cover object-bottom" />
@@ -276,15 +308,15 @@ export default function Landing({ onCTA }) {
       <footer className="bg-white py-8 md:py-12 px-4 md:px-8 border-t border-gray-100">
         <div className="max-w-7xl mx-auto flex flex-col items-center gap-8 md:gap-12 text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center justify-between w-full gap-6">
-            <a href="#" className="flex items-center hover:opacity-90 transition-opacity">
+            <a href="#home" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }} className="flex items-center hover:opacity-90 transition-opacity">
               <img src="/logo WBA.svg" alt="Wellbeing app" width="387" height="50" className="h-7 md:h-8 w-auto object-contain" />
             </a>
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-              <a href="#" className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Home</a>
-              <a href="#" className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Produkt</a>
-              <a href="#" className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Wypalenie</a>
-              <a href="#" className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">O nas</a>
-              <a href="#" className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Kontakt</a>
+              <a href="#home" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Home</a>
+              <a href="#produkt" onClick={(e) => { e.preventDefault(); scrollToSection("produkt"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Produkt</a>
+              <a href="#wypalenie" onClick={(e) => { e.preventDefault(); scrollToSection("wypalenie"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Wypalenie</a>
+              <a href="#o-nas" onClick={(e) => { e.preventDefault(); scrollToSection("o-nas"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">O nas</a>
+              <a href="#kontakt" onClick={(e) => { e.preventDefault(); scrollToSection("kontakt"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Kontakt</a>
             </div>
           </div>
           <div className="w-full h-px bg-[#F6F6F6]" />
