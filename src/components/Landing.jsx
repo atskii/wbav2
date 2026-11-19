@@ -630,9 +630,16 @@ export default function Landing({ onCTA }) {
       {/* Rozwiązanie problemu */}
       <section id="rozwiazanie" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-10 md:gap-16">
-          <div className="flex-1 flex flex-col items-start text-left">
-            <span className="inline-block px-4 py-1 border border-[#2F7377] text-[#2F7377] rounded-full text-sm font-semibold mb-4 md:mb-6 w-max">Rozwiązanie problemu</span>
-            <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] leading-tight mb-4 md:mb-8">Zaprojektowaliśmy aplikację Dla Ciebie</h2>
+          <div className="flex-1 flex flex-col items-start justify-between text-left">
+            <div>
+              <span className="inline-block px-4 py-1 border border-[#2F7377] text-[#2F7377] rounded-full text-sm font-semibold mb-4 md:mb-6 w-max">Rozwiązanie problemu</span>
+              <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] leading-tight mb-4 md:mb-8">Zaprojektowaliśmy aplikację Dla Ciebie</h2>
+            </div>
+            <img
+              src="/rozwiazanie_figure.png"
+              alt="Ilustracja równowagi i dobrostanu"
+              className="w-full max-w-[460px] md:max-w-[520px] h-auto object-contain mt-2"
+            />
           </div>
           <div className="flex-1 flex flex-col gap-4 md:gap-6 relative z-10">
             {[
