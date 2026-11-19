@@ -47,9 +47,9 @@ const TESTIMONIALS = [
   },
   {
     quote:
-      "Najbardziej cenię pełną prywatność danych i delikatny system ostrzegania. Pracownicy chętnie korzystają z aplikacji, bo wiedzą, że wspiera ich dobrostan bez żadnego nadzoru.",
+      "Najbardziej cenię pełną prywatność danych i delikatny system ostrzegania. Gdy przez kilka dni mam gorszy nastrój, aplikacja sama podpowiada mi, żeby zwolnić i zadbać o regenerację.",
     name: "Karolina Wiśniewska",
-    role: "HR Business Partner",
+    role: "Projektantka UX",
     initials: "KW",
   },
 ];
@@ -662,7 +662,7 @@ export default function Landing({ onCTA }) {
             Opisz swój nastrój i zadania do zrobienia, a my zaplanujemy wszystko dla Ciebie
           </h1>
           <p className="text-[#151515] text-base md:text-xl leading-relaxed mb-8">
-            Oferujemy prosty sposób, aby wspierać pracowników w radzeniu sobie ze stresem i wypaleniem zawodowym, zwiększać ich zaangażowanie i tworzyć zdrowszą, bardziej efektywną kulturę pracy.
+            Pomagamy Ci radzić sobie ze stresem i uniknąć wypalenia – układamy Twój dzień w zgodzie z Twoją energią, żebyś mógł pracować spokojniej i skuteczniej.
           </p>
           <button onClick={() => onCTA("register")} className="w-full sm:w-auto sm:min-w-[320px] inline-flex justify-center items-center gap-2.5 px-8 py-4 bg-[#0E6630] text-white text-base md:text-lg rounded-lg font-medium hover:bg-[#0b5025] transition-colors cursor-pointer">
             Ułóż swój dzień za darmo <ArrowRight size={20} />
@@ -685,7 +685,7 @@ export default function Landing({ onCTA }) {
             <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Co oferujemy</span>
             <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] mb-4 md:mb-6">Nasza aplikacja</h2>
             <p className="text-base md:text-xl text-[#151515] max-w-3xl leading-relaxed">
-              Jesteś pracownikiem, team leaderem czy menedżerem? Bez względu na rolę, nasza aplikacja wellbeing wspomoże Cię w efektywnym planowaniu dnia i zapobieganiu wypaleniu. Tylko 5-10 minut dziennie – spersonalizowana pod Ciebie, dla realnych rezultatów.
+              Studiujesz, pracujesz etatowo czy działasz na własny rachunek? Bez względu na to, jak wygląda Twój tydzień, nasza aplikacja pomoże Ci mądrze zaplanować dzień i zadbać o równowagę. Wystarczy 5–10 minut dziennie, w pełni dopasowanych do Ciebie.
             </p>
           </div>
           <div className="flex flex-col gap-5 md:gap-6 relative z-10 w-full items-center">
@@ -843,10 +843,10 @@ export default function Landing({ onCTA }) {
             <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Wypalenie</span>
             <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] mb-6 md:mb-8 leading-tight">Problem, który chcemy rozwiązać</h2>
             <p className="text-[#151515] text-base md:text-lg leading-relaxed mb-4 md:mb-6">
-              Wiele firm boryka się ze wzrostem wypalenia zawodowego wśród pracowników, co prowadzi do spadku efektywności, większej absencji i rotacji w zespole. Często brakuje narzędzi, które pozwalałyby w porę zauważyć przeciążenie i odpowiednio wspierać pracowników.
+              Coraz więcej osób zmaga się z ciągłym przeciążeniem, brakiem czasu na odpoczynek i powolnym wypaleniem. W codziennym biegu łatwo przeoczyć moment, w którym zmęczenie przestaje być chwilowe i zaczyna odbierać energię oraz satysfakcję.
             </p>
             <p className="text-[#0E6630] font-semibold text-base md:text-lg leading-relaxed">
-              Nasza aplikacja pomaga w tym wyzwaniu, oferując indywidualne planery, raporty i system ostrzegania przed wypaleniem. Dzięki temu HR może proaktywnie wspierać dobrostan zespołu i budować zdrowszą, bardziej efektywną kulturę pracy.
+              Nasza aplikacja pomaga Ci zatrzymać ten proces na czas – łączy indywidualny planer dnia, śledzenie nastroju i delikatny system ostrzegania, dzięki czemu szybciej zauważasz przeciążenie i odzyskujesz codzienną równowagę.
             </p>
           </div>
         </div>
@@ -967,7 +967,7 @@ export default function Landing({ onCTA }) {
             <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Kontakt</span>
             <h2 style={fontDM} className="text-[32px] md:text-5xl font-bold text-[#0D0D0D] tracking-tight mb-4 md:mb-6">Skontaktuj się z nami</h2>
             <p className="text-[#151515] text-base md:text-lg leading-relaxed max-w-md">
-              Masz pytania? Napisz do nas – pokażemy demo, porozmawiamy o możliwym wdrożeniu i przedstawimy, jak realnie może to zwiększyć efektywność pracy zespołu. Skontaktuj się z nami, a wspólnie dopasujemy najlepsze podejście dla Twojej organizacji.
+              Masz pytania, pomysł na nową funkcję albo potrzebujesz pomocy z aplikacją? Napisz do nas – chętnie odpowiemy, podpowiemy jak najlepiej wykorzystać Wellbeing App na co dzień i wysłuchamy Twoich sugestii.
             </p>
           </div>
           <div className="flex-1 w-full">
