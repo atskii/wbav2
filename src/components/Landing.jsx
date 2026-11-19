@@ -245,11 +245,10 @@ function InteractiveMoodMonitorPreview() {
               key={emoji}
               type="button"
               onClick={() => setSelectedIdx(idx)}
-              className={`w-6 h-6 text-xs rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                idx === selectedIdx
-                  ? "ring-2 ring-[#1E5C36] bg-[#E8F4ED] scale-110 shadow-xs"
-                  : "opacity-75 hover:opacity-100 hover:bg-[#F5EFE6]"
-              }`}
+              className={`w-6 h-6 text-xs rounded-xl flex items-center justify-center transition-all cursor-pointer ${idx === selectedIdx
+                ? "ring-2 ring-[#1E5C36] bg-[#E8F4ED] scale-110 shadow-xs"
+                : "opacity-75 hover:opacity-100 hover:bg-[#F5EFE6]"
+                }`}
               title={MOOD_L[idx]}
             >
               {emoji}
@@ -316,11 +315,10 @@ const OFFER_TOP_ROW = [
                 {["Dzień", "Tydzień", "Miesiąc", "Kwartał", "Rok"].map((tab) => (
                   <span
                     key={tab}
-                    className={`px-1 py-0.5 border-r last:border-r-0 border-[#F4F4F4] ${
-                      tab === "Tydzień"
-                        ? "bg-white font-bold text-[#000000]"
-                        : "bg-white font-semibold text-[#707070]"
-                    }`}
+                    className={`px-1 py-0.5 border-r last:border-r-0 border-[#F4F4F4] ${tab === "Tydzień"
+                      ? "bg-white font-bold text-[#000000]"
+                      : "bg-white font-semibold text-[#707070]"
+                      }`}
                   >
                     {tab}
                   </span>
@@ -661,27 +659,54 @@ export default function Landing({ onCTA }) {
       <section id="home" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 max-w-7xl mx-auto flex flex-col md:grid md:grid-cols-2 gap-10 md:gap-16 items-center">
         <div className="max-w-xl order-1 md:order-1 text-left">
           <h1 className="text-[32px] md:text-5xl font-bold text-[#151515] leading-[1.2] mb-6 md:mb-8">
-            Zdrowa produktywność bez wypalenia – zorganizuj swój dzień z Wellbeing App
+            Opisz swój nastrój i zadania do zrobienia, a my zaplanujemy wszystko dla Ciebie
           </h1>
           <p className="text-[#151515] text-base md:text-xl leading-relaxed mb-8">
             Oferujemy prosty sposób, aby wspierać pracowników w radzeniu sobie ze stresem i wypaleniem zawodowym, zwiększać ich zaangażowanie i tworzyć zdrowszą, bardziej efektywną kulturę pracy.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button onClick={() => onCTA("register")} className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 bg-[#0E6630] text-white rounded-lg font-medium hover:bg-[#0b5025] transition-colors cursor-pointer">
-              Zrób pierwszy krok <ArrowRight size={20} />
-            </button>
-            <button onClick={() => scrollToSection("co-oferujemy")} className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 bg-[#D0EBDA] text-[#0E6630] rounded-lg font-medium hover:bg-[#bce0ca] transition-colors cursor-pointer">
-              Zobacz, jak działa
-            </button>
-          </div>
+          <button onClick={() => onCTA("register")} className="w-full sm:w-auto sm:min-w-[320px] inline-flex justify-center items-center gap-2.5 px-8 py-4 bg-[#0E6630] text-white text-base md:text-lg rounded-lg font-medium hover:bg-[#0b5025] transition-colors cursor-pointer">
+            Ułóż swój dzień za darmo <ArrowRight size={20} />
+          </button>
         </div>
         <div className="flex justify-center order-2 md:order-2 w-full">
           <img src="/Frame 256.png" alt="Hero ilustracja" width="502" height="502" className="w-full max-w-md h-auto object-contain" />
         </div>
       </section>
 
+      {/* Co oferujemy */}
+      <section id="produkt" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#E8F5EC] relative overflow-hidden">
+        {/* Miejsce na grafikę w prawym dolnym rogu (np. niebieski ludzik) */}
+        <div className="absolute bottom-0 right-0 w-32 h-32 md:w-[350px] md:h-[350px] pointer-events-none z-0 opacity-50 md:opacity-100">
+          <img src="/blue_figure.png" alt="Ilustracja postaci" className="w-full h-full object-contain object-bottom right-0 bottom-0 absolute" />
+        </div>
+
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="flex flex-col items-center text-center mb-10 md:mb-16">
+            <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Co oferujemy</span>
+            <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] mb-4 md:mb-6">Nasza aplikacja</h2>
+            <p className="text-base md:text-xl text-[#151515] max-w-3xl leading-relaxed">
+              Jesteś pracownikiem, team leaderem czy menedżerem? Bez względu na rolę, nasza aplikacja wellbeing wspomoże Cię w efektywnym planowaniu dnia i zapobieganiu wypaleniu. Tylko 5-10 minut dziennie – spersonalizowana pod Ciebie, dla realnych rezultatów.
+            </p>
+          </div>
+          <div className="flex flex-col gap-5 md:gap-6 relative z-10 w-full items-center">
+            {/* Top row - 3 items */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 w-full">
+              {OFFER_TOP_ROW.map((item, idx) => (
+                <OfferCard key={item.title} item={item} index={idx} />
+              ))}
+            </div>
+            {/* Bottom row - 2 items */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 w-full max-w-4xl">
+              {OFFER_BOTTOM_ROW.map((item, idx) => (
+                <OfferCard key={item.title} item={item} index={idx} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Benefits */}
-      <section id="produkt" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#FFEDE6]">
+      <section id="korzysci" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#FFEDE6]">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center md:items-center mb-10 md:mb-16">
             <span className="inline-block px-4 py-1 border border-[#F2733C] text-[#F2733C] rounded-full text-sm font-semibold mb-4 md:mb-6">Nasz produkt</span>
@@ -787,9 +812,8 @@ export default function Landing({ onCTA }) {
                     type="button"
                     onClick={() => setTestimonialIdx(idx)}
                     aria-label={`Opinia ${idx + 1}`}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${
-                      idx === testimonialIdx ? "w-6 bg-[#0E6630]" : "w-2 bg-[#D0EBDA] hover:bg-[#0E6630]/50"
-                    }`}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${idx === testimonialIdx ? "w-6 bg-[#0E6630]" : "w-2 bg-[#D0EBDA] hover:bg-[#0E6630]/50"
+                      }`}
                   />
                 ))}
               </div>
@@ -824,38 +848,6 @@ export default function Landing({ onCTA }) {
             <p className="text-[#0E6630] font-semibold text-base md:text-lg leading-relaxed">
               Nasza aplikacja pomaga w tym wyzwaniu, oferując indywidualne planery, raporty i system ostrzegania przed wypaleniem. Dzięki temu HR może proaktywnie wspierać dobrostan zespołu i budować zdrowszą, bardziej efektywną kulturę pracy.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Co oferujemy */}
-      <section id="co-oferujemy" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#E8F5EC] relative overflow-hidden">
-        {/* Miejsce na grafikę w prawym dolnym rogu (np. niebieski ludzik) */}
-        <div className="absolute bottom-0 right-0 w-32 h-32 md:w-[350px] md:h-[350px] pointer-events-none z-0 opacity-50 md:opacity-100">
-          <img src="/blue_figure.png" alt="Ilustracja postaci" className="w-full h-full object-contain object-bottom right-0 bottom-0 absolute" />
-        </div>
-
-        <div className="max-w-6xl mx-auto relative z-10">
-          <div className="flex flex-col items-center text-center mb-10 md:mb-16">
-            <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Co oferujemy</span>
-            <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] mb-4 md:mb-6">Nasza aplikacja</h2>
-            <p className="text-base md:text-xl text-[#151515] max-w-3xl leading-relaxed">
-              Jesteś pracownikiem, team leaderem czy menedżerem? Bez względu na rolę, nasza aplikacja wellbeing wspomoże Cię w efektywnym planowaniu dnia i zapobieganiu wypaleniu. Tylko 5-10 minut dziennie – spersonalizowana pod Ciebie, dla realnych rezultatów.
-            </p>
-          </div>
-          <div className="flex flex-col gap-5 md:gap-6 relative z-10 w-full items-center">
-            {/* Top row - 3 items */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 w-full">
-              {OFFER_TOP_ROW.map((item, idx) => (
-                <OfferCard key={item.title} item={item} index={idx} />
-              ))}
-            </div>
-            {/* Bottom row - 2 items */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 w-full max-w-4xl">
-              {OFFER_BOTTOM_ROW.map((item, idx) => (
-                <OfferCard key={item.title} item={item} index={idx} />
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -938,9 +930,8 @@ export default function Landing({ onCTA }) {
                     </span>
                     <ChevronDown
                       size={18}
-                      className={`text-[#0E6630] shrink-0 transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
+                      className={`text-[#0E6630] shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
                   <AnimatePresence initial={false}>
@@ -1038,11 +1029,10 @@ export default function Landing({ onCTA }) {
 
                 {contactStatus && (
                   <div
-                    className={`flex items-start gap-2.5 p-3.5 rounded-lg text-sm font-medium ${
-                      contactStatus.type === "success"
-                        ? "bg-[#E8F5EC] text-[#0E6630] border border-[#0E6630]/20"
-                        : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
+                    className={`flex items-start gap-2.5 p-3.5 rounded-lg text-sm font-medium ${contactStatus.type === "success"
+                      ? "bg-[#E8F5EC] text-[#0E6630] border border-[#0E6630]/20"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                      }`}
                   >
                     {contactStatus.type === "success" ? (
                       <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
