@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   Sparkles,
@@ -14,8 +15,12 @@ import {
   Phone,
   ExternalLink,
   X,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import NavigationMenu4 from "./ui/navigation-menu-4";
+import { EMOJIS, MOOD_L } from "../lib/constants";
 
 const SECTION_IDS = [
   "home",
@@ -25,154 +30,256 @@ const SECTION_IDS = [
   "kontakt",
 ];
 
+const TESTIMONIALS = [
+  {
+    quote:
+      "Tydzień korzystania z Wellbeing app i nareszcie czuję się zorganizowana. Planer AI układa mój dzień tak, że kończę pracę bez poczucia przytłoczenia.",
+    name: "Anna Kowalska",
+    role: "Wykładowczyni na UW",
+    avatar: "/avatarLP.png",
+  },
+  {
+    quote:
+      "Jako lider zespołu często gubiłem się w spotkaniach i zadaniach na wczoraj. Automatyczne przerwy regeneracyjne i szybki check-in nastroju realnie poprawiły mój fokus.",
+    name: "Michał Nowak",
+    role: "Team Leader IT",
+    initials: "MN",
+  },
+  {
+    quote:
+      "Najbardziej cenię pełną prywatność danych i delikatny system ostrzegania. Pracownicy chętnie korzystają z aplikacji, bo wiedzą, że wspiera ich dobrostan bez żadnego nadzoru.",
+    name: "Karolina Wiśniewska",
+    role: "HR Business Partner",
+    initials: "KW",
+  },
+];
+
+const FAQ_ITEMS = [
+  {
+    q: "Jak działa system XP i roślinka (Streak Plant)?",
+    a: "Twoja wirtualna roślina to wskaźnik codziennej konsekwencji. Za każde wykonane zadanie zyskujesz punkty doświadczenia (XP), dzięki którym roślinka rośnie. Gdy wykonasz 100% zaplanowanego na dany dzień zestawu zadań, roślinka w pełni rozkwita.",
+  },
+  {
+    q: "Czy moje dane i wpisy o nastroju są bezpieczne?",
+    a: "Tak, w 100%. Twoje zadania i notatki o nastroju są bezpiecznie przechowywane i chronione. Żaden wpis nie jest udostępniany przełożonemu, działowi HR ani uczelni. Dodatkowo wpisy są automatycznie usuwane z serwera po 60 dniach braku aktywności.",
+  },
+  {
+    q: "Co oznaczają kolory przy zadaniach?",
+    a: "Kolory określają priorytet: czerwony to Priorytet Wysoki (najważniejsze na dziś), żółty to Priorytet Średni, a zielony to Priorytet Niski. Aplikacja automatycznie układa harmonogram tak, aby zadania o najwyższym priorytecie znalazły się na czele planu.",
+  },
+  {
+    q: "Jak zintegrować aplikację z Kalendarzem Google?",
+    a: "Wejdź w Ustawienia (ikona koła zębatego), kliknij „Synchronizuj Kalendarz” w sekcji Integracja z Google i zaloguj się na swoje konto. Twoje spotkania i wykłady pojawią się jako zablokowane czasowo zadania z ikoną kłódki.",
+  },
+  {
+    q: "Co się stanie, jeśli usunę konto?",
+    a: "Usunięcie konta w Ustawieniach powoduje natychmiastowe i bezpowrotne skasowanie wszystkich Twoich zadań, statystyk i historii nastrojów z serwera.",
+  },
+  {
+    q: "Gdzie znajdę profesjonalną pomoc psychologiczną?",
+    a: "W zakładce Pomoc (ikona koła ratunkowego) znajdziesz listę zweryfikowanych, bezpłatnych numerów wsparcia działających całą dobę (m.in. Kryzysowy Telefon Zaufania 116 123). Aplikacja sama delikatnie zasugeruje tę zakładkę, jeśli wykryje długotrwały spadek nastroju.",
+  },
+];
+
+function InteractiveTaskPlanerPreview() {
+  const [aiOptimized, setAiOptimized] = useState(true);
+
+  return (
+    <div className="p-2.5 flex-1 flex flex-col justify-between text-left bg-[#FAFAFA]">
+      {/* Header DashboardView */}
+      <div className="flex items-start justify-between gap-1.5 mb-1.5">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold text-[#1A2F22] tracking-tight leading-tight">
+            Dzisiejsze zadania
+          </p>
+          <div className="flex items-center gap-0.5 text-[8px] font-bold text-[#1A2F22] mt-0.5">
+            <ChevronLeft size={9} />
+            <span className="truncate">czwartek, 19 listopada</span>
+            <ChevronRight size={9} />
+          </div>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setAiOptimized((prev) => !prev)}
+            title="Kliknij, aby zobaczyć efekt AI"
+            className="relative inline-flex items-center gap-0.5 px-1.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-md text-[8px] font-bold shadow-2xs cursor-pointer active:scale-95 transition-all"
+          >
+            <Sparkles size={8} />
+            AI
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-400 border border-white rounded-full animate-pulse" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setAiOptimized((prev) => !prev)}
+            className="inline-flex items-center gap-0.5 px-1.5 py-1 bg-[#057E85] hover:bg-[#04686e] text-white rounded-md text-[8px] font-bold shadow-2xs cursor-pointer active:scale-95 transition-all"
+          >
+            <RefreshCw size={8} />
+            {aiOptimized ? "Zbalansowany" : "Generuj plan"}
+          </button>
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-1 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-md text-[8px] font-bold">
+            Dodaj <Plus size={8} />
+          </span>
+        </div>
+      </div>
+
+      {/* Oś czasu */}
+      <div className="relative flex-1 flex flex-col justify-between pl-7">
+        <div className="absolute left-6 top-1 bottom-1 border-l-2 border-dashed border-[#C4BBAF]" />
+
+        {/* Linia "teraz" */}
+        <div className="absolute left-6 right-0 top-[44%] flex items-center z-10 pointer-events-none">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#E40D0D] -ml-[4px]" />
+          <span className="flex-1 h-[1.5px] bg-[#E40D0D]" />
+        </div>
+
+        <span className="absolute left-0 top-1 text-[8px] font-bold text-[#9FB5AD]">8:00</span>
+        <span className="absolute left-0 top-[41%] text-[8px] font-bold text-[#9FB5AD]">9:00</span>
+        <span className="absolute left-0 bottom-1 text-[8px] font-bold text-[#9FB5AD]">10:00</span>
+
+        {aiOptimized ? (
+          <>
+            <div className="bg-white rounded-[10px] border-2 border-[#E8DDD0] px-2.5 py-1.5 shadow-2xs transition-all">
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[9.5px] font-bold text-[#1A2F22] truncate">
+                  Przygotowanie prezentacji
+                </span>
+                <span className="text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase bg-red-100 text-red-700 shrink-0">
+                  WYSOKI PRIORYTET
+                </span>
+              </div>
+              <p className="text-[8px] text-[#5A5A5A] mt-0.5">8:00 — 9:00</p>
+            </div>
+
+            <div className="flex items-center justify-center gap-1 py-0.5">
+              <Clock size={9} className="text-[#057E85]" />
+              <span className="text-[8.5px] font-semibold text-[#057E85]">
+                Czas na regenerację
+              </span>
+            </div>
+
+            <div className="bg-white rounded-[10px] border-2 border-[#E8DDD0] px-2.5 py-1.5 shadow-2xs transition-all">
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[9.5px] font-bold text-[#1A2F22] truncate">
+                  Spotkanie projektowe
+                </span>
+                <span className="text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase bg-yellow-100 text-yellow-700 shrink-0">
+                  ŚREDNI PRIORYTET
+                </span>
+              </div>
+              <p className="text-[8px] text-[#5A5A5A] mt-0.5">9:30 — 10:30</p>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col justify-center gap-1.5">
+            <div className="bg-white/90 rounded-[10px] border border-dashed border-[#C4BBAF] px-2.5 py-1.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[9.5px] font-bold text-[#5A5A5A] truncate">
+                  Spotkanie projektowe (bez godziny)
+                </span>
+                <span className="text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase bg-yellow-100 text-yellow-700 shrink-0">
+                  ŚREDNI
+                </span>
+              </div>
+            </div>
+            <div className="bg-white/90 rounded-[10px] border border-dashed border-[#C4BBAF] px-2.5 py-1.5">
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[9.5px] font-bold text-[#5A5A5A] truncate">
+                  Przygotowanie prezentacji (bez godziny)
+                </span>
+                <span className="text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase bg-red-100 text-red-700 shrink-0">
+                  WYSOKI
+                </span>
+              </div>
+            </div>
+            <p className="text-[8px] font-semibold text-[#057E85] text-center">
+              Kliknij „AI”, aby ułożyć dzień z przerwą ✨
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InteractiveMoodMonitorPreview() {
+  const [selectedIdx, setSelectedIdx] = useState(4);
+
+  return (
+    <div className="p-2.5 flex-1 flex items-center justify-center bg-[#1A2F22]/10 text-left">
+      <div className="w-full bg-white rounded-2xl shadow-md p-3 border border-[#E8DDD0]">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="font-bold text-[#1A2F22] text-[10.5px]">
+            Zarejestruj swój nastrój
+          </span>
+          <X size={11} className="text-[#9FB5AD]" />
+        </div>
+
+        <p className="text-[8.5px] font-bold text-[#1A2F22] mb-1">Jak się czujesz?</p>
+
+        <div className="grid grid-cols-2 gap-1.5 mb-2">
+          <div className="opacity-55">
+            <p className="text-[6.5px] font-bold text-[#5A7368] uppercase tracking-widest mb-0.5">
+              W tym momencie
+            </p>
+            <div className="px-2 py-1 bg-gray-100 border border-gray-200 rounded-lg text-[8px] flex justify-between items-center text-gray-500">
+              Dzisiaj <ChevronDown size={9} />
+            </div>
+          </div>
+          <div>
+            <p className="text-[6.5px] font-bold text-[#5A7368] uppercase tracking-widest mb-0.5">
+              Godzina
+            </p>
+            <div className="px-2 py-1 bg-[#F5EFE6] border border-[#E8DDD0] rounded-lg text-[8px] font-bold text-[#1E5C36] flex items-center gap-1">
+              <Clock size={9} /> 09:30
+            </div>
+          </div>
+        </div>
+
+        <p className="text-[6.5px] font-bold text-[#5A7368] uppercase tracking-widest mb-1">
+          Twój nastrój (kliknij emotkę)
+        </p>
+        <div className="flex justify-between items-center mb-1">
+          {EMOJIS.map((emoji, idx) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => setSelectedIdx(idx)}
+              className={`w-6 h-6 text-xs rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                idx === selectedIdx
+                  ? "ring-2 ring-[#1E5C36] bg-[#E8F4ED] scale-110 shadow-xs"
+                  : "opacity-75 hover:opacity-100 hover:bg-[#F5EFE6]"
+              }`}
+              title={MOOD_L[idx]}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+        <p className="text-center text-[8.5px] font-bold text-[#1E5C36] mb-1.5">
+          {MOOD_L[selectedIdx]}
+        </p>
+
+        <div className="w-full py-1.5 bg-[#1E5C36] text-white rounded-xl font-bold text-[8.5px] text-center shadow-sm">
+          Zapisz i kontynuuj
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const OFFER_TOP_ROW = [
   {
     icon: "/checklist.png",
     title: "Task planer",
     desc: "Układa zadania w harmonogram spersonalizowany pod Ciebie.",
-    preview: (
-      <div className="p-2.5 flex-1 flex flex-col justify-between text-left bg-[#FAFAFA]">
-        {/* Header DashboardView */}
-        <div className="flex items-start justify-between gap-1.5 mb-1.5">
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold text-[#1A2F22] tracking-tight leading-tight">
-              Dzisiejsze zadania
-            </p>
-            <div className="flex items-center gap-0.5 text-[8px] font-bold text-[#1A2F22] mt-0.5">
-              <ChevronLeft size={9} />
-              <span className="truncate">czwartek, 19 listopada</span>
-              <ChevronRight size={9} />
-            </div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <span className="relative inline-flex items-center gap-0.5 px-1.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-md text-[8px] font-bold shadow-2xs">
-              <Sparkles size={8} />
-              AI
-              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-400 border border-white rounded-full" />
-            </span>
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-1 bg-[#057E85] text-white rounded-md text-[8px] font-bold shadow-2xs">
-              <RefreshCw size={8} />
-              Generuj plan
-            </span>
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-1 bg-white border border-[#E8DDD0] text-[#1A2F22] rounded-md text-[8px] font-bold">
-              Dodaj <Plus size={8} />
-            </span>
-          </div>
-        </div>
-
-        {/* Oś czasu */}
-        <div className="relative flex-1 flex flex-col justify-between pl-7">
-          <div className="absolute left-6 top-1 bottom-1 border-l-2 border-dashed border-[#C4BBAF]" />
-
-          {/* Linia "teraz" */}
-          <div className="absolute left-6 right-0 top-[44%] flex items-center z-10 pointer-events-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E40D0D] -ml-[4px]" />
-            <span className="flex-1 h-[1.5px] bg-[#E40D0D]" />
-          </div>
-
-          <span className="absolute left-0 top-1 text-[8px] font-bold text-[#9FB5AD]">8:00</span>
-          <span className="absolute left-0 top-[41%] text-[8px] font-bold text-[#9FB5AD]">9:00</span>
-          <span className="absolute left-0 bottom-1 text-[8px] font-bold text-[#9FB5AD]">10:00</span>
-
-          {/* Karta zadania 1 */}
-          <div className="bg-white rounded-[10px] border-2 border-[#E8DDD0] px-2.5 py-1.5 shadow-2xs">
-            <div className="flex items-center justify-between gap-1.5">
-              <span className="text-[9.5px] font-bold text-[#1A2F22] truncate">
-                Przygotowanie prezentacji
-              </span>
-              <span className="text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase bg-red-100 text-red-700 shrink-0">
-                WYSOKI PRIORYTET
-              </span>
-            </div>
-            <p className="text-[8px] text-[#5A5A5A] mt-0.5">8:00 — 9:00</p>
-          </div>
-
-          {/* Przerwa regeneracyjna */}
-          <div className="flex items-center justify-center gap-1 py-0.5">
-            <Clock size={9} className="text-[#057E85]" />
-            <span className="text-[8.5px] font-semibold text-[#057E85]">
-              Czas na regenerację
-            </span>
-          </div>
-
-          {/* Karta zadania 2 */}
-          <div className="bg-white rounded-[10px] border-2 border-[#E8DDD0] px-2.5 py-1.5 shadow-2xs">
-            <div className="flex items-center justify-between gap-1.5">
-              <span className="text-[9.5px] font-bold text-[#1A2F22] truncate">
-                Spotkanie projektowe
-              </span>
-              <span className="text-[7px] px-1.5 py-0.5 rounded-full font-bold uppercase bg-yellow-100 text-yellow-700 shrink-0">
-                ŚREDNI PRIORYTET
-              </span>
-            </div>
-            <p className="text-[8px] text-[#5A5A5A] mt-0.5">9:30 — 10:30</p>
-          </div>
-        </div>
-      </div>
-    ),
+    preview: <InteractiveTaskPlanerPreview />,
   },
   {
     icon: "/sentiment_satisfied.png",
     title: "Monitor nastroju",
-    desc: "Krótka, codzienna skala 5 stopniowa, która zbiera to, jak się czujesz w pracy.",
-    preview: (
-      <div className="p-2.5 flex-1 flex items-center justify-center bg-[#1A2F22]/10 text-left">
-        <div className="w-full bg-white rounded-2xl shadow-md p-3 border border-[#E8DDD0]">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="font-bold text-[#1A2F22] text-[10.5px]">
-              Zarejestruj swój nastrój
-            </span>
-            <X size={11} className="text-[#9FB5AD]" />
-          </div>
-
-          <p className="text-[8.5px] font-bold text-[#1A2F22] mb-1">Jak się czujesz?</p>
-
-          <div className="grid grid-cols-2 gap-1.5 mb-2">
-            <div className="opacity-55">
-              <p className="text-[6.5px] font-bold text-[#5A7368] uppercase tracking-widest mb-0.5">
-                W tym momencie
-              </p>
-              <div className="px-2 py-1 bg-gray-100 border border-gray-200 rounded-lg text-[8px] flex justify-between items-center text-gray-500">
-                Dzisiaj <ChevronDown size={9} />
-              </div>
-            </div>
-            <div>
-              <p className="text-[6.5px] font-bold text-[#5A7368] uppercase tracking-widest mb-0.5">
-                Godzina
-              </p>
-              <div className="px-2 py-1 bg-[#F5EFE6] border border-[#E8DDD0] rounded-lg text-[8px] font-bold text-[#1E5C36] flex items-center gap-1">
-                <Clock size={9} /> 09:30
-              </div>
-            </div>
-          </div>
-
-          <p className="text-[6.5px] font-bold text-[#5A7368] uppercase tracking-widest mb-1">
-            Twój nastrój
-          </p>
-          <div className="flex justify-between items-center mb-1">
-            {["😫", "😟", "😐", "🙂", "😊", "😄", "🤩"].map((emoji, idx) => (
-              <span
-                key={emoji}
-                className={`w-6 h-6 text-xs rounded-xl flex items-center justify-center ${
-                  idx === 4
-                    ? "ring-2 ring-[#1E5C36] bg-[#E8F4ED] scale-110 shadow-xs"
-                    : "opacity-80"
-                }`}
-              >
-                {emoji}
-              </span>
-            ))}
-          </div>
-          <p className="text-center text-[8px] font-bold text-[#1E5C36] mb-1.5">
-            Bardzo dobrze
-          </p>
-
-          <div className="w-full py-1.5 bg-[#1E5C36] text-white rounded-xl font-bold text-[8.5px] text-center shadow-sm">
-            Zapisz i kontynuuj
-          </div>
-        </div>
-      </div>
-    ),
+    desc: "Krótka, codzienna skala 7-stopniowa, która zbiera to, jak się czujesz w pracy.",
+    preview: <InteractiveMoodMonitorPreview />,
   },
   {
     icon: "/query_stats.png",
@@ -396,9 +503,15 @@ const OFFER_BOTTOM_ROW = [
   },
 ];
 
-function OfferCard({ item }) {
+function OfferCard({ item, index = 0 }) {
   return (
-    <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-start text-left border border-[#0E6630]/10 group">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.45, delay: index * 0.08 }}
+      className="bg-white p-5 md:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-start text-left border border-[#0E6630]/10 group"
+    >
       <div className="w-full h-52 rounded-xl border border-[#E8DDD0] overflow-hidden mb-5 flex flex-col group-hover:border-[#0E6630]/35 transition-all">
         {item.preview}
       </div>
@@ -407,7 +520,7 @@ function OfferCard({ item }) {
         <h3 className="font-bold text-[#151515] text-base md:text-lg">{item.title}</h3>
       </div>
       <p className="text-sm text-[#5A5A5A] leading-relaxed">{item.desc}</p>
-    </div>
+    </motion.div>
   );
 }
 
@@ -418,8 +531,69 @@ export default function Landing({ onCTA }) {
   const fontInter = { fontFamily: "'Inter', sans-serif" };
   const fontDM = { fontFamily: "'DM Sans', sans-serif" };
   const [activeSection, setActiveSection] = useState("home");
+  const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [openFaqIdx, setOpenFaqIdx] = useState(0);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    message: "",
+    acceptedTerms: false,
+    website: "",
+  });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactStatus, setContactStatus] = useState(null);
   const isProgrammaticScroll = useRef(false);
   const scrollTimeoutRef = useRef(null);
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setContactStatus(null);
+
+    if (contactForm.name.trim().length < 2) {
+      setContactStatus({ type: "error", text: "Wpisz swoje imię (min. 2 znaki)." });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactForm.email.trim())) {
+      setContactStatus({ type: "error", text: "Podaj poprawny adres e-mail." });
+      return;
+    }
+    if (contactForm.message.trim().length < 10) {
+      setContactStatus({ type: "error", text: "Wiadomość powinna mieć co najmniej 10 znaków." });
+      return;
+    }
+    if (!contactForm.acceptedTerms) {
+      setContactStatus({ type: "error", text: "Zaakceptuj regulamin przed wysłaniem wiadomości." });
+      return;
+    }
+
+    setContactLoading(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contactForm),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || "Nie udało się wysłać wiadomości.");
+      }
+      setContactStatus({
+        type: "success",
+        text: "Dziękujemy! Twoja wiadomość została wysłana — odezwiemy się wkrótce.",
+      });
+      setContactForm({
+        name: "",
+        email: "",
+        message: "",
+        acceptedTerms: false,
+        website: "",
+      });
+    } catch (err) {
+      setContactStatus({ type: "error", text: err.message });
+    } finally {
+      setContactLoading(false);
+    }
+  };
 
   const scrollToSection = useCallback((sectionId) => {
     setActiveSection(sectionId);
@@ -492,9 +666,14 @@ export default function Landing({ onCTA }) {
           <p className="text-[#151515] text-base md:text-xl leading-relaxed mb-8">
             Oferujemy prosty sposób, aby wspierać pracowników w radzeniu sobie ze stresem i wypaleniem zawodowym, zwiększać ich zaangażowanie i tworzyć zdrowszą, bardziej efektywną kulturę pracy.
           </p>
-          <button onClick={() => onCTA("login")} className="w-full md:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 bg-[#0E6630] text-white rounded-lg font-medium hover:bg-[#0b5025] transition-colors">
-            Zrób pierwszy krok <ArrowRight size={20} />
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button onClick={() => onCTA("register")} className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 bg-[#0E6630] text-white rounded-lg font-medium hover:bg-[#0b5025] transition-colors cursor-pointer">
+              Zrób pierwszy krok <ArrowRight size={20} />
+            </button>
+            <button onClick={() => scrollToSection("co-oferujemy")} className="w-full sm:w-auto inline-flex justify-center items-center gap-2 px-6 py-3.5 bg-[#D0EBDA] text-[#0E6630] rounded-lg font-medium hover:bg-[#bce0ca] transition-colors cursor-pointer">
+              Zobacz, jak działa
+            </button>
+          </div>
         </div>
         <div className="flex justify-center order-2 md:order-2 w-full">
           <img src="/Frame 256.png" alt="Hero ilustracja" width="502" height="502" className="w-full max-w-md h-auto object-contain" />
@@ -526,7 +705,14 @@ export default function Landing({ onCTA }) {
                 title: "Personalizowane wskazówki, jak zadbać o swój dobrostan i energię"
               }
             ].map((f, i) => (
-              <div key={i} className="bg-white p-6 md:p-7 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-start text-left border border-[#F2733C]/10 group">
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.45, delay: i * 0.1 }}
+                className="bg-white p-6 md:p-7 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-start text-left border border-[#F2733C]/10 group"
+              >
                 <div className="w-full aspect-square bg-[#F8F4E9] rounded-xl overflow-hidden mb-5 md:mb-6 flex items-center justify-center border border-[#E8DDD0]/60">
                   <img
                     src={f.image}
@@ -535,7 +721,7 @@ export default function Landing({ onCTA }) {
                   />
                 </div>
                 <p className="text-base md:text-xl font-medium text-[#151515] leading-relaxed">{f.title}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -544,20 +730,77 @@ export default function Landing({ onCTA }) {
       {/* Testimonials */}
       <section id="opinie" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-white">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-16">
-          <div className="flex-1 flex flex-col items-start text-left">
+          <div className="flex-1 flex flex-col items-start text-left w-full">
             <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Opinie</span>
             <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] mb-6 md:mb-8 leading-tight">Co mówią nasi użytkownicy</h2>
-            <p className="text-base md:text-lg text-[#151515] mb-6 md:mb-8 leading-relaxed max-w-lg">
-              "Tydzień korzystania z Wellbeing app i nareszcie czuję się zorganizowana"
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                <img src="/avatarLP.png" alt="Anna Kowalska" className="w-full h-full object-cover" />
+            <div className="min-h-[168px] w-full max-w-lg flex flex-col justify-between">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={testimonialIdx}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <p className="text-base md:text-lg text-[#151515] mb-6 leading-relaxed">
+                    „{TESTIMONIALS[testimonialIdx].quote}”
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-[#E8F5EC] text-[#0E6630] font-bold rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                      {TESTIMONIALS[testimonialIdx].avatar ? (
+                        <img
+                          src={TESTIMONIALS[testimonialIdx].avatar}
+                          alt={TESTIMONIALS[testimonialIdx].name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{TESTIMONIALS[testimonialIdx].initials}</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm md:text-base text-[#151515]">
+                        {TESTIMONIALS[testimonialIdx].name}
+                      </p>
+                      <p className="text-xs md:text-sm text-[#5A5A5A]">
+                        {TESTIMONIALS[testimonialIdx].role}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() =>
+                  setTestimonialIdx((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length)
+                }
+                aria-label="Poprzednia opinia"
+                className="p-2 rounded-full border border-[#E5E7EB] text-[#151515] hover:border-[#0E6630] hover:text-[#0E6630] transition-colors cursor-pointer"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className="flex items-center gap-1.5">
+                {TESTIMONIALS.map((t, idx) => (
+                  <button
+                    key={t.name}
+                    type="button"
+                    onClick={() => setTestimonialIdx(idx)}
+                    aria-label={`Opinia ${idx + 1}`}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      idx === testimonialIdx ? "w-6 bg-[#0E6630]" : "w-2 bg-[#D0EBDA] hover:bg-[#0E6630]/50"
+                    }`}
+                  />
+                ))}
               </div>
-              <div>
-                <p className="font-medium text-sm md:text-base text-[#151515]">Anna Kowalska</p>
-                <p className="text-xs md:text-sm text-[#5A5A5A]">Wykładowczyni na UW</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setTestimonialIdx((prev) => (prev + 1) % TESTIMONIALS.length)}
+                aria-label="Następna opinia"
+                className="p-2 rounded-full border border-[#E5E7EB] text-[#151515] hover:border-[#0E6630] hover:text-[#0E6630] transition-colors cursor-pointer"
+              >
+                <ChevronRight size={18} />
+              </button>
             </div>
           </div>
           <div className="flex-1 flex justify-center w-full">
@@ -603,14 +846,14 @@ export default function Landing({ onCTA }) {
           <div className="flex flex-col gap-5 md:gap-6 relative z-10 w-full items-center">
             {/* Top row - 3 items */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 w-full">
-              {OFFER_TOP_ROW.map((item) => (
-                <OfferCard key={item.title} item={item} />
+              {OFFER_TOP_ROW.map((item, idx) => (
+                <OfferCard key={item.title} item={item} index={idx} />
               ))}
             </div>
             {/* Bottom row - 2 items */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6 w-full max-w-4xl">
-              {OFFER_BOTTOM_ROW.map((item) => (
-                <OfferCard key={item.title} item={item} />
+              {OFFER_BOTTOM_ROW.map((item, idx) => (
+                <OfferCard key={item.title} item={item} index={idx} />
               ))}
             </div>
           </div>
@@ -647,10 +890,77 @@ export default function Landing({ onCTA }) {
               "Codziennie oceniasz nastrój w prostej skali, aplikacja analizuje emocje i czas pracy, sygnalizując ryzyka z indywidualnymi wskazówkami.",
               "To Twój osobisty asystent równowagi – wypróbuj i przekonaj się o zmianie."
             ].map((text, i) => (
-              <div key={i} className="bg-[#E4F6F8] p-5 md:p-6 rounded-xl text-[#151515] text-sm md:text-lg leading-relaxed shadow-sm">
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="bg-[#E4F6F8] p-5 md:p-6 rounded-xl text-[#151515] text-sm md:text-lg leading-relaxed shadow-sm"
+              >
                 {text}
-              </div>
+              </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#FCFCFD] border-t border-gray-100">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-10 md:mb-12">
+            <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4">
+              FAQ
+            </span>
+            <h2 className="text-[24px] md:text-4xl font-bold text-[#151515]">
+              Najczęściej zadawane pytania
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {FAQ_ITEMS.map((item, idx) => {
+              const isOpen = openFaqIdx === idx;
+              return (
+                <motion.div
+                  key={item.q}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  transition={{ duration: 0.35, delay: idx * 0.04 }}
+                  className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden shadow-2xs"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaqIdx(isOpen ? -1 : idx)}
+                    className="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-[#E8F5EC]/40 transition-colors cursor-pointer"
+                  >
+                    <span className="font-semibold text-[#151515] text-sm md:text-base">
+                      {item.q}
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      className={`text-[#0E6630] shrink-0 transition-transform duration-200 ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-4 pt-1 text-sm md:text-base text-[#5A5A5A] leading-relaxed border-t border-gray-100">
+                          {item.a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -670,29 +980,96 @@ export default function Landing({ onCTA }) {
             </p>
           </div>
           <div className="flex-1 w-full">
-            <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 w-full">
+            <form onSubmit={handleContactSubmit} className="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 w-full">
+              {/* Ukryty honeypot przeciwko botom */}
+              <input
+                type="text"
+                name="website"
+                value={contactForm.website}
+                onChange={(e) => setContactForm((prev) => ({ ...prev, website: e.target.value }))}
+                tabIndex={-1}
+                autoComplete="off"
+                className="hidden"
+                aria-hidden="true"
+              />
               <div className="space-y-5 md:space-y-6">
                 <div>
                   <label className="block text-[#151515] text-sm md:text-base font-medium mb-1 md:mb-2">Imię</label>
-                  <input type="text" placeholder="Twoje imię" className="w-full px-4 py-2.5 md:py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630] text-sm md:text-base" />
+                  <input
+                    type="text"
+                    required
+                    value={contactForm.name}
+                    onChange={(e) => setContactForm((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="Twoje imię"
+                    className="w-full px-4 py-2.5 md:py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630] text-sm md:text-base"
+                  />
                 </div>
                 <div>
                   <label className="block text-[#151515] text-sm md:text-base font-medium mb-1 md:mb-2">Email</label>
-                  <input type="email" placeholder="Wpisz e-mail" className="w-full px-4 py-2.5 md:py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630] text-sm md:text-base" />
+                  <input
+                    type="email"
+                    required
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm((prev) => ({ ...prev, email: e.target.value }))}
+                    placeholder="Wpisz e-mail"
+                    className="w-full px-4 py-2.5 md:py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630] text-sm md:text-base"
+                  />
                 </div>
                 <div>
                   <label className="block text-[#151515] text-sm md:text-base font-medium mb-1 md:mb-2">Twoja wiadomość</label>
-                  <textarea placeholder="Napisz..." rows={4} className="w-full px-4 py-2.5 md:py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630] resize-none text-sm md:text-base" />
+                  <textarea
+                    required
+                    value={contactForm.message}
+                    onChange={(e) => setContactForm((prev) => ({ ...prev, message: e.target.value }))}
+                    placeholder="Napisz..."
+                    rows={4}
+                    className="w-full px-4 py-2.5 md:py-3 border border-[#D6D6D6] rounded-lg focus:outline-none focus:border-[#0E6630] resize-none text-sm md:text-base"
+                  />
                 </div>
                 <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-4 h-4 md:w-5 md:h-5 border-[#DFDBDB] rounded accent-[#0E6630] shrink-0" />
+                  <input
+                    type="checkbox"
+                    checked={contactForm.acceptedTerms}
+                    onChange={(e) => setContactForm((prev) => ({ ...prev, acceptedTerms: e.target.checked }))}
+                    className="mt-1 w-4 h-4 md:w-5 md:h-5 border-[#DFDBDB] rounded accent-[#0E6630] shrink-0"
+                  />
                   <span className="text-[#151515] text-xs md:text-sm mt-0.5">Akceptuję <a href="/regulamin" className="underline">regulamin</a></span>
                 </label>
-                <button className="flex justify-center items-center gap-2 px-6 py-3 bg-[#0E6630] text-white font-medium rounded-lg hover:bg-[#0b5025] transition-colors w-full md:w-auto mt-2">
-                  Wyślij <ArrowRight size={18} />
+
+                {contactStatus && (
+                  <div
+                    className={`flex items-start gap-2.5 p-3.5 rounded-lg text-sm font-medium ${
+                      contactStatus.type === "success"
+                        ? "bg-[#E8F5EC] text-[#0E6630] border border-[#0E6630]/20"
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    }`}
+                  >
+                    {contactStatus.type === "success" ? (
+                      <CheckCircle2 size={18} className="shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                    )}
+                    <span>{contactStatus.text}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={contactLoading}
+                  className="flex justify-center items-center gap-2 px-6 py-3 bg-[#0E6630] text-white font-medium rounded-lg hover:bg-[#0b5025] transition-colors w-full md:w-auto mt-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {contactLoading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" /> Wysyłanie...
+                    </>
+                  ) : (
+                    <>
+                      Wyślij <ArrowRight size={18} />
+                    </>
+                  )}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </section>
@@ -717,7 +1094,7 @@ export default function Landing({ onCTA }) {
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6 text-xs md:text-sm text-[#121212] order-2 md:order-1">
               <a href="/polityka-prywatnosci" className="underline hover:text-[#0E6630]">Polityka prywatności</a>
               <a href="/regulamin" className="underline hover:text-[#0E6630]">Regulamin</a>
-              <a href="#" className="underline hover:text-[#0E6630]">Pliki cookies</a>
+              <span className="text-[#121212]">Pliki cookies – nie bierzemy żadnych :)</span>
             </div>
             <p className="text-[#121212] text-xs md:text-sm order-1 md:order-2">© 2026 Nasza Aplikacja Wellbeing</p>
           </div>

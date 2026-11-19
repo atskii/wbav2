@@ -6,38 +6,45 @@ import path from 'path';
 
 dotenv.config();
 
-const localGeminiApiPlugin = () => ({
-  name: 'local-gemini-api',
+const localApiPlugin = () => ({
+  name: 'local-serverless-api',
   configureServer(server) {
-    server.middlewares.use('/api/gemini', async (req, res) => {
-      if (req.method === 'POST' && !req.body) {
-        const chunks = [];
-        for await (const chunk of req) chunks.push(chunk);
-        const raw = Buffer.concat(chunks).toString('utf8');
-        try {
-          req.body = raw ? JSON.parse(raw) : {};
-        } catch {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'Invalid JSON body' }));
-          return;
+    const routes = {
+      '/api/gemini': './api/gemini.js',
+      '/api/contact': './api/contact.js',
+    };
+
+    Object.entries(routes).forEach(([route, modulePath]) => {
+      server.middlewares.use(route, async (req, res) => {
+        if (req.method === 'POST' && !req.body) {
+          const chunks = [];
+          for await (const chunk of req) chunks.push(chunk);
+          const raw = Buffer.concat(chunks).toString('utf8');
+          try {
+            req.body = raw ? JSON.parse(raw) : {};
+          } catch {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+            return;
+          }
         }
-      }
-      if (!res.status) {
-        res.status = (code) => {
-          res.statusCode = code;
-          return res;
-        };
-      }
-      if (!res.json) {
-        res.json = (data) => {
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify(data));
-          return res;
-        };
-      }
-      const { default: handler } = await import('./api/gemini.js');
-      return handler(req, res);
+        if (!res.status) {
+          res.status = (code) => {
+            res.statusCode = code;
+            return res;
+          };
+        }
+        if (!res.json) {
+          res.json = (data) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data));
+            return res;
+          };
+        }
+        const { default: handler } = await import(modulePath);
+        return handler(req, res);
+      });
     });
   }
 });
@@ -50,7 +57,7 @@ try {
 } catch (e) {}
 
 export default defineConfig({
-  plugins: [react(), localGeminiApiPlugin()],
+  plugins: [react(), localApiPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
