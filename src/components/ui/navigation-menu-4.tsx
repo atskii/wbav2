@@ -24,7 +24,7 @@ const navigationLinks: NavLinkItem[] = [
   { id: "home", href: "#home", label: "Home" },
   { id: "produkt", href: "#produkt", label: "Produkt" },
   { id: "wypalenie", href: "#wypalenie", label: "Wypalenie" },
-  { id: "o-nas", href: "#o-nas", label: "O nas" },
+  { id: "o-nas", href: "#o-nas", label: "Porównanie" },
   { id: "kontakt", href: "#kontakt", label: "Kontakt" },
 ]
 

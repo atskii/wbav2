@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import NavigationMenu4 from "./ui/navigation-menu-4";
 import { TestimonialsSection } from "./ui/testimonials-with-marquee";
+import ComparisonBlock from "./ui/comparison-2";
 import { EMOJIS, MOOD_L } from "../lib/constants";
 import { fireCustomConfetti } from "./StreakPlant";
 
@@ -1058,15 +1059,12 @@ export default function Landing({ onCTA }) {
         </div>
       </section>
 
-      {/* Nasza wizja */}
-      <section id="o-nas" className="scroll-mt-20 py-16 md:py-24 px-4 md:px-8 bg-[#0E6630] text-center relative overflow-hidden">
-        <div className="max-w-4xl mx-auto relative z-10 flex flex-col items-center">
-          <span className="inline-block px-4 py-1 border border-white text-white rounded-full text-sm font-semibold mb-6 md:mb-8">Nasza wizja</span>
-          <p className="text-lg md:text-3xl font-bold text-white leading-relaxed">
-            Jeśli codziennie zmagasz się z natłokiem zadań, pomożemy Ci je zorganizować i wychwycić wczesne symptomy wypalenia. Aplikacja dostosowuje się do Ciebie na podstawie wywiadu i danych o nastroju, oferując spersonalizowany planer oraz monitorowanie. Dostarczamy rekomendacje do sprawdzonych źródeł pomocy – rządowych instytucji czy specjalistów – bo zależy nam na Twoim dobrostanie.
-          </p>
-        </div>
-      </section>
+      {/* Porównanie: Wellbeing App vs zwykły planer */}
+      <ComparisonBlock
+        id="o-nas"
+        onCTA={onCTA}
+        onExplore={() => scrollToSection("produkt")}
+      />
 
       {/* Rozwiązanie problemu */}
       <section id="rozwiazanie" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-white">
@@ -1292,7 +1290,7 @@ export default function Landing({ onCTA }) {
               <a href="#home" onClick={(e) => { e.preventDefault(); scrollToSection("home"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Home</a>
               <a href="#produkt" onClick={(e) => { e.preventDefault(); scrollToSection("produkt"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Produkt</a>
               <a href="#wypalenie" onClick={(e) => { e.preventDefault(); scrollToSection("wypalenie"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Wypalenie</a>
-              <a href="#o-nas" onClick={(e) => { e.preventDefault(); scrollToSection("o-nas"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">O nas</a>
+              <a href="#o-nas" onClick={(e) => { e.preventDefault(); scrollToSection("o-nas"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Porównanie</a>
               <a href="#kontakt" onClick={(e) => { e.preventDefault(); scrollToSection("kontakt"); }} className="text-[#5A5A5A] text-sm md:text-base font-medium hover:text-[#0E6630]">Kontakt</a>
             </div>
           </div>
