@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import {
   ArrowRight,
   Sparkles,
@@ -18,9 +18,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  Check,
 } from "lucide-react";
 import NavigationMenu4 from "./ui/navigation-menu-4";
+import { TestimonialsSection } from "./ui/testimonials-with-marquee";
 import { EMOJIS, MOOD_L } from "../lib/constants";
+import { fireCustomConfetti } from "./StreakPlant";
 
 const SECTION_IDS = [
   "home",
@@ -32,25 +35,52 @@ const SECTION_IDS = [
 
 const TESTIMONIALS = [
   {
-    quote:
-      "Tydzień korzystania z Wellbeing app i nareszcie czuję się zorganizowana. Planer AI układa mój dzień tak, że kończę pracę bez poczucia przytłoczenia.",
-    name: "Anna Kowalska",
-    role: "Wykładowczyni na UW",
-    avatar: "/avatarLP.png",
+    author: {
+      name: "Anna Kowalska",
+      handle: "Wykładowczyni na UW",
+      avatar: "/avatarLP.png",
+    },
+    text: "Tydzień korzystania z Wellbeing app i nareszcie czuję się zorganizowana. Planer AI układa mój dzień tak, że kończę pracę bez poczucia przytłoczenia.",
   },
   {
-    quote:
-      "Jako lider zespołu często gubiłem się w spotkaniach i zadaniach na wczoraj. Automatyczne przerwy regeneracyjne i szybki check-in nastroju realnie poprawiły mój fokus.",
-    name: "Michał Nowak",
-    role: "Team Leader IT",
-    initials: "MN",
+    author: {
+      name: "Michał Nowak",
+      handle: "Team Leader IT",
+      initials: "MN",
+    },
+    text: "Często gubiłem się w spotkaniach i zadaniach na wczoraj. Automatyczne przerwy regeneracyjne i szybki check-in nastroju realnie poprawiły mój fokus.",
   },
   {
-    quote:
-      "Najbardziej cenię pełną prywatność danych i delikatny system ostrzegania. Gdy przez kilka dni mam gorszy nastrój, aplikacja sama podpowiada mi, żeby zwolnić i zadbać o regenerację.",
-    name: "Karolina Wiśniewska",
-    role: "Projektantka UX",
-    initials: "KW",
+    author: {
+      name: "Karolina Wiśniewska",
+      handle: "Projektantka UX",
+      initials: "KW",
+    },
+    text: "Najbardziej cenię pełną prywatność danych i delikatny system ostrzegania. Gdy przez kilka dni mam gorszy nastrój, aplikacja podpowiada mi, żeby zwolnić.",
+  },
+  {
+    author: {
+      name: "Zuzanna Zielińska",
+      handle: "Studentka psychologii",
+      initials: "ZZ",
+    },
+    text: "Łączenie studiów z pracą było dla mnie ciągłym chaosem. Dzięki synchronizacji z Kalendarzem Google i rosnącej Monsterze wreszcie trzymam spokojny rytm dnia.",
+  },
+  {
+    author: {
+      name: "Jakub Kamiński",
+      handle: "Freelancer / Copywriter",
+      initials: "JK",
+    },
+    text: "Pracując z domu łatwo pracować za długo. Wykres nastroju pokazał mi, w które dni spada mi energia, a AI przeniosło najcięższe teksty na poranki.",
+  },
+  {
+    author: {
+      name: "Tomasz Lewandowski",
+      handle: "Doktorant i analityk",
+      initials: "TL",
+    },
+    text: "Zwykłe listy zadań tylko dokładają presji. Tutaj pierwszy raz czuję, że planer dostosowuje się do mojego samopoczucia, a nie odwrotnie.",
   },
 ];
 
@@ -244,6 +274,7 @@ function InteractiveMoodMonitorPreview() {
             <button
               key={emoji}
               type="button"
+              aria-pressed={idx === selectedIdx}
               onClick={() => setSelectedIdx(idx)}
               className={`w-6 h-6 text-xs rounded-xl flex items-center justify-center transition-all cursor-pointer ${idx === selectedIdx
                 ? "ring-2 ring-[#1E5C36] bg-[#E8F4ED] scale-110 shadow-xs"
@@ -514,11 +545,251 @@ function OfferCard({ item, index = 0 }) {
         {item.preview}
       </div>
       <div className="flex items-center gap-2.5 mb-2">
-        <img src={item.icon} alt={item.title} className="w-5 h-5 object-contain shrink-0" />
+        <img src={item.icon} alt={item.title} loading="lazy" decoding="async" className="w-5 h-5 object-contain shrink-0" />
         <h3 className="font-bold text-[#151515] text-base md:text-lg">{item.title}</h3>
       </div>
       <p className="text-sm text-[#5A5A5A] leading-relaxed">{item.desc}</p>
     </motion.div>
+  );
+}
+
+const DEMO_PLANT_TASKS = [
+  {
+    id: 1,
+    title: "Zaplanuj priorytety na dziś",
+    prioLabel: "NISKI PRIORYTET",
+    prioTw: "bg-green-100 text-green-700",
+    xp: 15,
+    done: true,
+  },
+  {
+    id: 2,
+    title: "Zakończ najważniejsze zadanie dnia",
+    prioLabel: "WYSOKI PRIORYTET",
+    prioTw: "bg-red-100 text-red-700",
+    xp: 35,
+    done: false,
+  },
+  {
+    id: 3,
+    title: "Zrób 15 min przerwy regeneracyjnej",
+    prioLabel: "ŚREDNI PRIORYTET",
+    prioTw: "bg-yellow-100 text-yellow-700",
+    xp: 25,
+    done: false,
+  },
+  {
+    id: 4,
+    title: "Zaznacz swój wieczorny nastrój",
+    prioLabel: "NISKI PRIORYTET",
+    prioTw: "bg-green-100 text-green-700",
+    xp: 25,
+    done: false,
+  },
+];
+
+function MonsteraShowcase() {
+  const [demoTasks, setDemoTasks] = useState(DEMO_PLANT_TASKS);
+  const celebratedRef = useRef(false);
+
+  const total = demoTasks.length;
+  const doneCount = demoTasks.filter((t) => t.done).length;
+  const totalXP = demoTasks.reduce((acc, t) => acc + t.xp, 0);
+  const earnedXP = demoTasks
+    .filter((t) => t.done)
+    .reduce((acc, t) => acc + t.xp, 0);
+  const xpProgress =
+    totalXP === 0 ? 0 : Math.round((earnedXP / totalXP) * 100);
+  const currentStep = xpProgress === 0 ? 1 : Math.ceil(xpProgress / 10);
+
+  useEffect(() => {
+    for (let step = 1; step <= 10; step++) {
+      const img = new Image();
+      img.src = `/plant/step ${step}.png`;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (xpProgress === 100 && !celebratedRef.current) {
+      celebratedRef.current = true;
+      const prefersReducedMotion =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!prefersReducedMotion) {
+        fireCustomConfetti();
+      }
+    } else if (xpProgress < 100) {
+      celebratedRef.current = false;
+    }
+  }, [xpProgress]);
+
+  const toggleTask = (id) => {
+    setDemoTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
+  };
+
+  const resetTasks = () => {
+    setDemoTasks(DEMO_PLANT_TASKS.map((t) => ({ ...t, done: t.id === 1 })));
+  };
+
+  return (
+    <section
+      id="roslinka"
+      className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-white"
+    >
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+        {/* Left column */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.45 }}
+          className="lg:col-span-7 flex flex-col items-start text-left"
+        >
+          <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">
+            Motywacja bez presji
+          </span>
+          <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] mb-4 leading-tight">
+            Twoja Monstera rośnie razem z Tobą
+          </h2>
+          <p className="text-[#151515] text-base md:text-lg leading-relaxed mb-6">
+            Za każde wykonane zadanie zdobywasz punkty XP, dzięki którym Twoja
+            wirtualna Monstera Deliciosa wypuszcza nowe liście. Kliknij poniższe
+            zadania i sprawdź, jak rośnie!
+          </p>
+
+          <div className="w-full space-y-3">
+            {demoTasks.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                aria-pressed={t.done}
+                onClick={() => toggleTask(t.id)}
+                className={`w-full text-left rounded-[14px] border-2 px-4 py-3.5 transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                  t.done
+                    ? "border-[#E8DDD0] bg-[#FAFAFA] opacity-75"
+                    : "border-[#E8DDD0] bg-white shadow-sm hover:border-[#2D9E6B]/60 hover:shadow-md"
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                      t.done
+                        ? "bg-[#1E5C36] text-white"
+                        : "bg-[#E8F4ED] text-[#1E5C36] border border-[#2D9E6B]"
+                    }`}
+                  >
+                    <Check size={13} strokeWidth={2.8} />
+                  </span>
+                  <span
+                    className={`text-sm md:text-base font-bold truncate ${
+                      t.done
+                        ? "line-through text-gray-500"
+                        : "text-[#1A2F22]"
+                    }`}
+                  >
+                    {t.title}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    className={`hidden sm:inline-block text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase ${t.prioTw}`}
+                  >
+                    {t.prioLabel}
+                  </span>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#E8F5EC] text-[#1E5C36]">
+                    +{t.xp} XP
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {xpProgress === 100 && (
+            <div className="mt-4 w-full flex justify-end">
+              <button
+                type="button"
+                onClick={resetTasks}
+                className="text-xs font-bold px-3.5 py-2 rounded-lg bg-[#E8F5EC] text-[#0E6630] border border-[#0E6630]/20 hover:bg-[#D0EBDA] transition-colors cursor-pointer"
+              >
+                Zacznij od nowa
+              </button>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Right column */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.45, delay: 0.1 }}
+          className="lg:col-span-5 flex justify-center w-full"
+        >
+          <div className="bg-white rounded-3xl p-6 border border-[#E8DDD0] shadow-md max-w-sm mx-auto w-full flex flex-col">
+            <div className="text-center mb-2">
+              <h3 className="font-lora text-xl font-bold text-[#1A2F22]">
+                Roślinka Streaku
+              </h3>
+              <p className="text-xs text-[#5A7368] font-medium mt-0.5">
+                Monstera Deliciosa
+              </p>
+            </div>
+
+            <div className="relative h-72 sm:h-80 w-full mb-4 flex justify-center items-end">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={currentStep}
+                  src={`/plant/step ${currentStep}.png`}
+                  alt={`Monstera Deliciosa etap wzrostu ${currentStep}`}
+                  initial={{ opacity: 0, filter: "blur(4px)", scale: 0.98 }}
+                  animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                  exit={{ opacity: 0, filter: "blur(4px)", scale: 1.02 }}
+                  transition={{ duration: 0.35, ease: "easeInOut" }}
+                  style={{ transformOrigin: "bottom center" }}
+                  className="absolute bottom-0 w-48 sm:w-52 h-auto object-contain object-bottom pointer-events-none"
+                />
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {xpProgress === 100 && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0, rotate: -20 }}
+                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ duration: 0.5, type: "spring" }}
+                    className="absolute top-6 right-8 z-30 pointer-events-none"
+                  >
+                    <Sparkles className="w-8 h-8 text-[#F2733C] animate-pulse drop-shadow-md" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="w-full pt-1">
+              <div className="flex justify-between mb-2">
+                <span className="text-xs font-semibold text-[#5A7368]">
+                  Postęp dnia
+                </span>
+                <span translate="no" className="text-xs font-bold text-[#1E5C36]">
+                  {doneCount}/{total}
+                </span>
+              </div>
+              <div className="h-2.5 bg-[#F5EFE6] rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-[#2D9E6B] to-[#1E5C36] rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${xpProgress}%` }}
+                  transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
@@ -529,7 +800,6 @@ export default function Landing({ onCTA }) {
   const fontInter = { fontFamily: "'Inter', sans-serif" };
   const fontDM = { fontFamily: "'DM Sans', sans-serif" };
   const [activeSection, setActiveSection] = useState("home");
-  const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [openFaqIdx, setOpenFaqIdx] = useState(0);
   const [contactForm, setContactForm] = useState({
     name: "",
@@ -647,6 +917,7 @@ export default function Landing({ onCTA }) {
   }, []);
 
   return (
+    <MotionConfig reducedMotion="user">
     <div style={fontInter} className="min-h-screen bg-[#FCFCFD] text-[#151515] overflow-x-clip relative">
       {/* Navbar */}
       <NavigationMenu4
@@ -669,7 +940,7 @@ export default function Landing({ onCTA }) {
           </button>
         </div>
         <div className="flex justify-center order-2 md:order-2 w-full">
-          <img src="/Frame 256.png" alt="Hero ilustracja" width="502" height="502" className="w-full max-w-md h-auto object-contain" />
+          <img src="/Frame 256.png" alt="Hero ilustracja" width="502" height="502" fetchPriority="high" decoding="async" className="w-full max-w-md h-auto object-contain" />
         </div>
       </section>
 
@@ -677,7 +948,7 @@ export default function Landing({ onCTA }) {
       <section id="produkt" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#E8F5EC] relative overflow-hidden">
         {/* Miejsce na grafikę w prawym dolnym rogu (np. niebieski ludzik) */}
         <div className="absolute bottom-0 right-0 w-32 h-32 md:w-[350px] md:h-[350px] pointer-events-none z-0 opacity-50 md:opacity-100">
-          <img src="/blue_figure.png" alt="Ilustracja postaci" className="w-full h-full object-contain object-bottom right-0 bottom-0 absolute" />
+          <img src="/blue_figure.png" alt="Ilustracja postaci" loading="lazy" decoding="async" className="w-full h-full object-contain object-bottom right-0 bottom-0 absolute" />
         </div>
 
         <div className="max-w-6xl mx-auto relative z-10">
@@ -705,6 +976,9 @@ export default function Landing({ onCTA }) {
         </div>
       </section>
 
+      {/* Monstera Showcase */}
+      <MonsteraShowcase />
+
       {/* Benefits */}
       <section id="korzysci" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#FFEDE6]">
         <div className="max-w-7xl mx-auto">
@@ -715,17 +989,17 @@ export default function Landing({ onCTA }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[
               {
-                image: "/benefit_planner.png",
+                image: "/benefit_planner.webp",
                 alt: "Ilustracja indywidualnego planera zadań",
                 title: "Indywidualny planer, który pomaga organizować dzień i unikać przeciążenia"
               },
               {
-                image: "/benefit_signals.png",
+                image: "/benefit_signals.webp",
                 alt: "Ilustracja automatycznych sygnałów stresu i wypalenia",
                 title: "Automatyczne sygnały, gdy Twój poziom stresu lub wypalenia rośnie"
               },
               {
-                image: "/benefit_tips.png",
+                image: "/benefit_tips.webp",
                 alt: "Ilustracja personalizowanych wskazówek dobrostanu",
                 title: "Personalizowane wskazówki, jak zadbać o swój dobrostan i energię"
               }
@@ -742,6 +1016,10 @@ export default function Landing({ onCTA }) {
                   <img
                     src={f.image}
                     alt={f.alt}
+                    width="800"
+                    height="800"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
                   />
                 </div>
@@ -753,91 +1031,19 @@ export default function Landing({ onCTA }) {
       </section>
 
       {/* Testimonials */}
-      <section id="opinie" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-white">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-16">
-          <div className="flex-1 flex flex-col items-start text-left w-full">
-            <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Opinie</span>
-            <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] mb-6 md:mb-8 leading-tight">Co mówią nasi użytkownicy</h2>
-            <div className="min-h-[168px] w-full max-w-lg flex flex-col justify-between">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={testimonialIdx}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  <p className="text-base md:text-lg text-[#151515] mb-6 leading-relaxed">
-                    „{TESTIMONIALS[testimonialIdx].quote}”
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 md:w-14 md:h-14 bg-[#E8F5EC] text-[#0E6630] font-bold rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                      {TESTIMONIALS[testimonialIdx].avatar ? (
-                        <img
-                          src={TESTIMONIALS[testimonialIdx].avatar}
-                          alt={TESTIMONIALS[testimonialIdx].name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span>{TESTIMONIALS[testimonialIdx].initials}</span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm md:text-base text-[#151515]">
-                        {TESTIMONIALS[testimonialIdx].name}
-                      </p>
-                      <p className="text-xs md:text-sm text-[#5A5A5A]">
-                        {TESTIMONIALS[testimonialIdx].role}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-            <div className="flex items-center gap-3 mt-6">
-              <button
-                type="button"
-                onClick={() =>
-                  setTestimonialIdx((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length)
-                }
-                aria-label="Poprzednia opinia"
-                className="p-2 rounded-full border border-[#E5E7EB] text-[#151515] hover:border-[#0E6630] hover:text-[#0E6630] transition-colors cursor-pointer"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <div className="flex items-center gap-1.5">
-                {TESTIMONIALS.map((t, idx) => (
-                  <button
-                    key={t.name}
-                    type="button"
-                    onClick={() => setTestimonialIdx(idx)}
-                    aria-label={`Opinia ${idx + 1}`}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${idx === testimonialIdx ? "w-6 bg-[#0E6630]" : "w-2 bg-[#D0EBDA] hover:bg-[#0E6630]/50"
-                      }`}
-                  />
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setTestimonialIdx((prev) => (prev + 1) % TESTIMONIALS.length)}
-                aria-label="Następna opinia"
-                className="p-2 rounded-full border border-[#E5E7EB] text-[#151515] hover:border-[#0E6630] hover:text-[#0E6630] transition-colors cursor-pointer"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 flex justify-center w-full">
-            <img src="/comowiaonas.png" alt="Opinie użytkowników" className="w-full max-w-lg aspect-[4/3] object-cover rounded-2xl md:rounded-3xl border border-[#E8DDD0]" />
-          </div>
-        </div>
-      </section>
+      <TestimonialsSection
+        id="opinie"
+        badge="Opinie"
+        title="Co mówią nasi użytkownicy"
+        description="Zobacz, jak Wellbeing App pomaga odzyskać spokój, rytm dnia i równowagę w pracy oraz na studiach."
+        testimonials={TESTIMONIALS}
+      />
 
       {/* Wypalenie */}
       <section id="wypalenie" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#E8F5EC]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-10 md:gap-16">
           <div className="flex-1 flex justify-center order-2 md:order-1 w-full">
-            <img src="/kluczykwypalenie.png" alt="Problem wypalenia" className="w-full max-w-lg aspect-square object-contain rounded-2xl md:rounded-3xl" />
+            <img src="/kluczykwypalenie.webp" alt="Problem wypalenia" loading="lazy" decoding="async" className="w-full max-w-lg aspect-square object-contain rounded-2xl md:rounded-3xl" />
           </div>
           <div className="flex-1 order-1 md:order-2 flex flex-col items-start text-left">
             <span className="inline-block px-4 py-1 border border-[#0E6630] text-[#0E6630] rounded-full text-sm font-semibold mb-4 md:mb-6">Wypalenie</span>
@@ -871,8 +1077,12 @@ export default function Landing({ onCTA }) {
               <h2 className="text-[24px] md:text-4xl font-bold text-[#151515] leading-tight mb-4 md:mb-8">Zaprojektowaliśmy aplikację Dla Ciebie</h2>
             </div>
             <img
-              src="/rozwiazanie_figure.png"
+              src="/rozwiazanie_figure.webp"
               alt="Ilustracja równowagi i dobrostanu"
+              width="1000"
+              height="747"
+              loading="lazy"
+              decoding="async"
               className="w-full max-w-[460px] md:max-w-[520px] h-auto object-contain mt-2"
             />
           </div>
@@ -921,7 +1131,10 @@ export default function Landing({ onCTA }) {
                   className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden shadow-2xs"
                 >
                   <button
+                    id={`faq-trigger-${idx}`}
                     type="button"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-panel-${idx}`}
                     onClick={() => setOpenFaqIdx(isOpen ? -1 : idx)}
                     className="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-[#E8F5EC]/40 transition-colors cursor-pointer"
                   >
@@ -930,6 +1143,7 @@ export default function Landing({ onCTA }) {
                     </span>
                     <ChevronDown
                       size={18}
+                      aria-hidden="true"
                       className={`text-[#0E6630] shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
                         }`}
                     />
@@ -937,6 +1151,9 @@ export default function Landing({ onCTA }) {
                   <AnimatePresence initial={false}>
                     {isOpen && (
                       <motion.div
+                        id={`faq-panel-${idx}`}
+                        role="region"
+                        aria-labelledby={`faq-trigger-${idx}`}
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -960,7 +1177,7 @@ export default function Landing({ onCTA }) {
       <section id="kontakt" className="scroll-mt-20 py-12 md:py-20 px-4 md:px-8 bg-[#F5EFE6] relative overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none">
           {/* Miejsce na grafikę tła */}
-          <img src="/kontakt_tlo.png" alt="Tło kontaktowe" className="w-full h-full object-cover object-bottom" />
+          <img src="/kontakt_tlo.webp" alt="Tło kontaktowe" loading="lazy" decoding="async" className="w-full h-full object-cover object-bottom" />
         </div>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-10 md:gap-16 relative z-10">
           <div className="flex-1 flex flex-col items-start text-left">
@@ -1091,5 +1308,6 @@ export default function Landing({ onCTA }) {
         </div>
       </footer>
     </div>
+    </MotionConfig>
   );
 }

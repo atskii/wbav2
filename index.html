@@ -6,8 +6,101 @@
     <meta name="theme-color" content="#1E5C36" />
     <meta
       name="description"
-      content="Wellbeing App — inteligentny planer zadań z systemem ostrzegania o samopoczuciu"
+      content="Opisz swój nastrój i zadania do zrobienia, a Wellbeing App zaplanuje zbalansowany dzień z przerwami regeneracyjnymi i pomoże uniknąć wypalenia."
     />
+    <!-- OpenGraph / Social Share -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pl_PL" />
+    <meta property="og:site_name" content="Wellbeing App" />
+    <meta property="og:title" content="Wellbeing App – Zdrowa produktywność bez wypalenia" />
+    <meta
+      property="og:description"
+      content="Opisz swój nastrój i zadania do zrobienia, a my zaplanujemy Twój dzień z przerwami regeneracyjnymi i wczesnym ostrzeganiem przed przeciążeniem."
+    />
+    <meta property="og:image" content="/Frame 256.png" />
+    <meta property="og:image:alt" content="Wellbeing App – równowaga i zdrowa produktywność" />
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Wellbeing App – Zdrowa produktywność bez wypalenia" />
+    <meta
+      name="twitter:description"
+      content="Opisz swój nastrój i zadania do zrobienia, a my zaplanujemy Twój dzień z przerwami regeneracyjnymi i wczesnym ostrzeganiem przed przeciążeniem."
+    />
+    <meta name="twitter:image" content="/Frame 256.png" />
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Wellbeing App",
+            "applicationCategory": "LifestyleApplication",
+            "operatingSystem": "Web",
+            "inLanguage": "pl",
+            "description": "Opisz swój nastrój i zadania do zrobienia, a Wellbeing App zaplanuje zbalansowany dzień z przerwami regeneracyjnymi i pomoże uniknąć wypalenia.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "PLN"
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Jak działa system XP i roślinka (Streak Plant)?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Twoja wirtualna roślina to wskaźnik codziennej konsekwencji. Za każde wykonane zadanie zyskujesz punkty doświadczenia (XP), dzięki którym roślinka rośnie. Gdy wykonasz 100% zaplanowanego na dany dzień zestawu zadań, roślinka w pełni rozkwita."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Czy moje dane i wpisy o nastroju są bezpieczne?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Tak, w 100%. Twoje zadania i notatki o nastroju są bezpiecznie przechowywane i chronione. Żaden wpis nie jest udostępniany przełożonemu, działowi HR ani uczelni. Dodatkowo wpisy są automatycznie usuwane z serwera po 60 dniach braku aktywności."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Co oznaczają kolory przy zadaniach?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Kolory określają priorytet: czerwony to Priorytet Wysoki (najważniejsze na dziś), żółty to Priorytet Średni, a zielony to Priorytet Niski. Aplikacja automatycznie układa harmonogram tak, aby zadania o najwyższym priorytecie znalazły się na czele planu."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Jak zintegrować aplikację z Kalendarzem Google?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Wejdź w Ustawienia (ikona koła zębatego), kliknij „Synchronizuj Kalendarz” w sekcji Integracja z Google i zaloguj się na swoje konto. Twoje spotkania i wykłady pojawią się jako zablokowane czasowo zadania z ikoną kłódki."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Co się stanie, jeśli usunę konto?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Usunięcie konta w Ustawieniach powoduje natychmiastowe i bezpowrotne skasowanie wszystkich Twoich zadań, statystyk i historii nastrojów z serwera."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Gdzie znajdę profesjonalną pomoc psychologiczną?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "W zakładce Pomoc (ikona koła ratunkowego) znajdziesz listę zweryfikowanych, bezpłatnych numerów wsparcia działających całą dobę (m.in. Kryzysowy Telefon Zaufania 116 123). Aplikacja sama delikatnie zasugeruje tę zakładkę, jeśli wykryje długotrwały spadek nastroju."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
     <!-- CSP: Content Security Policy — A02:2025 Security Misconfiguration -->
     <meta http-equiv="Content-Security-Policy" 
       content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' ws: http: https: https://*.supabase.co wss://*.supabase.co https://www.googleapis.com https://accounts.google.com https://vitals.vercel-insights.com; frame-src 'self' https://accounts.google.com; base-uri 'self'; form-action 'self';" />
